@@ -1,0 +1,52 @@
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editors and IDEs
+.idea/
+.vscode/
+.vs/
+*.iml
+*.ipr
+*.iws
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Java and JVM
+.gradle/
+build/
+out/
+target/
+*.class
+
+# Backend monorepo
+/backend/.gradle/
+/backend/build/
+/backend/out/
+/backend/target/
+
+# Node and frontend tooling
+node_modules/
+.npm/
+.pnpm-store/
+.yarn/
+.parcel-cache/
+.next/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Frontend monorepo
+/frontend/node_modules/
+/frontend/.next/
+/frontend/dist/
+/frontend/coverage/

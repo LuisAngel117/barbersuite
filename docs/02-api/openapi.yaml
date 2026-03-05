@@ -1,0 +1,91 @@
+openapi: 3.1.0
+info:
+  title: BarberSuite API
+  version: 0.2.0
+  description: |
+    API SaaS multi-tenant para barberías.
+    Contrato fuente: este archivo (docs-as-code).
+servers:
+  - url: /api/v1
+tags:
+  - name: Auth
+  - name: Appointments
+  - name: Invoices
+  - name: Reports
+  - name: Notifications
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    XBranchId:
+      name: X-Branch-Id
+      in: header
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Required for branch-scoped endpoints (see ADR-0004).
+  schemas:
+    ProblemDetails:
+      type: object
+      description: RFC 7807 Problem Details for HTTP APIs
+      required: [type, title, status]
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer, minimum: 100, maximum: 599 }
+        detail: { type: string }
+        instance: { type: string, format: uri }
+        code: { type: string, description: "Código estable de error (app-level)." }
+        traceId: { type: string }
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field: { type: string }
+              message: { type: string }
+
+paths:
+  /health:
+    get:
+      summary: Health (placeholder)
+      responses:
+        "200":
+          description: OK
+
+  /auth/login:
+    post:
+      summary: Login (placeholder)
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, minLength: 8 }
+      responses:
+        "200":
+          description: Token emitido
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [accessToken, tokenType, expiresIn]
+                properties:
+                  accessToken: { type: string }
+                  tokenType: { type: string, enum: [Bearer] }
+                  expiresIn: { type: integer, description: "Segundos" }
+        "401":
+          description: Credenciales inválidas
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }

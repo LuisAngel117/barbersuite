@@ -5,6 +5,8 @@ import static org.springframework.http.HttpMethod.POST;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import com.nimbusds.jose.proc.SecurityContext;
 import com.barbersuite.backend.security.TenantContextFilter;
+import com.barbersuite.backend.security.ProblemAccessDeniedHandler;
+import com.barbersuite.backend.security.ProblemAuthenticationEntryPoint;
 import java.nio.charset.StandardCharsets;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -38,14 +40,22 @@ public class SecurityConfiguration {
     HttpSecurity http,
     Converter<Jwt, ? extends AbstractAuthenticationToken> jwtAuthenticationConverter
   ) throws Exception {
+    com.fasterxml.jackson.databind.ObjectMapper objectMapper =
+      new com.fasterxml.jackson.databind.ObjectMapper();
+
     http
       .csrf(AbstractHttpConfigurer::disable)
       .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
       .authorizeHttpRequests(authorize -> authorize
         .requestMatchers(POST, "/api/v1/auth/login").permitAll()
         .requestMatchers(POST, "/api/v1/tenants/signup").permitAll()
+        .requestMatchers("/api/v1/branches", "/api/v1/branches/**").hasAnyRole("ADMIN", "MANAGER")
         .requestMatchers("/error").permitAll()
         .anyRequest().authenticated()
+      )
+      .exceptionHandling(exceptionHandling -> exceptionHandling
+        .authenticationEntryPoint(new ProblemAuthenticationEntryPoint(objectMapper))
+        .accessDeniedHandler(new ProblemAccessDeniedHandler(objectMapper))
       )
       .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(
         jwtAuthenticationConverter

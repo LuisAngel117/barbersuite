@@ -48,6 +48,22 @@ public class ApiExceptionHandler {
     );
   }
 
+  @ExceptionHandler(ApiNotFoundException.class)
+  ResponseEntity<ProblemDetail> handleNotFound(
+    ApiNotFoundException exception,
+    HttpServletRequest request
+  ) {
+    return problemResponse(
+      HttpStatus.NOT_FOUND,
+      "Not Found",
+      exception.getMessage(),
+      exception.getCode(),
+      request,
+      problemDetail -> {
+      }
+    );
+  }
+
   @ExceptionHandler(InvalidCredentialsException.class)
   ResponseEntity<ProblemDetail> handleInvalidCredentials(
     InvalidCredentialsException exception,

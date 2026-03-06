@@ -5,7 +5,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.barbersuite.backend.auth.AuthUser;
+import com.barbersuite.backend.auth.JwtTokenService;
 import java.util.Map;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +46,9 @@ abstract class AuthenticatedWebIntegrationTestSupport {
   @Autowired
   private PasswordEncoder passwordEncoder;
 
+  @Autowired
+  private JwtTokenService jwtTokenService;
+
   protected final ObjectMapper objectMapper = new ObjectMapper();
   protected MockMvc mockMvc;
 
@@ -73,6 +79,44 @@ abstract class AuthenticatedWebIntegrationTestSupport {
 
     JsonNode jsonNode = objectMapper.readTree(mvcResult.getResponse().getContentAsByteArray());
     return jsonNode.get("accessToken").asText();
+  }
+
+  protected String seedUserAndIssueToken(
+    UUID userId,
+    String fullName,
+    String email,
+    String password,
+    String role
+  ) {
+    jdbcTemplate.update(
+      """
+      insert into users (id, tenant_id, full_name, email, password_hash)
+      values (?, ?, ?, ?, ?)
+      """,
+      userId,
+      TENANT_ID,
+      fullName,
+      email,
+      passwordEncoder.encode(password)
+    );
+
+    jdbcTemplate.update(
+      """
+      insert into user_roles (tenant_id, user_id, role)
+      values (?, ?, ?)
+      """,
+      TENANT_ID,
+      userId,
+      role
+    );
+
+    return jwtTokenService.issueToken(new AuthUser(
+      TENANT_ID,
+      userId,
+      email,
+      "",
+      List.of(role)
+    ));
   }
 
   private void reseedAuthData() {

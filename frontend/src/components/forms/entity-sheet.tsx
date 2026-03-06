@@ -14,6 +14,7 @@ type EntitySheetProps = {
   cancelLabel: string;
   submitLabel: string;
   submitTestId?: string;
+  hideSubmit?: boolean;
   submitting: boolean;
   onCancel: () => void;
   onSubmit: FormEventHandler<HTMLFormElement>;
@@ -28,6 +29,7 @@ export function EntitySheet({
   cancelLabel,
   submitLabel,
   submitTestId,
+  hideSubmit = false,
   submitting,
   onCancel,
   onSubmit,
@@ -56,10 +58,12 @@ export function EntitySheet({
             <Button disabled={submitting} onClick={onCancel} type="button" variant="outline">
               {cancelLabel}
             </Button>
-            <Button data-testid={submitTestId} disabled={submitting} type="submit">
-              {submitting ? <LoaderCircle className="size-4 animate-spin" /> : null}
-              {submitLabel}
-            </Button>
+            {!hideSubmit ? (
+              <Button data-testid={submitTestId} disabled={submitting} type="submit">
+                {submitting ? <LoaderCircle className="size-4 animate-spin" /> : null}
+                {submitLabel}
+              </Button>
+            ) : null}
           </SheetFooter>
         </form>
       </SheetContent>

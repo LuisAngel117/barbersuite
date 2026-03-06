@@ -45,6 +45,14 @@
     radial-gradient(circle at top left, rgba(245, 158, 11, 0.16), transparent 30%),
     radial-gradient(circle at right top, rgba(24, 24, 27, 0.06), transparent 24%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(246, 246, 243, 1));
+  --fc-border-color: var(--border);
+  --fc-page-bg-color: var(--background);
+  --fc-neutral-bg-color: var(--muted);
+  --fc-today-bg-color: color-mix(in oklch, var(--brand-muted) 84%, transparent);
+  --fc-event-bg-color: var(--brand);
+  --fc-event-border-color: var(--brand);
+  --fc-event-text-color: var(--brand-foreground);
+  --fc-list-event-hover-bg-color: color-mix(in oklch, var(--brand-muted) 54%, transparent);
 }
 
 .dark {
@@ -87,6 +95,14 @@
     radial-gradient(circle at top left, rgba(245, 158, 11, 0.18), transparent 28%),
     radial-gradient(circle at bottom right, rgba(255, 255, 255, 0.05), transparent 24%),
     linear-gradient(180deg, rgba(10, 11, 14, 1), rgba(16, 18, 24, 1));
+  --fc-border-color: var(--border);
+  --fc-page-bg-color: var(--background);
+  --fc-neutral-bg-color: var(--muted);
+  --fc-today-bg-color: color-mix(in oklch, var(--brand-muted) 88%, transparent);
+  --fc-event-bg-color: var(--brand);
+  --fc-event-border-color: var(--brand);
+  --fc-event-text-color: var(--brand-foreground);
+  --fc-list-event-hover-bg-color: color-mix(in oklch, var(--brand-muted) 46%, transparent);
 }
 
 @theme inline {
@@ -155,5 +171,72 @@
 
   a {
     @apply transition-colors;
+  }
+}
+
+@layer components {
+  .fc {
+    --fc-small-font-size: 0.8rem;
+    font-family: var(--font-inter), sans-serif;
+  }
+
+  .fc .fc-scrollgrid,
+  .fc .fc-theme-standard td,
+  .fc .fc-theme-standard th,
+  .fc .fc-list,
+  .fc .fc-list-table {
+    border-color: var(--fc-border-color);
+  }
+
+  .fc .fc-toolbar-title {
+    @apply text-lg font-semibold tracking-tight text-foreground;
+  }
+
+  .fc .fc-col-header-cell-cushion,
+  .fc .fc-timegrid-axis-cushion,
+  .fc .fc-timegrid-slot-label-cushion,
+  .fc .fc-list-day-text,
+  .fc .fc-list-day-side-text {
+    @apply text-xs font-medium text-muted-foreground;
+  }
+
+  .fc .fc-daygrid-day-number,
+  .fc .fc-timegrid-slot-label {
+    @apply text-muted-foreground;
+  }
+
+  .fc .fc-list-event-title,
+  .fc .fc-event-title {
+    @apply font-medium tracking-tight;
+  }
+
+  .fc .fc-event {
+    @apply rounded-xl border-0 px-1 py-0.5 shadow-sm;
+  }
+
+  .fc .fc-timegrid-event-harness-inset .fc-timegrid-event,
+  .fc .fc-timegrid-event {
+    @apply rounded-2xl;
+  }
+
+  .fc .fc-list-event:hover td {
+    background-color: var(--fc-list-event-hover-bg-color);
+  }
+
+  .fc .fc-highlight {
+    background-color: color-mix(in oklch, var(--brand) 18%, transparent);
+  }
+
+  .fc .fc-timegrid-now-indicator-line {
+    border-color: var(--brand);
+  }
+
+  .fc .fc-timegrid-now-indicator-arrow {
+    border-color: var(--brand);
+    color: var(--brand);
+  }
+
+  .fc .fc-button {
+    @apply rounded-xl border border-border/70 bg-card/80 text-foreground shadow-none;
   }
 }

@@ -194,6 +194,77 @@
     "active": "Active",
     "inactive": "Inactive"
   },
+  "appointments": {
+    "title": "Appointments",
+    "subtitle": "Run the selected branch with day, week or list views without leaving the app shell.",
+    "calendarBadge": "Agenda v1",
+    "calendarTitle": "Operating calendar",
+    "calendarDescription": "FullCalendar consumes /api/barbers and /api/appointments using the active branch and its real time zone.",
+    "day": "Day",
+    "week": "Week",
+    "list": "List",
+    "new": "New appointment",
+    "edit": "Edit appointment",
+    "details": "Appointment details",
+    "noBranchTitle": "Select a branch to view the agenda",
+    "noBranchDesc": "Appointments are branch-scoped. Once you choose a branch above, the calendar will load in its real time zone.",
+    "noBranchCta": "Open clients",
+    "noBarbersTitle": "There are no barbers in this branch yet",
+    "noBarbersDesc": "The agenda needs at least one user with role BARBER and access to this branch before it can show availability.",
+    "noBarbersCta": "Review branches",
+    "loadFailed": "We couldn't load the agenda.",
+    "createFailed": "We couldn't create the appointment.",
+    "updateFailed": "We couldn't update the appointment.",
+    "created": "Appointment created successfully.",
+    "updated": "Appointment updated successfully.",
+    "overlapError": "That barber already has an appointment in this time range.",
+    "validationTitle": "Local validation",
+    "emptyPatch": "Make at least one change before saving.",
+    "eventFallback": "Appointment",
+    "filters": {
+      "label": "Filters",
+      "barber": "Barber",
+      "status": "Status",
+      "all": "All"
+    },
+    "fields": {
+      "client": "Client",
+      "service": "Service",
+      "barber": "Barber",
+      "start": "Start",
+      "duration": "Duration (minutes)",
+      "status": "Status",
+      "notes": "Notes",
+      "notesPlaceholder": "Operational context, reminders or follow-up.",
+      "clientValidation": "Select a valid client.",
+      "serviceValidation": "Select a valid service.",
+      "barberValidation": "Select a valid barber.",
+      "startValidation": "Enter a valid date and time.",
+      "startFormatValidation": "Date must use the YYYY-MM-DDTHH:mm format.",
+      "durationValidation": "Duration must be between 5 and 480 minutes."
+    },
+    "statuses": {
+      "scheduled": "Scheduled",
+      "checked_in": "Checked in",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "no_show": "No show"
+    },
+    "sheet": {
+      "createDescription": "Create a new appointment using the client, barber and service for the active branch.",
+      "editDescription": "Reschedule the appointment, change its status or add operating context.",
+      "detailDescription": "Detail view for read-only roles."
+    },
+    "clientPicker": {
+      "placeholder": "Search client by name, phone or email",
+      "hint": "Type at least 2 characters to search clients in this branch.",
+      "empty": "We couldn't find clients for that search.",
+      "noContact": "No contact information",
+      "change": "Change client",
+      "searchFailed": "We couldn't search clients for this appointment.",
+      "loadFailed": "We couldn't load the client for this appointment."
+    }
+  },
   "services": {
     "pageEyebrow": "Services",
     "pageTitle": "Tenant services",

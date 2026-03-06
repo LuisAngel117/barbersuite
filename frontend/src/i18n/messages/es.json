@@ -194,6 +194,77 @@
     "active": "Activa",
     "inactive": "Inactiva"
   },
+  "appointments": {
+    "title": "Agenda",
+    "subtitle": "Organiza la sucursal seleccionada con vista día, semana o lista sin salir del app shell.",
+    "calendarBadge": "Agenda v1",
+    "calendarTitle": "Calendario operativo",
+    "calendarDescription": "FullCalendar consume /api/barbers y /api/appointments usando la sucursal activa y su time zone.",
+    "day": "Día",
+    "week": "Semana",
+    "list": "Lista",
+    "new": "Nueva cita",
+    "edit": "Editar cita",
+    "details": "Detalle de cita",
+    "noBranchTitle": "Selecciona una sucursal para ver la agenda",
+    "noBranchDesc": "Las citas son branch-scoped. Cuando elijas una sucursal arriba, el calendario cargará en su time zone real.",
+    "noBranchCta": "Ir a clientes",
+    "noBarbersTitle": "Todavía no hay barberos en esta sucursal",
+    "noBarbersDesc": "La agenda necesita al menos un usuario con rol BARBER y acceso a esta sucursal para mostrar disponibilidad.",
+    "noBarbersCta": "Revisar sucursales",
+    "loadFailed": "No pudimos cargar la agenda.",
+    "createFailed": "No pudimos crear la cita.",
+    "updateFailed": "No pudimos actualizar la cita.",
+    "created": "Cita creada correctamente.",
+    "updated": "Cita actualizada correctamente.",
+    "overlapError": "Ese barbero ya tiene una cita en este rango.",
+    "validationTitle": "Validación local",
+    "emptyPatch": "Realiza al menos un cambio antes de guardar.",
+    "eventFallback": "Cita",
+    "filters": {
+      "label": "Filtros",
+      "barber": "Barbero",
+      "status": "Status",
+      "all": "Todos"
+    },
+    "fields": {
+      "client": "Cliente",
+      "service": "Servicio",
+      "barber": "Barbero",
+      "start": "Inicio",
+      "duration": "Duración (minutos)",
+      "status": "Estado",
+      "notes": "Notas",
+      "notesPlaceholder": "Contexto operativo, observaciones o seguimiento.",
+      "clientValidation": "Selecciona un cliente válido.",
+      "serviceValidation": "Selecciona un servicio válido.",
+      "barberValidation": "Selecciona un barbero válido.",
+      "startValidation": "Ingresa una fecha y hora válidas.",
+      "startFormatValidation": "La fecha debe usar el formato YYYY-MM-DDTHH:mm.",
+      "durationValidation": "La duración debe estar entre 5 y 480 minutos."
+    },
+    "statuses": {
+      "scheduled": "Agendada",
+      "checked_in": "Check-in",
+      "completed": "Completada",
+      "cancelled": "Cancelada",
+      "no_show": "No show"
+    },
+    "sheet": {
+      "createDescription": "Crea una cita nueva usando el cliente, barbero y servicio de la sucursal actual.",
+      "editDescription": "Reprograma la cita, cambia su estado o agrega contexto operativo.",
+      "detailDescription": "Vista de detalle para roles con acceso de lectura."
+    },
+    "clientPicker": {
+      "placeholder": "Buscar cliente por nombre, teléfono o email",
+      "hint": "Escribe al menos 2 caracteres para buscar clientes de esta sucursal.",
+      "empty": "No encontramos clientes para esa búsqueda.",
+      "noContact": "Sin contacto registrado",
+      "change": "Cambiar cliente",
+      "searchFailed": "No pudimos buscar clientes para la cita.",
+      "loadFailed": "No pudimos cargar el cliente de esta cita."
+    }
+  },
   "services": {
     "pageEyebrow": "Services",
     "pageTitle": "Servicios del tenant",

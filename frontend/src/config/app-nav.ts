@@ -5,6 +5,7 @@ import {
   Building2,
   CalendarClock,
   ChartColumnBig,
+  Clock3,
   LayoutDashboard,
   Scissors,
   Settings2,
@@ -144,6 +145,18 @@ export const APP_NAV_ITEMS: AppNavItem[] = [
     testId: "nav-staff",
   },
   {
+    key: "availability",
+    href: "/app/staff/availability",
+    icon: Clock3,
+    label: {
+      es: "Disponibilidad",
+      en: "Availability",
+    },
+    group: "administration",
+    allowedRoles: ["ADMIN", "MANAGER"],
+    testId: "nav-availability",
+  },
+  {
     key: "branches",
     href: "/app/branches",
     icon: Building2,
@@ -221,7 +234,20 @@ export function isNavItemActive(pathname: string, href: string) {
     return pathname === href;
   }
 
-  return pathname === href || pathname.startsWith(`${href}/`);
+  if (pathname === href) {
+    return true;
+  }
+
+  if (!pathname.startsWith(`${href}/`)) {
+    return false;
+  }
+
+  return !APP_NAV_ITEMS.some(
+    (item) =>
+      item.href !== href &&
+      item.href.length > href.length &&
+      (pathname === item.href || pathname.startsWith(`${item.href}/`)),
+  );
 }
 
 export function getVisibleNavItems(roles: readonly string[]) {

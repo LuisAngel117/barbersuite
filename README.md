@@ -40,3 +40,9 @@ Luego abre:
 
 Guia completa:
 - `/docs/00-product/demo.md`
+
+## Release Images (GHCR)
+Para publicar imagenes Docker versionadas en GitHub Container Registry:
+
+- usa tags semver como `v0.1.0`
+- revisa la guia en `/docs/01-architecture/release-and-artifacts.md`

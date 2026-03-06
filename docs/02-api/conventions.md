@@ -22,6 +22,7 @@ Endpoints tenant-scoped (catálogo global, usuarios/roles del tenant) **no** req
 - Ejemplos tenant-scoped del Slice 1: `/me`, `/branches`, `/branches/{branchId}`.
 - Ejemplos tenant-scoped del Slice 2: `/services`, `/services/{serviceId}`.
 - Ejemplos tenant-scoped del Slice 4: `/staff/barbers`, `/staff/barbers/{barberId}`.
+- Ejemplos tenant-scoped del Slice 7: `/notifications/email/test`, `/notifications/email/outbox`.
 - Ejemplos branch-scoped del Slice 2: `/clients`, `/clients/{clientId}`.
 - Ejemplos branch-scoped del Slice 3: `/barbers`, `/appointments`, `/appointments/{appointmentId}`.
 - Ejemplos branch-scoped del Slice 5: `/receipts`, `/receipts/{receiptId}`, `/receipts/{receiptId}/void`.
@@ -33,6 +34,7 @@ Endpoints tenant-scoped (catálogo global, usuarios/roles del tenant) **no** req
 - `Staff` operativo (`GET /barbers`) es branch-scoped y requiere `X-Branch-Id` porque lista solo barberos con acceso a la sucursal seleccionada.
 - `Cash` (`/receipts`, `/receipts/{receiptId}`, `/receipts/{receiptId}/void`) es branch-scoped y requiere `X-Branch-Id`.
 - `Reports` (`/reports/*`) es branch-scoped y requiere `X-Branch-Id`.
+- `Notifications` (`/notifications/email/*`) es tenant-scoped y NO requiere `X-Branch-Id`.
 - En endpoints branch-scoped con filtros de fecha (`/appointments`, `/receipts`, `/reports/*`), `date`, `from` y `to` se interpretan en la `time_zone` de la branch.
 
 ### Error estándar

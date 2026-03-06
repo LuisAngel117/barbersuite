@@ -1238,6 +1238,116 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/BarberSummaryItem"
+    EmailOutboxStatus:
+      type: string
+      enum: [pending, sent, failed, cancelled]
+      example: pending
+    EmailKind:
+      type: string
+      enum: [appointment_confirmation, appointment_reminder]
+      example: appointment_confirmation
+    EmailOutboxItem:
+      type: object
+      required:
+        - id
+        - kind
+        - status
+        - toEmail
+        - subject
+        - scheduledAt
+        - attempts
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        kind:
+          $ref: "#/components/schemas/EmailKind"
+        status:
+          $ref: "#/components/schemas/EmailOutboxStatus"
+        toEmail:
+          type: string
+          format: email
+          example: client@example.com
+        subject:
+          type: string
+          minLength: 2
+          example: Confirmación de cita
+        scheduledAt:
+          type: string
+          format: date-time
+        sentAt:
+          type: [string, "null"]
+          format: date-time
+        attempts:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 1
+        lastError:
+          type: [string, "null"]
+          example: SMTP connection timed out.
+        createdAt:
+          type: string
+          format: date-time
+    EmailOutboxPage:
+      type: object
+      required: [items, page, size, totalItems, totalPages]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/EmailOutboxItem"
+        page:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 0
+        size:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 20
+        totalItems:
+          type: integer
+          format: int64
+          minimum: 0
+          example: 42
+        totalPages:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 3
+    SendTestEmailRequest:
+      type: object
+      required: [toEmail, subject]
+      properties:
+        toEmail:
+          type: string
+          format: email
+          example: qa@example.com
+        subject:
+          type: string
+          minLength: 2
+          example: BarberSuite SMTP smoke test
+        bodyText:
+          type: string
+          example: SMTP is configured correctly for this environment.
+        bodyHtml:
+          type: string
+          example: "<p>SMTP is configured correctly for this environment.</p>"
+      description: At least one of `bodyText` or `bodyHtml` must be provided.
+    SendTestEmailResponse:
+      type: object
+      required: [outboxId, status]
+      properties:
+        outboxId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending]
+          example: pending
 
 paths:
   /health:
@@ -2541,3 +2651,115 @@ paths:
           $ref: "#/components/responses/UnauthorizedProblem"
         "403":
           $ref: "#/components/responses/BranchForbiddenProblem"
+
+  /notifications/email/test:
+    post:
+      operationId: enqueueTestEmail
+      tags: [Notifications]
+      summary: Enqueue a test email for SMTP verification
+      description: |
+        Tenant-scoped notifications endpoint.
+        Does not require `X-Branch-Id`.
+        Only `ADMIN` and `MANAGER` can enqueue test emails.
+        The request must provide at least one of `bodyText` or `bodyHtml`.
+        The backend persists the email intent in the outbox and responds `202 Accepted`.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendTestEmailRequest"
+      responses:
+        "202":
+          description: Email intent persisted in outbox with pending status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SendTestEmailResponse"
+        "400":
+          $ref: "#/components/responses/ValidationProblem"
+        "401":
+          $ref: "#/components/responses/UnauthorizedProblem"
+        "403":
+          $ref: "#/components/responses/ForbiddenProblem"
+
+  /notifications/email/outbox:
+    get:
+      operationId: listEmailOutbox
+      tags: [Notifications]
+      summary: List email outbox items for the authenticated tenant
+      description: |
+        Tenant-scoped notifications endpoint.
+        Does not require `X-Branch-Id`.
+        Only `ADMIN` and `MANAGER` can inspect the email outbox.
+        `from` and `to` filter by `createdAt` date.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/EmailOutboxStatus"
+          description: Filter by outbox delivery status.
+        - name: kind
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/EmailKind"
+          description: Filter by notification kind.
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: Inclusive start day for `createdAt`.
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: Inclusive end day for `createdAt`.
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            default: 0
+          description: Zero-based page number.
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Page size.
+        - name: sort
+          in: query
+          required: false
+          schema:
+            type: string
+            example: createdAt,desc
+          description: Sorting expression following the shared `sort` convention.
+      responses:
+        "200":
+          description: Email outbox items visible in the authenticated tenant
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmailOutboxPage"
+        "400":
+          $ref: "#/components/responses/ValidationProblem"
+        "401":
+          $ref: "#/components/responses/UnauthorizedProblem"
+        "403":
+          $ref: "#/components/responses/ForbiddenProblem"

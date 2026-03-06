@@ -30,7 +30,7 @@ class FlywayMigrationIntegrationTest {
     assertThat(jdbcTemplate.queryForObject("select version()", String.class))
       .contains("PostgreSQL");
     assertThat(flyway.info().current()).isNotNull();
-    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("11");
+    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("12");
 
     assertThat(
       List.of(
@@ -46,7 +46,8 @@ class FlywayMigrationIntegrationTest {
         "barber_services",
         "receipts",
         "receipt_items",
-        "receipt_payments"
+        "receipt_payments",
+        "email_outbox"
       )
     )
       .allMatch(this::tableExists);
@@ -106,8 +107,28 @@ class FlywayMigrationIntegrationTest {
     assertThat(columnType("receipt_payments", "receipt_id")).isEqualTo("uuid");
     assertThat(columnType("receipt_payments", "amount")).isEqualTo("numeric");
     assertThat(columnType("receipt_payments", "created_at")).isEqualTo("timestamp with time zone");
+    assertThat(columnType("email_outbox", "id")).isEqualTo("uuid");
+    assertThat(columnType("email_outbox", "tenant_id")).isEqualTo("uuid");
+    assertThat(columnType("email_outbox", "branch_id")).isEqualTo("uuid");
+    assertThat(columnType("email_outbox", "kind")).isEqualTo("text");
+    assertThat(columnType("email_outbox", "status")).isEqualTo("text");
+    assertThat(columnType("email_outbox", "to_email")).isEqualTo("text");
+    assertThat(columnType("email_outbox", "subject")).isEqualTo("text");
+    assertThat(columnType("email_outbox", "body_text")).isEqualTo("text");
+    assertThat(columnType("email_outbox", "body_html")).isEqualTo("text");
+    assertThat(columnType("email_outbox", "dedup_key")).isEqualTo("text");
+    assertThat(columnType("email_outbox", "appointment_id")).isEqualTo("uuid");
+    assertThat(columnType("email_outbox", "attempts")).isEqualTo("integer");
+    assertThat(columnType("email_outbox", "last_error")).isEqualTo("text");
+    assertThat(columnType("email_outbox", "scheduled_at")).isEqualTo("timestamp with time zone");
+    assertThat(columnType("email_outbox", "sent_at")).isEqualTo("timestamp with time zone");
+    assertThat(columnType("email_outbox", "created_at")).isEqualTo("timestamp with time zone");
+    assertThat(columnType("email_outbox", "updated_at")).isEqualTo("timestamp with time zone");
     assertThat(columnNullable("users", "active")).isFalse();
     assertThat(columnNullable("users", "phone")).isTrue();
+    assertThat(columnNullable("email_outbox", "branch_id")).isTrue();
+    assertThat(columnNullable("email_outbox", "appointment_id")).isTrue();
+    assertThat(columnNullable("email_outbox", "sent_at")).isTrue();
     assertThat(columnDefault("users", "active")).contains("true");
 
     assertThat(constraintExists("branches", "uq_branches_tenant_code", "UNIQUE")).isTrue();
@@ -223,6 +244,30 @@ class FlywayMigrationIntegrationTest {
     assertThat(constraintExists(
       "receipt_payments",
       "ck_receipt_payments_method_valid",
+      "CHECK"
+    )).isTrue();
+    assertThat(constraintExists(
+      "email_outbox",
+      "uq_email_outbox_tenant_dedup_key",
+      "UNIQUE"
+    )).isTrue();
+    assertThat(constraintExists("email_outbox", "fk_email_outbox_branch", "FOREIGN KEY")).isTrue();
+    assertThat(constraintExists(
+      "email_outbox",
+      "fk_email_outbox_appointment",
+      "FOREIGN KEY"
+    )).isTrue();
+    assertThat(constraintExists("email_outbox", "ck_email_outbox_kind_valid", "CHECK")).isTrue();
+    assertThat(constraintExists("email_outbox", "ck_email_outbox_status_valid", "CHECK")).isTrue();
+    assertThat(constraintExists(
+      "email_outbox",
+      "ck_email_outbox_attempts_non_negative",
+      "CHECK"
+    )).isTrue();
+    assertThat(constraintExists("email_outbox", "ck_email_outbox_body_present", "CHECK")).isTrue();
+    assertThat(constraintExists(
+      "email_outbox",
+      "ck_email_outbox_appointment_requires_branch",
       "CHECK"
     )).isTrue();
 
@@ -341,6 +386,32 @@ class FlywayMigrationIntegrationTest {
       .contains("card")
       .contains("transfer")
       .contains("other");
+    assertThat(constraintDefinition("email_outbox", "uq_email_outbox_tenant_dedup_key"))
+      .contains("UNIQUE (tenant_id, dedup_key)");
+    assertThat(constraintDefinition("email_outbox", "fk_email_outbox_branch"))
+      .contains("FOREIGN KEY (tenant_id, branch_id)")
+      .contains("REFERENCES branches(tenant_id, id)");
+    assertThat(constraintDefinition("email_outbox", "fk_email_outbox_appointment"))
+      .contains("FOREIGN KEY (tenant_id, branch_id, appointment_id)")
+      .contains("REFERENCES appointments(tenant_id, branch_id, id)");
+    assertThat(constraintDefinition("email_outbox", "ck_email_outbox_kind_valid"))
+      .contains("appointment_confirmation")
+      .contains("appointment_reminder");
+    assertThat(constraintDefinition("email_outbox", "ck_email_outbox_status_valid"))
+      .contains("pending")
+      .contains("sent")
+      .contains("failed")
+      .contains("cancelled");
+    assertThat(constraintDefinition("email_outbox", "ck_email_outbox_attempts_non_negative"))
+      .contains("attempts >= 0");
+    assertThat(constraintDefinition("email_outbox", "ck_email_outbox_body_present"))
+      .contains("body_text IS NOT NULL")
+      .contains("body_html IS NOT NULL");
+    assertThat(
+      constraintDefinition("email_outbox", "ck_email_outbox_appointment_requires_branch")
+    )
+      .contains("appointment_id IS NULL")
+      .contains("branch_id IS NOT NULL");
 
     assertThat(indexDefinition("ix_user_branch_access_tenant_user"))
       .contains("ON public.user_branch_access")
@@ -421,6 +492,13 @@ class FlywayMigrationIntegrationTest {
     assertThat(indexDefinition("idx_receipt_payments_receipt"))
       .contains("ON public.receipt_payments")
       .contains("(tenant_id, receipt_id)");
+    assertThat(indexDefinition("idx_email_outbox_pending_due"))
+      .contains("ON public.email_outbox")
+      .contains("(scheduled_at)")
+      .contains("WHERE (status = 'pending'::text)");
+    assertThat(indexDefinition("idx_email_outbox_tenant_created_at"))
+      .contains("ON public.email_outbox")
+      .contains("(tenant_id, created_at DESC)");
   }
 
   private boolean tableExists(String tableName) {

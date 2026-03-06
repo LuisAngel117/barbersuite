@@ -18,6 +18,15 @@ type ClientPickerProps = {
   value: string;
   onChange: (clientId: string) => void;
   disabled?: boolean;
+  messages?: Partial<{
+    placeholder: string;
+    hint: string;
+    empty: string;
+    noContact: string;
+    change: string;
+    searchFailed: string;
+    loadFailed: string;
+  }>;
 };
 
 function clientMeta(client: ClientPayload, emptyLabel: string) {
@@ -28,6 +37,7 @@ export function ClientPicker({
   value,
   onChange,
   disabled = false,
+  messages,
 }: ClientPickerProps) {
   const tAppointments = useTranslations("appointments");
   const tErrors = useTranslations("errors");
@@ -37,6 +47,15 @@ export function ClientPicker({
   const [selectedClient, setSelectedClient] = useState<ClientPayload | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [problem, setProblem] = useState<ProblemBannerState | null>(null);
+  const labels = {
+    placeholder: messages?.placeholder ?? tAppointments("clientPicker.placeholder"),
+    hint: messages?.hint ?? tAppointments("clientPicker.hint"),
+    empty: messages?.empty ?? tAppointments("clientPicker.empty"),
+    noContact: messages?.noContact ?? tAppointments("clientPicker.noContact"),
+    change: messages?.change ?? tAppointments("clientPicker.change"),
+    searchFailed: messages?.searchFailed ?? tAppointments("clientPicker.searchFailed"),
+    loadFailed: messages?.loadFailed ?? tAppointments("clientPicker.loadFailed"),
+  };
 
   useEffect(() => {
     if (!value || selectedClient?.id === value) {
@@ -59,7 +78,7 @@ export function ClientPicker({
       const toastProblem = toProblemToast(
         result.problem,
         {
-          generic: tAppointments("clientPicker.loadFailed"),
+          generic: labels.loadFailed,
           unauthorized: tErrors("unauthorized"),
           forbidden: tErrors("forbidden"),
           branchRequired: tErrors("branchRequired"),
@@ -67,7 +86,7 @@ export function ClientPicker({
           conflict: tErrors("conflict"),
           validation: tErrors("validation"),
         },
-        tAppointments("clientPicker.loadFailed"),
+        labels.loadFailed,
       );
 
       setProblem({
@@ -80,7 +99,7 @@ export function ClientPicker({
     return () => {
       active = false;
     };
-  }, [selectedClient?.id, tAppointments, tErrors, value]);
+  }, [labels.loadFailed, selectedClient?.id, tErrors, value]);
 
   useEffect(() => {
     if (disabled || selectedClient || query.trim().length < 2) {
@@ -107,7 +126,7 @@ export function ClientPicker({
         const toastProblem = toProblemToast(
           result.problem,
           {
-            generic: tAppointments("clientPicker.searchFailed"),
+            generic: labels.searchFailed,
             unauthorized: tErrors("unauthorized"),
             forbidden: tErrors("forbidden"),
             branchRequired: tErrors("branchRequired"),
@@ -115,7 +134,7 @@ export function ClientPicker({
             conflict: tErrors("conflict"),
             validation: tErrors("validation"),
           },
-          tAppointments("clientPicker.searchFailed"),
+          labels.searchFailed,
         );
 
         setProblem({
@@ -130,7 +149,7 @@ export function ClientPicker({
       active = false;
       window.clearTimeout(timeoutId);
     };
-  }, [disabled, query, selectedClient, tAppointments, tErrors]);
+  }, [disabled, labels.searchFailed, query, selectedClient, tErrors]);
 
   return (
     <div className="space-y-4">
@@ -145,7 +164,7 @@ export function ClientPicker({
                 <p className="font-medium tracking-tight">{selectedClient.fullName}</p>
               </div>
               <p className="text-sm text-muted-foreground">
-                {clientMeta(selectedClient, tAppointments("clientPicker.noContact"))}
+                {clientMeta(selectedClient, labels.noContact)}
               </p>
             </div>
             {!disabled ? (
@@ -161,7 +180,7 @@ export function ClientPicker({
                 type="button"
                 variant="outline"
               >
-                {tAppointments("clientPicker.change")}
+                {labels.change}
               </Button>
             ) : null}
           </div>
@@ -181,14 +200,14 @@ export function ClientPicker({
                   setIsSearching(false);
                 }
               }}
-              placeholder={tAppointments("clientPicker.placeholder")}
+              placeholder={labels.placeholder}
               value={query}
             />
           </div>
 
           {query.trim().length < 2 ? (
             <p className="text-sm leading-6 text-muted-foreground">
-              {tAppointments("clientPicker.hint")}
+              {labels.hint}
             </p>
           ) : isSearching ? (
             <div className="flex items-center gap-2 rounded-2xl border border-border/70 bg-muted/35 px-4 py-3 text-sm text-muted-foreground">
@@ -197,7 +216,7 @@ export function ClientPicker({
             </div>
           ) : options.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-border/70 bg-muted/25 px-4 py-4 text-sm text-muted-foreground">
-              {tAppointments("clientPicker.empty")}
+              {labels.empty}
             </div>
           ) : (
             <div className="max-h-64 space-y-2 overflow-y-auto rounded-2xl border border-border/70 bg-card/80 p-2">
@@ -216,7 +235,7 @@ export function ClientPicker({
                 >
                   <span className="font-medium tracking-tight">{client.fullName}</span>
                   <span className="text-xs text-muted-foreground">
-                    {clientMeta(client, tAppointments("clientPicker.noContact"))}
+                    {clientMeta(client, labels.noContact)}
                   </span>
                 </button>
               ))}

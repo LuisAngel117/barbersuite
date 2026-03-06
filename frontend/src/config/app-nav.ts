@@ -129,6 +129,7 @@ export const APP_NAV_ITEMS: AppNavItem[] = [
     group: "operations",
     allowedRoles: ["ADMIN", "MANAGER", "RECEPTION"],
     mobilePrimary: true,
+    testId: "nav-receipts",
   },
   {
     key: "staff",

@@ -3,10 +3,12 @@ import { defineConfig } from "@playwright/test";
 export default defineConfig({
   testDir: "./e2e",
   globalSetup: "./e2e/global-setup.ts",
-  fullyParallel: true,
+  // The E2E suite exercises a shared Docker stack and mutates real data.
+  // Running it serially keeps the flows deterministic and avoids cross-test flakes.
+  fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  workers: 1,
   reporter: process.env.CI
     ? [["line"], ["html", { open: "never" }]]
     : [["list"], ["html", { open: "never" }]],

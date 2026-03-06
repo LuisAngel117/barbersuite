@@ -23,3 +23,20 @@ Regla: **Codex implementa solo lo que esté especificado en `/docs`**.
 - Resumen de decisiones: `/docs/00-product/decisions.md`
 - Release 1 scope: `/docs/00-product/release-1-scope.md`
 - Arquitectura: `/docs/01-architecture/overview.md`
+
+## Quick Demo
+Para levantar todo con Docker y tener una demo reproducible:
+
+```powershell
+docker compose -f docker-compose.yml -f docker-compose.app.yml -f docker-compose.frontend.yml up -d --build
+./scripts/demo-seed.ps1
+```
+
+Si ya tienes frontend o backend locales corriendo, libera primero los puertos `3000` y `8080`.
+
+Luego abre:
+- Frontend: `http://localhost:3000`
+- Backend health: `http://localhost:8080/api/v1/health`
+
+Guia completa:
+- `/docs/00-product/demo.md`

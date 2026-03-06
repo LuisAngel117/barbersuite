@@ -89,30 +89,44 @@ public class NotificationsService {
   public void enqueueAppointmentConfirmation(UUID tenantId, UUID branchId, UUID appointmentId) {
     appointmentEmailContextRepository.findByTenantBranchAndAppointmentId(tenantId, branchId, appointmentId)
       .ifPresent(context -> {
-        String toEmail = normalizeEmailNullable(context.clientEmail());
-        if (toEmail == null) {
-          return;
-        }
-
-        ZoneId branchZoneId = ZoneId.of(context.branchTimeZone());
-        ZonedDateTime startAtLocal = context.startAt().atZone(branchZoneId);
-        ZonedDateTime endAtLocal = context.endAt().atZone(branchZoneId);
-        String subject = "Confirmacion de cita - " + context.branchCode();
-        String bodyText = buildAppointmentConfirmationBody(context, startAtLocal, endAtLocal);
-
-        emailOutboxRepository.insertOutboxIgnoringDedup(
+        enqueueAppointmentEmail(
           tenantId,
-          context.branchId(),
-          UUID.randomUUID(),
+          context,
           EmailKind.appointment_confirmation,
-          EmailOutboxStatus.pending,
-          toEmail,
-          subject,
-          bodyText,
-          null,
+          "Confirmacion de cita - " + context.branchCode(),
+          buildAppointmentConfirmationBody(
+            context,
+            context.startAt().atZone(ZoneId.of(context.branchTimeZone())),
+            context.endAt().atZone(ZoneId.of(context.branchTimeZone()))
+          ),
           "appt-confirm:" + appointmentId,
-          appointmentId,
           Instant.now()
+        );
+      });
+  }
+
+  @Transactional
+  public void enqueueAppointmentReminder(
+    UUID tenantId,
+    UUID branchId,
+    UUID appointmentId,
+    Instant scheduledAt
+  ) {
+    appointmentEmailContextRepository.findByTenantBranchAndAppointmentId(tenantId, branchId, appointmentId)
+      .ifPresent(context -> {
+        ZoneId branchZoneId = ZoneId.of(context.branchTimeZone());
+        enqueueAppointmentEmail(
+          tenantId,
+          context,
+          EmailKind.appointment_reminder,
+          "Recordatorio de cita - " + context.branchCode(),
+          buildAppointmentReminderBody(
+            context,
+            context.startAt().atZone(branchZoneId),
+            context.endAt().atZone(branchZoneId)
+          ),
+          "appt-reminder-24h:" + appointmentId,
+          scheduledAt
         );
       });
   }
@@ -311,6 +325,73 @@ public class NotificationsService {
       .append("\n");
 
     return body.toString();
+  }
+
+  private String buildAppointmentReminderBody(
+    JdbcAppointmentEmailContextRepository.AppointmentEmailContext context,
+    ZonedDateTime startAtLocal,
+    ZonedDateTime endAtLocal
+  ) {
+    String clientFullName = normalizeNullable(context.clientFullName());
+    StringBuilder body = new StringBuilder();
+
+    if (clientFullName != null) {
+      body.append("Hola ").append(clientFullName).append(",\n\n");
+    }
+
+    body.append("Te recordamos tu cita programada en BarberSuite.\n")
+      .append("Sucursal: ")
+      .append(context.branchName())
+      .append(" (")
+      .append(context.branchCode())
+      .append(")\n")
+      .append("Servicio: ")
+      .append(context.serviceName())
+      .append("\n")
+      .append("Barbero: ")
+      .append(context.barberFullName())
+      .append("\n")
+      .append("Inicio: ")
+      .append(APPOINTMENT_TIME_FORMATTER.format(startAtLocal))
+      .append("\n")
+      .append("Fin: ")
+      .append(APPOINTMENT_TIME_FORMATTER.format(endAtLocal))
+      .append("\n")
+      .append("Zona horaria: ")
+      .append(context.branchTimeZone())
+      .append("\n");
+
+    return body.toString();
+  }
+
+  private void enqueueAppointmentEmail(
+    UUID tenantId,
+    JdbcAppointmentEmailContextRepository.AppointmentEmailContext context,
+    EmailKind kind,
+    String subject,
+    String bodyText,
+    String dedupKey,
+    Instant scheduledAt
+  ) {
+    String toEmail = normalizeEmailNullable(context.clientEmail());
+    if (toEmail == null) {
+      return;
+    }
+
+    emailOutboxRepository.insertOutboxIgnoringDedup(
+      tenantId,
+      context.branchId(),
+      UUID.randomUUID(),
+      kind,
+      EmailOutboxStatus.pending,
+      toEmail,
+      subject,
+      bodyText,
+      null,
+      dedupKey,
+      context.appointmentId(),
+      scheduledAt
+    );
   }
 
   private boolean isDedupConflict(DataIntegrityViolationException exception) {

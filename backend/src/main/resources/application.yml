@@ -42,6 +42,9 @@ notifications:
       max-attempts: ${NOTIFICATIONS_EMAIL_WORKER_MAX_ATTEMPTS:5}
       base-backoff: ${NOTIFICATIONS_EMAIL_WORKER_BASE_BACKOFF:PT30S}
       max-backoff: ${NOTIFICATIONS_EMAIL_WORKER_MAX_BACKOFF:PT15M}
+  reminders:
+    enabled: ${NOTIFICATIONS_REMINDERS_ENABLED:true}
+    delay: ${NOTIFICATIONS_REMINDERS_DELAY:60000}
 server:
   port: ${SERVER_PORT:8080}
 logging:

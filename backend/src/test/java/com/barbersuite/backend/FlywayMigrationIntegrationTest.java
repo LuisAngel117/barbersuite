@@ -30,7 +30,7 @@ class FlywayMigrationIntegrationTest {
     assertThat(jdbcTemplate.queryForObject("select version()", String.class))
       .contains("PostgreSQL");
     assertThat(flyway.info().current()).isNotNull();
-    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("13");
+    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("14");
 
     assertThat(
       List.of(
@@ -502,6 +502,10 @@ class FlywayMigrationIntegrationTest {
     assertThat(indexDefinition("idx_email_outbox_tenant_created_at"))
       .contains("ON public.email_outbox")
       .contains("(tenant_id, created_at DESC)");
+    assertThat(indexDefinition("idx_email_outbox_appt_kind"))
+      .contains("ON public.email_outbox")
+      .contains("(tenant_id, branch_id, appointment_id, kind)")
+      .contains("WHERE (appointment_id IS NOT NULL)");
   }
 
   private boolean tableExists(String tableName) {

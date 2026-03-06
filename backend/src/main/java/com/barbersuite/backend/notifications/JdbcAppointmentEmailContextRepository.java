@@ -4,6 +4,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -61,6 +62,36 @@ public class JdbcAppointmentEmailContextRepository {
     ).stream().findFirst();
   }
 
+  public List<ReminderCandidate> listReminderCandidates(
+    Instant fromInclusive,
+    Instant toInclusive
+  ) {
+    return jdbcTemplate.query(
+      """
+      select a.tenant_id,
+             a.branch_id,
+             a.id as appointment_id
+      from appointments a
+      join clients c
+        on c.tenant_id = a.tenant_id
+       and c.branch_id = a.branch_id
+       and c.id = a.client_id
+      where a.status = 'scheduled'
+        and a.start_at >= ?
+        and a.start_at <= ?
+        and nullif(btrim(c.email), '') is not null
+      order by a.start_at asc, a.id asc
+      """,
+      (resultSet, rowNum) -> new ReminderCandidate(
+        resultSet.getObject("tenant_id", UUID.class),
+        resultSet.getObject("branch_id", UUID.class),
+        resultSet.getObject("appointment_id", UUID.class)
+      ),
+      Timestamp.from(fromInclusive),
+      Timestamp.from(toInclusive)
+    );
+  }
+
   private static AppointmentEmailContext mapAppointmentEmailContext(ResultSet resultSet, int rowNum)
     throws SQLException {
     return new AppointmentEmailContext(
@@ -91,5 +122,8 @@ public class JdbcAppointmentEmailContextRepository {
     String clientEmail,
     String clientFullName
   ) {
+  }
+
+  public record ReminderCandidate(UUID tenantId, UUID branchId, UUID appointmentId) {
   }
 }

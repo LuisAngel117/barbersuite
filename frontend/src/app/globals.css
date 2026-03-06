@@ -370,6 +370,11 @@ button {
   padding: 24px;
 }
 
+.dashboard-stack {
+  display: grid;
+  gap: 18px;
+}
+
 .dashboard-topbar,
 .dashboard-grid {
   display: grid;
@@ -483,6 +488,29 @@ button {
   background: rgba(255, 255, 255, 0.46);
   padding: 24px;
   color: var(--ink-500);
+}
+
+.branch-selector-input {
+  min-height: 54px;
+  width: 100%;
+  border-radius: 14px;
+  border: 1px solid rgba(64, 38, 24, 0.14);
+  background: rgba(255, 255, 255, 0.92);
+  padding: 0 16px;
+  color: var(--ink-900);
+  outline: none;
+  transition: border-color 120ms ease, transform 120ms ease, box-shadow 120ms ease;
+}
+
+.branch-selector-input:focus {
+  border-color: rgba(190, 90, 42, 0.48);
+  box-shadow: 0 0 0 4px rgba(190, 90, 42, 0.12);
+  transform: translateY(-1px);
+}
+
+.branch-selector-input:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
 }
 
 @media (max-width: 1080px) {

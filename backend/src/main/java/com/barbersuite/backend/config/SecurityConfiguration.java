@@ -1,6 +1,7 @@
 package com.barbersuite.backend.config;
 
 import static org.springframework.http.HttpMethod.POST;
+import static org.springframework.http.HttpMethod.PATCH;
 
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import com.nimbusds.jose.proc.SecurityContext;
@@ -52,6 +53,8 @@ public class SecurityConfiguration {
         .requestMatchers("/actuator/health", "/actuator/health/**", "/api/v1/health", "/api/v1/health/**")
         .permitAll()
         .requestMatchers("/api/v1/branches", "/api/v1/branches/**").hasAnyRole("ADMIN", "MANAGER")
+        .requestMatchers(POST, "/api/v1/services").hasAnyRole("ADMIN", "MANAGER")
+        .requestMatchers(PATCH, "/api/v1/services/**").hasAnyRole("ADMIN", "MANAGER")
         .requestMatchers("/error").permitAll()
         .anyRequest().authenticated()
       )

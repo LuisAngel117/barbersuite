@@ -228,6 +228,8 @@ class TenantsSignupIntegrationTest {
     jdbcTemplate.update("delete from user_branch_access");
     jdbcTemplate.update("delete from user_roles");
     jdbcTemplate.update("delete from receipt_sequences");
+    jdbcTemplate.update("delete from clients");
+    jdbcTemplate.update("delete from services");
     jdbcTemplate.update("delete from users");
     jdbcTemplate.update("delete from branches");
     jdbcTemplate.update("delete from tenants");

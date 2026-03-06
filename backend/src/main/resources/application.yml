@@ -6,6 +6,17 @@ spring:
     username: ${DB_USERNAME:${POSTGRES_USER:barbersuite}}
     password: ${DB_PASSWORD:${POSTGRES_PASSWORD:change-me-local}}
     driver-class-name: org.postgresql.Driver
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_SMTP_AUTH:false}
+          starttls:
+            enable: ${MAIL_SMTP_STARTTLS_ENABLE:false}
   jpa:
     open-in-view: false
     hibernate:
@@ -21,6 +32,16 @@ security:
     secret: ${JWT_SECRET:change-me-local-barbersuite-jwt-secret-please-override}
     issuer: ${JWT_ISSUER:barbersuite-backend}
     access-token-ttl: ${JWT_ACCESS_TOKEN_TTL:PT8H}
+notifications:
+  email:
+    from: ${MAIL_FROM:noreply@barbersuite.local}
+    worker:
+      enabled: ${NOTIFICATIONS_EMAIL_WORKER_ENABLED:true}
+      delay: ${NOTIFICATIONS_EMAIL_WORKER_DELAY:2000}
+      batch-size: ${NOTIFICATIONS_EMAIL_WORKER_BATCH_SIZE:20}
+      max-attempts: ${NOTIFICATIONS_EMAIL_WORKER_MAX_ATTEMPTS:5}
+      base-backoff: ${NOTIFICATIONS_EMAIL_WORKER_BASE_BACKOFF:PT30S}
+      max-backoff: ${NOTIFICATIONS_EMAIL_WORKER_MAX_BACKOFF:PT15M}
 server:
   port: ${SERVER_PORT:8080}
 logging:

@@ -30,7 +30,7 @@ class FlywayMigrationIntegrationTest {
     assertThat(jdbcTemplate.queryForObject("select version()", String.class))
       .contains("PostgreSQL");
     assertThat(flyway.info().current()).isNotNull();
-    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("12");
+    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("13");
 
     assertThat(
       List.of(
@@ -122,6 +122,7 @@ class FlywayMigrationIntegrationTest {
     assertThat(columnType("email_outbox", "last_error")).isEqualTo("text");
     assertThat(columnType("email_outbox", "scheduled_at")).isEqualTo("timestamp with time zone");
     assertThat(columnType("email_outbox", "sent_at")).isEqualTo("timestamp with time zone");
+    assertThat(columnType("email_outbox", "processing_started_at")).isEqualTo("timestamp with time zone");
     assertThat(columnType("email_outbox", "created_at")).isEqualTo("timestamp with time zone");
     assertThat(columnType("email_outbox", "updated_at")).isEqualTo("timestamp with time zone");
     assertThat(columnNullable("users", "active")).isFalse();
@@ -129,6 +130,7 @@ class FlywayMigrationIntegrationTest {
     assertThat(columnNullable("email_outbox", "branch_id")).isTrue();
     assertThat(columnNullable("email_outbox", "appointment_id")).isTrue();
     assertThat(columnNullable("email_outbox", "sent_at")).isTrue();
+    assertThat(columnNullable("email_outbox", "processing_started_at")).isTrue();
     assertThat(columnDefault("users", "active")).contains("true");
 
     assertThat(constraintExists("branches", "uq_branches_tenant_code", "UNIQUE")).isTrue();
@@ -399,6 +401,7 @@ class FlywayMigrationIntegrationTest {
       .contains("appointment_reminder");
     assertThat(constraintDefinition("email_outbox", "ck_email_outbox_status_valid"))
       .contains("pending")
+      .contains("processing")
       .contains("sent")
       .contains("failed")
       .contains("cancelled");

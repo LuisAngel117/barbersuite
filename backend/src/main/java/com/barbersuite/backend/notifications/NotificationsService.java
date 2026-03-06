@@ -14,6 +14,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Locale;
@@ -93,7 +94,7 @@ public class NotificationsService {
 
     JdbcEmailOutboxRepository.EmailOutboxFilter filter =
       new JdbcEmailOutboxRepository.EmailOutboxFilter(
-        parseOptionalStatus(status),
+        parsePublicStatuses(status),
         parseOptionalKind(kind),
         fromDate == null ? null : fromDate.atStartOfDay(ZoneOffset.UTC).toInstant(),
         toDate == null ? null : toDate.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant()
@@ -110,7 +111,7 @@ public class NotificationsService {
       .map(row -> new EmailOutboxItemResponse(
         row.id(),
         row.kind(),
-        row.status(),
+        publicStatus(row.status()),
         row.toEmail(),
         row.subject(),
         row.scheduledAt(),
@@ -181,9 +182,30 @@ public class NotificationsService {
     return normalizedValue == null ? null : EmailOutboxStatus.parse(normalizedValue);
   }
 
+  private List<EmailOutboxStatus> parsePublicStatuses(String rawValue) {
+    EmailOutboxStatus status = parseOptionalStatus(rawValue);
+    if (status == null) {
+      return List.of();
+    }
+    if (status == EmailOutboxStatus.processing) {
+      throw new ValidationErrorException("status must be a valid public email outbox status.");
+    }
+    if (status == EmailOutboxStatus.pending) {
+      List<EmailOutboxStatus> statuses = new ArrayList<>();
+      statuses.add(EmailOutboxStatus.pending);
+      statuses.add(EmailOutboxStatus.processing);
+      return List.copyOf(statuses);
+    }
+    return List.of(status);
+  }
+
   private EmailKind parseOptionalKind(String rawValue) {
     String normalizedValue = normalizeNullable(rawValue);
     return normalizedValue == null ? null : EmailKind.parse(normalizedValue);
+  }
+
+  private EmailOutboxStatus publicStatus(EmailOutboxStatus status) {
+    return status == EmailOutboxStatus.processing ? EmailOutboxStatus.pending : status;
   }
 
   private String dedupKey(

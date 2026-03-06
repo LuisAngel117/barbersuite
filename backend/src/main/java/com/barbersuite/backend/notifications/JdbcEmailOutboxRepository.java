@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -132,9 +133,10 @@ public class JdbcEmailOutboxRepository {
     List<Object> arguments = new ArrayList<>();
     arguments.add(tenantId);
 
-    if (filter.status() != null) {
-      sqlBuilder.append(" and status = ?");
-      arguments.add(filter.status().name());
+    if (!filter.statuses().isEmpty()) {
+      String placeholders = String.join(", ", Collections.nCopies(filter.statuses().size(), "?"));
+      sqlBuilder.append(" and status in (" + placeholders + ")");
+      filter.statuses().forEach(status -> arguments.add(status.name()));
     }
     if (filter.kind() != null) {
       sqlBuilder.append(" and kind = ?");
@@ -186,7 +188,7 @@ public class JdbcEmailOutboxRepository {
   }
 
   public record EmailOutboxFilter(
-    EmailOutboxStatus status,
+    List<EmailOutboxStatus> statuses,
     EmailKind kind,
     Instant fromInclusive,
     Instant toExclusive

@@ -4,6 +4,7 @@ import com.barbersuite.backend.web.error.ValidationErrorException;
 
 public enum EmailOutboxStatus {
   pending,
+  processing,
   sent,
   failed,
   cancelled;

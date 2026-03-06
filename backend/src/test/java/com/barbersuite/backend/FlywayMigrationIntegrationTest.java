@@ -30,7 +30,7 @@ class FlywayMigrationIntegrationTest {
     assertThat(jdbcTemplate.queryForObject("select version()", String.class))
       .contains("PostgreSQL");
     assertThat(flyway.info().current()).isNotNull();
-    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("7");
+    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("8");
 
     assertThat(
       List.of(
@@ -41,7 +41,8 @@ class FlywayMigrationIntegrationTest {
         "user_roles",
         "user_branch_access",
         "services",
-        "clients"
+        "clients",
+        "appointments"
       )
     )
       .allMatch(this::tableExists);
@@ -63,6 +64,14 @@ class FlywayMigrationIntegrationTest {
     assertThat(columnType("clients", "id")).isEqualTo("uuid");
     assertThat(columnType("clients", "tenant_id")).isEqualTo("uuid");
     assertThat(columnType("clients", "branch_id")).isEqualTo("uuid");
+    assertThat(columnType("appointments", "id")).isEqualTo("uuid");
+    assertThat(columnType("appointments", "tenant_id")).isEqualTo("uuid");
+    assertThat(columnType("appointments", "branch_id")).isEqualTo("uuid");
+    assertThat(columnType("appointments", "client_id")).isEqualTo("uuid");
+    assertThat(columnType("appointments", "barber_id")).isEqualTo("uuid");
+    assertThat(columnType("appointments", "service_id")).isEqualTo("uuid");
+    assertThat(columnType("appointments", "start_at")).isEqualTo("timestamp with time zone");
+    assertThat(columnType("appointments", "end_at")).isEqualTo("timestamp with time zone");
 
     assertThat(constraintExists("branches", "uq_branches_tenant_code", "UNIQUE")).isTrue();
     assertThat(constraintExists("branches", "uq_branches_tenant_branch", "UNIQUE")).isTrue();
@@ -112,6 +121,19 @@ class FlywayMigrationIntegrationTest {
     assertThat(constraintExists("services", "ck_services_price_non_negative", "CHECK")).isTrue();
     assertThat(constraintExists("clients", "fk_clients_branch", "FOREIGN KEY")).isTrue();
     assertThat(constraintExists("clients", "ck_clients_full_name_min_length", "CHECK")).isTrue();
+    assertThat(constraintExists("clients", "uq_clients_tenant_branch_id", "UNIQUE")).isTrue();
+    assertThat(constraintExists("services", "uq_services_tenant_id_id", "UNIQUE")).isTrue();
+    assertThat(constraintExists("appointments", "fk_appointments_branch", "FOREIGN KEY")).isTrue();
+    assertThat(constraintExists("appointments", "fk_appointments_client", "FOREIGN KEY")).isTrue();
+    assertThat(constraintExists("appointments", "fk_appointments_barber", "FOREIGN KEY")).isTrue();
+    assertThat(constraintExists("appointments", "fk_appointments_service", "FOREIGN KEY")).isTrue();
+    assertThat(constraintExists("appointments", "ck_appointments_status_valid", "CHECK")).isTrue();
+    assertThat(constraintExists("appointments", "ck_appointments_end_after_start", "CHECK"))
+      .isTrue();
+    assertThat(
+      constraintExists("appointments", "ck_appointments_duration_seconds_range", "CHECK")
+    ).isTrue();
+    assertThat(exclusionConstraintExists("appointments", "ex_appt_no_overlap")).isTrue();
 
     assertThat(constraintDefinition(
       "user_branch_access",
@@ -135,6 +157,41 @@ class FlywayMigrationIntegrationTest {
       .contains("FOREIGN KEY (tenant_id, branch_id)")
       .contains("REFERENCES branches(tenant_id, id)")
       .contains("ON DELETE RESTRICT");
+    assertThat(constraintDefinition("clients", "uq_clients_tenant_branch_id"))
+      .contains("UNIQUE (tenant_id, branch_id, id)");
+    assertThat(constraintDefinition("services", "uq_services_tenant_id_id"))
+      .contains("UNIQUE (tenant_id, id)");
+    assertThat(constraintDefinition("appointments", "fk_appointments_branch"))
+      .contains("FOREIGN KEY (tenant_id, branch_id)")
+      .contains("REFERENCES branches(tenant_id, id)");
+    assertThat(constraintDefinition("appointments", "fk_appointments_client"))
+      .contains("FOREIGN KEY (tenant_id, branch_id, client_id)")
+      .contains("REFERENCES clients(tenant_id, branch_id, id)");
+    assertThat(constraintDefinition("appointments", "fk_appointments_barber"))
+      .contains("FOREIGN KEY (tenant_id, barber_id)")
+      .contains("REFERENCES users(tenant_id, id)");
+    assertThat(constraintDefinition("appointments", "fk_appointments_service"))
+      .contains("FOREIGN KEY (tenant_id, service_id)")
+      .contains("REFERENCES services(tenant_id, id)");
+    assertThat(constraintDefinition("appointments", "ck_appointments_status_valid"))
+      .contains("status")
+      .contains("scheduled")
+      .contains("checked_in")
+      .contains("completed")
+      .contains("cancelled")
+      .contains("no_show");
+    assertThat(constraintDefinition("appointments", "ck_appointments_end_after_start"))
+      .contains("end_at > start_at");
+    assertThat(constraintDefinition("appointments", "ck_appointments_duration_seconds_range"))
+      .contains("EXTRACT(epoch FROM (end_at - start_at))")
+      .contains("300")
+      .contains("28800");
+    assertThat(constraintDefinition("appointments", "ex_appt_no_overlap"))
+      .contains("EXCLUDE USING gist")
+      .contains("tstzrange(start_at, end_at")
+      .contains("status")
+      .contains("scheduled")
+      .contains("checked_in");
 
     assertThat(indexDefinition("ix_user_branch_access_tenant_user"))
       .contains("ON public.user_branch_access")
@@ -167,6 +224,18 @@ class FlywayMigrationIntegrationTest {
       .contains("ON public.clients")
       .contains("(tenant_id, branch_id, lower(email))")
       .contains("WHERE (email IS NOT NULL)");
+    assertThat(indexDefinition("idx_user_roles_tenant_role"))
+      .contains("ON public.user_roles")
+      .contains("(tenant_id, role)");
+    assertThat(indexDefinition("idx_appt_tenant_branch_start"))
+      .contains("ON public.appointments")
+      .contains("(tenant_id, branch_id, start_at)");
+    assertThat(indexDefinition("idx_appt_tenant_branch_barber_start"))
+      .contains("ON public.appointments")
+      .contains("(tenant_id, branch_id, barber_id, start_at)");
+    assertThat(indexDefinition("idx_appt_tenant_branch_status_start"))
+      .contains("ON public.appointments")
+      .contains("(tenant_id, branch_id, status, start_at)");
   }
 
   private boolean tableExists(String tableName) {
@@ -233,6 +302,26 @@ class FlywayMigrationIntegrationTest {
       tableName,
       constraintName
     );
+  }
+
+  private boolean exclusionConstraintExists(String tableName, String constraintName) {
+    return Boolean.TRUE.equals(jdbcTemplate.queryForObject(
+      """
+      select exists (
+        select 1
+        from pg_constraint c
+        join pg_class t on t.oid = c.conrelid
+        join pg_namespace n on n.oid = t.relnamespace
+        where n.nspname = 'public'
+          and t.relname = ?
+          and c.conname = ?
+          and c.contype = 'x'
+      )
+      """,
+      Boolean.class,
+      tableName,
+      constraintName
+    ));
   }
 
   private String indexDefinition(String indexName) {

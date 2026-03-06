@@ -531,6 +531,88 @@ components:
           format: int32
           minimum: 0
           example: 8
+    ClientHistoryAppointment:
+      type: object
+      required: [id, status, startAt, endAt, barberId, barberName, serviceId, serviceName]
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          $ref: "#/components/schemas/AppointmentStatus"
+        startAt:
+          type: string
+          format: date-time
+        endAt:
+          type: string
+          format: date-time
+        barberId:
+          type: string
+          format: uuid
+        barberName:
+          type: string
+          example: Diego Herrera
+        serviceId:
+          type: string
+          format: uuid
+        serviceName:
+          type: string
+          example: Corte clásico
+    ClientHistoryReceipt:
+      type: object
+      required: [id, number, status, issuedAt, total]
+      properties:
+        id:
+          type: string
+          format: uuid
+        number:
+          type: string
+          example: BR-UIO-2026-000024
+        status:
+          $ref: "#/components/schemas/ReceiptStatus"
+        issuedAt:
+          type: string
+          format: date-time
+        total:
+          type: number
+          format: decimal
+          multipleOf: 0.01
+          example: 24.00
+    ClientHistoryStats:
+      type: object
+      required: [totalVisits, noShows, totalSpend]
+      properties:
+        totalVisits:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 12
+        noShows:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 1
+        totalSpend:
+          type: number
+          format: decimal
+          multipleOf: 0.01
+          example: 180.00
+    ClientHistoryResponse:
+      type: object
+      required: [client, appointments, receipts, stats]
+      properties:
+        client:
+          $ref: "#/components/schemas/Client"
+        appointments:
+          type: array
+          items:
+            $ref: "#/components/schemas/ClientHistoryAppointment"
+        receipts:
+          type: array
+          items:
+            $ref: "#/components/schemas/ClientHistoryReceipt"
+        stats:
+          $ref: "#/components/schemas/ClientHistoryStats"
     BarberSummary:
       type: object
       required: [id, fullName, active]
@@ -1990,6 +2072,67 @@ paths:
           $ref: "#/components/responses/NotFoundProblem"
         "409":
           $ref: "#/components/responses/ConflictProblem"
+
+  /clients/{clientId}/history:
+    get:
+      operationId: getClientHistory
+      tags: [Clients]
+      summary: Get appointments, receipts, and stats for a client in the authenticated branch context
+      description: |
+        Branch-scoped client history endpoint.
+        Requires `X-Branch-Id`.
+        Any authenticated role can inspect client history for the selected branch, including `RECEPTION` and `BARBER`.
+        Date filters are interpreted in the branch time zone and limit the history payload without changing client scope.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/XBranchId"
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Client identifier scoped to `(tenant, branch)`.
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: Inclusive local start date for history filtering in the branch time zone.
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: Inclusive local end date for history filtering in the branch time zone.
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 200
+            default: 50
+          description: Maximum number of appointments and receipts returned per collection.
+      responses:
+        "200":
+          description: Client history resolved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientHistoryResponse"
+        "400":
+          $ref: "#/components/responses/BranchScopedBadRequestProblem"
+        "401":
+          $ref: "#/components/responses/UnauthorizedProblem"
+        "403":
+          $ref: "#/components/responses/BranchForbiddenProblem"
+        "404":
+          $ref: "#/components/responses/NotFoundProblem"
 
   /staff/barbers:
     get:

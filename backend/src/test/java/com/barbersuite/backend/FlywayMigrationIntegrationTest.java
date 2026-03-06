@@ -30,7 +30,7 @@ class FlywayMigrationIntegrationTest {
     assertThat(jdbcTemplate.queryForObject("select version()", String.class))
       .contains("PostgreSQL");
     assertThat(flyway.info().current()).isNotNull();
-    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("15");
+    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("16");
 
     assertThat(
       List.of(
@@ -606,6 +606,9 @@ class FlywayMigrationIntegrationTest {
     assertThat(indexDefinition("idx_appt_tenant_branch_status_start"))
       .contains("ON public.appointments")
       .contains("(tenant_id, branch_id, status, start_at)");
+    assertThat(indexDefinition("idx_appointments_client"))
+      .contains("ON public.appointments")
+      .contains("(tenant_id, branch_id, client_id, start_at DESC)");
     assertThat(indexDefinition("idx_barber_services_tenant_barber"))
       .contains("ON public.barber_services")
       .contains("(tenant_id, barber_id)");
@@ -621,6 +624,9 @@ class FlywayMigrationIntegrationTest {
     assertThat(indexDefinition("idx_receipts_number"))
       .contains("ON public.receipts")
       .contains("(tenant_id, branch_id, number)");
+    assertThat(indexDefinition("idx_receipts_client"))
+      .contains("ON public.receipts")
+      .contains("(tenant_id, branch_id, client_id, issued_at DESC)");
     assertThat(indexDefinition("ux_receipts_tenant_branch_appointment_issued"))
       .contains("CREATE UNIQUE INDEX")
       .contains("ON public.receipts")

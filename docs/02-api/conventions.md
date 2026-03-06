@@ -23,7 +23,7 @@ Endpoints tenant-scoped (catálogo global, usuarios/roles del tenant) **no** req
 - Ejemplos tenant-scoped del Slice 2: `/services`, `/services/{serviceId}`.
 - Ejemplos tenant-scoped del Slice 4: `/staff/barbers`, `/staff/barbers/{barberId}`.
 - Ejemplos tenant-scoped del Slice 7: `/notifications/email/test`, `/notifications/email/outbox`.
-- Ejemplos branch-scoped del Slice 2: `/clients`, `/clients/{clientId}`.
+- Ejemplos branch-scoped del Slice 2: `/clients`, `/clients/{clientId}`, `/clients/{clientId}/history`.
 - Ejemplos branch-scoped del Slice 3: `/barbers`, `/appointments`, `/appointments/{appointmentId}`.
 - Ejemplos branch-scoped del Slice 5: `/receipts`, `/receipts/{receiptId}`, `/receipts/{receiptId}/void`.
 - Ejemplos branch-scoped del Slice 6: `/reports/sales/*`, `/reports/services/top`, `/reports/appointments/summary`, `/reports/barbers/summary`.

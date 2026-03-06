@@ -65,6 +65,7 @@ export function BranchSelector({
         <select
           id="branch-selector"
           className="branch-selector-input"
+          data-testid="branch-selector"
           disabled={branches.length === 0 || isPending}
           value={value}
           onChange={(event) => void handleChange(event.target.value)}

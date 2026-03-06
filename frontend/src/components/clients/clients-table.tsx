@@ -16,6 +16,16 @@ import { ProblemBanner } from "@/components/ui/problem-banner";
 
 const DEFAULT_PAGE_SIZE = 20;
 
+function toTestIdSegment(value: string) {
+  return (
+    value
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "item"
+  );
+}
+
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("es-EC", {
     dateStyle: "medium",
@@ -192,6 +202,7 @@ export function ClientsTable({ branchId }: { branchId: string }) {
 
         <button
           className="button button-primary"
+          data-testid="clients-add"
           onClick={() => {
             setEditingClient(null);
             setFormMode("create");
@@ -207,6 +218,7 @@ export function ClientsTable({ branchId }: { branchId: string }) {
         <div className="field search-field">
           <label htmlFor="client-search">Buscar</label>
           <input
+            data-testid="clients-search"
             id="client-search"
             onChange={(event) => setQueryInput(event.target.value)}
             placeholder="Nombre, teléfono o email"
@@ -214,7 +226,12 @@ export function ClientsTable({ branchId }: { branchId: string }) {
           />
         </div>
 
-        <button className="button button-secondary" disabled={isLoading} type="submit">
+        <button
+          className="button button-secondary"
+          data-testid="clients-search-submit"
+          disabled={isLoading}
+          type="submit"
+        >
           Buscar
         </button>
       </form>
@@ -251,7 +268,10 @@ export function ClientsTable({ branchId }: { branchId: string }) {
                   </thead>
                   <tbody>
                     {clientPage.items.map((client) => (
-                      <tr key={client.id}>
+                      <tr
+                        data-testid={`clients-row-${toTestIdSegment(client.fullName)}`}
+                        key={client.id}
+                      >
                         <td>
                           <div className="cell-stack">
                             <strong>{client.fullName}</strong>
@@ -278,6 +298,7 @@ export function ClientsTable({ branchId }: { branchId: string }) {
                           <div className="row-actions">
                             <button
                               className="button button-secondary button-small"
+                              data-testid={`clients-edit-${toTestIdSegment(client.fullName)}`}
                               disabled={pendingClientId === client.id || isSubmitting}
                               onClick={() => void openClientEditor(client.id)}
                               type="button"
@@ -286,6 +307,7 @@ export function ClientsTable({ branchId }: { branchId: string }) {
                             </button>
                             <button
                               className="button button-secondary button-small"
+                              data-testid={`clients-toggle-${toTestIdSegment(client.fullName)}`}
                               disabled={pendingClientId === client.id || isSubmitting}
                               onClick={() => void handleToggleActive(client)}
                               type="button"

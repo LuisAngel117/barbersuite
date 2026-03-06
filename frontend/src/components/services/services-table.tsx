@@ -27,6 +27,16 @@ function sortServices(services: ServicePayload[]) {
   });
 }
 
+function toTestIdSegment(value: string) {
+  return (
+    value
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "item"
+  );
+}
+
 export function ServicesTable() {
   const router = useRouter();
   const [services, setServices] = useState<ServicePayload[]>([]);
@@ -167,6 +177,7 @@ export function ServicesTable() {
 
         <button
           className="button button-primary"
+          data-testid="services-add"
           onClick={() => {
             setEditingService(null);
             setFormMode("create");
@@ -203,7 +214,10 @@ export function ServicesTable() {
                 </thead>
                 <tbody>
                   {services.map((service) => (
-                    <tr key={service.id}>
+                    <tr
+                      data-testid={`services-row-${toTestIdSegment(service.name)}`}
+                      key={service.id}
+                    >
                       <td>
                         <div className="cell-stack">
                           <strong>{service.name}</strong>
@@ -225,6 +239,7 @@ export function ServicesTable() {
                         <div className="row-actions">
                           <button
                             className="button button-secondary button-small"
+                            data-testid={`services-edit-${toTestIdSegment(service.name)}`}
                             disabled={pendingServiceId === service.id || isSubmitting}
                             onClick={() => void openServiceEditor(service.id)}
                             type="button"
@@ -233,6 +248,7 @@ export function ServicesTable() {
                           </button>
                           <button
                             className="button button-secondary button-small"
+                            data-testid={`services-toggle-${toTestIdSegment(service.name)}`}
                             disabled={pendingServiceId === service.id || isSubmitting}
                             onClick={() => void handleToggleActive(service)}
                             type="button"

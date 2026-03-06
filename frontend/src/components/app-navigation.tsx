@@ -8,14 +8,17 @@ const navigationItems = [
   {
     href: "/app",
     label: "Dashboard",
+    testId: "nav-dashboard",
   },
   {
     href: "/app/services",
     label: "Services",
+    testId: "nav-services",
   },
   {
     href: "/app/clients",
     label: "Clients",
+    testId: "nav-clients",
   },
 ];
 
@@ -36,6 +39,7 @@ export function AppNavigation() {
         {navigationItems.map((item) => (
           <Link
             className={`app-nav-link ${isActive(pathname, item.href) ? "app-nav-link-active" : ""}`}
+            data-testid={item.testId}
             href={item.href}
             key={item.href}
             prefetch={false}

@@ -58,6 +58,7 @@ export function SignupForm() {
       <div className="field">
         <label htmlFor="tenantName">Tenant</label>
         <input
+          data-testid="signup-tenantName"
           id="tenantName"
           minLength={2}
           name="tenantName"
@@ -70,6 +71,7 @@ export function SignupForm() {
         <div className="field">
           <label htmlFor="branchName">Sucursal inicial</label>
           <input
+            data-testid="signup-branchName"
             id="branchName"
             minLength={2}
             name="branchName"
@@ -81,6 +83,7 @@ export function SignupForm() {
         <div className="field field-code">
           <label htmlFor="branchCode">Código</label>
           <input
+            data-testid="signup-branchCode"
             id="branchCode"
             name="branchCode"
             pattern="^[A-Z0-9]{2,10}$"
@@ -93,6 +96,7 @@ export function SignupForm() {
       <div className="field">
         <label htmlFor="timeZone">Time zone</label>
         <input
+          data-testid="signup-timeZone"
           defaultValue="America/Guayaquil"
           id="timeZone"
           name="timeZone"
@@ -104,6 +108,7 @@ export function SignupForm() {
       <div className="field">
         <label htmlFor="adminFullName">Admin full name</label>
         <input
+          data-testid="signup-adminFullName"
           id="adminFullName"
           minLength={2}
           name="adminFullName"
@@ -116,6 +121,7 @@ export function SignupForm() {
         <label htmlFor="adminEmail">Admin email</label>
         <input
           autoComplete="email"
+          data-testid="signup-adminEmail"
           id="adminEmail"
           name="adminEmail"
           placeholder="ana@barbersuite.test"
@@ -128,6 +134,7 @@ export function SignupForm() {
         <label htmlFor="adminPassword">Admin password</label>
         <input
           autoComplete="new-password"
+          data-testid="signup-adminPassword"
           id="adminPassword"
           minLength={8}
           name="adminPassword"
@@ -141,7 +148,12 @@ export function SignupForm() {
         El signup llama al backend real y te deja autenticado sin exponer el token en el browser.
       </p>
 
-      <button className="button button-primary" disabled={isPending} type="submit">
+      <button
+        className="button button-primary"
+        data-testid="signup-submit"
+        disabled={isPending}
+        type="submit"
+      >
         {isPending ? "Creando tenant..." : "Crear cuenta y entrar"}
       </button>
     </form>

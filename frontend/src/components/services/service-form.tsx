@@ -79,6 +79,7 @@ export function ServiceForm({
       <div className="field">
         <label htmlFor="service-name">Name</label>
         <input
+          data-testid="services-name"
           id="service-name"
           minLength={2}
           onChange={(event) => setName(event.target.value)}
@@ -92,6 +93,7 @@ export function ServiceForm({
         <div className="field">
           <label htmlFor="service-duration">Duration (minutes)</label>
           <input
+            data-testid="services-duration"
             id="service-duration"
             max={480}
             min={5}
@@ -106,6 +108,7 @@ export function ServiceForm({
         <div className="field">
           <label htmlFor="service-price">Price</label>
           <input
+            data-testid="services-price"
             id="service-price"
             min={0}
             onChange={(event) => setPrice(event.target.value)}
@@ -131,7 +134,12 @@ export function ServiceForm({
       )}
 
       <div className="actions-row">
-        <button className="button button-primary" disabled={isSubmitting} type="submit">
+        <button
+          className="button button-primary"
+          data-testid="services-submit"
+          disabled={isSubmitting}
+          type="submit"
+        >
           {isSubmitting
             ? initialService
               ? "Guardando..."

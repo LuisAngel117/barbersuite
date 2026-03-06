@@ -79,6 +79,7 @@ export function ClientForm({
       <div className="field">
         <label htmlFor="client-full-name">Full name</label>
         <input
+          data-testid="client-fullName"
           id="client-full-name"
           minLength={2}
           onChange={(event) => setFullName(event.target.value)}
@@ -92,6 +93,7 @@ export function ClientForm({
         <div className="field">
           <label htmlFor="client-phone">Phone</label>
           <input
+            data-testid="client-phone"
             id="client-phone"
             onChange={(event) => setPhone(event.target.value)}
             placeholder="+593999123456"
@@ -102,6 +104,7 @@ export function ClientForm({
         <div className="field">
           <label htmlFor="client-email">Email</label>
           <input
+            data-testid="client-email"
             id="client-email"
             onChange={(event) => setEmail(event.target.value)}
             placeholder="cliente@example.com"
@@ -114,6 +117,7 @@ export function ClientForm({
       <div className="field">
         <label htmlFor="client-notes">Notes</label>
         <textarea
+          data-testid="client-notes"
           id="client-notes"
           onChange={(event) => setNotes(event.target.value)}
           placeholder="Preferencias, recordatorios o contexto operativo."
@@ -136,7 +140,12 @@ export function ClientForm({
       )}
 
       <div className="actions-row">
-        <button className="button button-primary" disabled={isSubmitting} type="submit">
+        <button
+          className="button button-primary"
+          data-testid="client-submit"
+          disabled={isSubmitting}
+          type="submit"
+        >
           {isSubmitting
             ? initialClient
               ? "Guardando..."

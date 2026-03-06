@@ -37,7 +37,13 @@ export function LogoutButton({
 
   return (
     <div className="stack">
-      <button className={className} disabled={isPending} onClick={() => void handleClick()} type="button">
+      <button
+        className={className}
+        data-testid="nav-logout"
+        disabled={isPending}
+        onClick={() => void handleClick()}
+        type="button"
+      >
         {isPending ? "Cerrando..." : label}
       </button>
       {error ? <p className="alert">{error}</p> : null}

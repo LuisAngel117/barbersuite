@@ -59,6 +59,7 @@ export function LoginForm() {
         <label htmlFor="email">Email</label>
         <input
           autoComplete="email"
+          data-testid="login-email"
           id="email"
           name="email"
           placeholder="admin@barbersuite.test"
@@ -71,6 +72,7 @@ export function LoginForm() {
         <label htmlFor="password">Password</label>
         <input
           autoComplete="current-password"
+          data-testid="login-password"
           id="password"
           minLength={8}
           name="password"
@@ -80,7 +82,12 @@ export function LoginForm() {
         />
       </div>
 
-      <button className="button button-primary" disabled={isPending} type="submit">
+      <button
+        className="button button-primary"
+        data-testid="login-submit"
+        disabled={isPending}
+        type="submit"
+      >
         {isPending ? "Validando..." : "Entrar al dashboard"}
       </button>
     </form>

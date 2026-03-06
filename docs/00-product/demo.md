@@ -116,6 +116,26 @@ En Grafana:
    - `Client creations (rate 5m)`
    - `Branch Required / Forbidden (rate 5m)`
 
+## 3.c Ejecutar E2E con Playwright
+Con el stack demo arriba:
+
+```powershell
+cd frontend
+npm run e2e
+```
+
+Flujo cubierto:
+- signup
+- dashboard
+- services create/edit/deactivate
+- branch selection
+- clients create/search/edit/deactivate
+- logout
+
+Reportes:
+- HTML report: `frontend/playwright-report/index.html`
+- traces y artifacts de fallo: `frontend/test-results/`
+
 ## 4. Apagar el stack
 
 ```powershell
@@ -184,3 +204,16 @@ docker compose -f docker-compose.yml -f docker-compose.app.yml -f docker-compose
 ```powershell
 docker compose -f docker-compose.yml -f docker-compose.app.yml -f docker-compose.frontend.yml up -d --build barbersuite-frontend
 ```
+
+### Los E2E fallan
+- Verifica primero que `http://localhost:3000` y `http://localhost:8080/actuator/health` respondan
+- Luego ejecuta:
+
+```powershell
+cd frontend
+npm run e2e
+```
+
+- Si falla una prueba, abre:
+  - `frontend/playwright-report/index.html`
+  - `frontend/test-results/`

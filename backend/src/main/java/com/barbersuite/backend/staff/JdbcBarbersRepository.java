@@ -22,7 +22,7 @@ public class JdbcBarbersRepository {
   public List<BarberRow> listByTenantAndBranch(UUID tenantId, UUID branchId) {
     return jdbcTemplate.query(
       """
-      select u.id, u.full_name, true as active
+      select u.id, u.full_name, u.active
       from users u
       join user_roles ur
         on ur.tenant_id = u.tenant_id

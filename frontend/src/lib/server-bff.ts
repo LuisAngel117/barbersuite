@@ -3,6 +3,10 @@ import {
   readJson,
   type ProblemPayload,
 } from "@/lib/backend";
+import type {
+  AppointmentsResponse,
+  BarbersResponse,
+} from "@/lib/types/appointments";
 
 function resolveProtocol(host: string | null, forwardedProtocol: string | null) {
   if (forwardedProtocol) {
@@ -75,4 +79,19 @@ export async function fetchBffJson<T>(path: string) {
     problem: payload as ProblemPayload | null,
     status: response.status,
   };
+}
+
+export async function getBarbers() {
+  return fetchBffJson<BarbersResponse>("/api/barbers");
+}
+
+export async function getAppointments(query?: string | URLSearchParams) {
+  const search = typeof query === "string"
+    ? query
+    : query instanceof URLSearchParams
+      ? query.toString()
+      : "";
+  const path = search ? `/api/appointments?${search}` : "/api/appointments";
+
+  return fetchBffJson<AppointmentsResponse>(path);
 }

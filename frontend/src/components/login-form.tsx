@@ -23,7 +23,6 @@ export function LoginForm() {
     const formData = new FormData(event.currentTarget);
 
     const payload = {
-      tenantId: String(formData.get("tenantId") || "").trim(),
       email: String(formData.get("email") || "").trim(),
       password: String(formData.get("password") || ""),
     };
@@ -57,17 +56,6 @@ export function LoginForm() {
       {error ? <div className="alert">{error}</div> : null}
 
       <div className="field">
-        <label htmlFor="tenantId">Tenant ID</label>
-        <input
-          autoComplete="off"
-          id="tenantId"
-          name="tenantId"
-          placeholder="11111111-1111-7111-8111-111111111111"
-          required
-        />
-      </div>
-
-      <div className="field">
         <label htmlFor="email">Email</label>
         <input
           autoComplete="email"
@@ -91,10 +79,6 @@ export function LoginForm() {
           type="password"
         />
       </div>
-
-      <p className="support">
-        Mientras el backend mantenga login tenant-qualified, este campo es obligatorio.
-      </p>
 
       <button className="button button-primary" disabled={isPending} type="submit">
         {isPending ? "Validando..." : "Entrar al dashboard"}

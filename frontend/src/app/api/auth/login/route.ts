@@ -18,12 +18,11 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!body.tenantId || !body.email || !body.password) {
+  if (!body.email || !body.password) {
     return NextResponse.json(
       {
         ok: false,
-        error:
-          "Tenant ID, email y password son obligatorios. El backend actual todavía requiere tenantId para login.",
+        error: "Email y password son obligatorios.",
       },
       { status: 400 },
     );
@@ -44,7 +43,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           ok: false,
-          error: resolveErrorMessage(payload, "No pudimos iniciar sesión."),
+          error: resolveErrorMessage(payload, "No pudimos iniciar sesión. Verifica tus credenciales."),
         },
         { status: backendResponse.status },
       );

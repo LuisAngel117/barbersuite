@@ -27,7 +27,7 @@ export default async function LoginPage() {
           <span className="eyebrow">Acceso</span>
           <h1>Entrar a BarberSuite</h1>
           <p>
-            El backend actual todavía autentica por <strong>tenantId + email + password</strong>.
+            Inicia sesión con <strong>email + password</strong>. El backend resuelve el tenant desde el usuario.
           </p>
         </div>
 

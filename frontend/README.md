@@ -14,6 +14,8 @@ Abrir [http://localhost:3000](http://localhost:3000).
 
 El backend debe estar disponible en `http://localhost:8080`.
 
+El login se resuelve globalmente por `email` + `password`; el frontend no envía `tenantId`.
+
 ## Flujos
 
 - `POST /api/auth/login` desde Route Handlers de Next

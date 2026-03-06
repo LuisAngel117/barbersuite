@@ -12,7 +12,6 @@ export type TokenPayload = {
 };
 
 export type LoginProxyPayload = {
-  tenantId?: string;
   email?: string;
   password?: string;
 };

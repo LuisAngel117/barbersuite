@@ -30,7 +30,7 @@ class FlywayMigrationIntegrationTest {
     assertThat(jdbcTemplate.queryForObject("select version()", String.class))
       .contains("PostgreSQL");
     assertThat(flyway.info().current()).isNotNull();
-    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("9");
+    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("10");
 
     assertThat(
       List.of(
@@ -43,7 +43,10 @@ class FlywayMigrationIntegrationTest {
         "services",
         "clients",
         "appointments",
-        "barber_services"
+        "barber_services",
+        "receipts",
+        "receipt_items",
+        "receipt_payments"
       )
     )
       .allMatch(this::tableExists);
@@ -80,6 +83,29 @@ class FlywayMigrationIntegrationTest {
     assertThat(columnType("barber_services", "barber_id")).isEqualTo("uuid");
     assertThat(columnType("barber_services", "service_id")).isEqualTo("uuid");
     assertThat(columnType("barber_services", "created_at")).isEqualTo("timestamp with time zone");
+    assertThat(columnType("receipts", "id")).isEqualTo("uuid");
+    assertThat(columnType("receipts", "tenant_id")).isEqualTo("uuid");
+    assertThat(columnType("receipts", "branch_id")).isEqualTo("uuid");
+    assertThat(columnType("receipts", "client_id")).isEqualTo("uuid");
+    assertThat(columnType("receipts", "appointment_id")).isEqualTo("uuid");
+    assertThat(columnType("receipts", "issued_at")).isEqualTo("timestamp with time zone");
+    assertThat(columnType("receipts", "subtotal")).isEqualTo("numeric");
+    assertThat(columnType("receipts", "discount")).isEqualTo("numeric");
+    assertThat(columnType("receipts", "tax")).isEqualTo("numeric");
+    assertThat(columnType("receipts", "total")).isEqualTo("numeric");
+    assertThat(columnType("receipts", "voided_at")).isEqualTo("timestamp with time zone");
+    assertThat(columnType("receipt_items", "id")).isEqualTo("uuid");
+    assertThat(columnType("receipt_items", "tenant_id")).isEqualTo("uuid");
+    assertThat(columnType("receipt_items", "receipt_id")).isEqualTo("uuid");
+    assertThat(columnType("receipt_items", "service_id")).isEqualTo("uuid");
+    assertThat(columnType("receipt_items", "unit_price")).isEqualTo("numeric");
+    assertThat(columnType("receipt_items", "line_total")).isEqualTo("numeric");
+    assertThat(columnType("receipt_items", "created_at")).isEqualTo("timestamp with time zone");
+    assertThat(columnType("receipt_payments", "id")).isEqualTo("uuid");
+    assertThat(columnType("receipt_payments", "tenant_id")).isEqualTo("uuid");
+    assertThat(columnType("receipt_payments", "receipt_id")).isEqualTo("uuid");
+    assertThat(columnType("receipt_payments", "amount")).isEqualTo("numeric");
+    assertThat(columnType("receipt_payments", "created_at")).isEqualTo("timestamp with time zone");
     assertThat(columnNullable("users", "active")).isFalse();
     assertThat(columnNullable("users", "phone")).isTrue();
     assertThat(columnDefault("users", "active")).contains("true");
@@ -139,6 +165,8 @@ class FlywayMigrationIntegrationTest {
     assertThat(constraintExists("appointments", "fk_appointments_barber", "FOREIGN KEY")).isTrue();
     assertThat(constraintExists("appointments", "fk_appointments_service", "FOREIGN KEY")).isTrue();
     assertThat(constraintExists("appointments", "ck_appointments_status_valid", "CHECK")).isTrue();
+    assertThat(constraintExists("appointments", "uq_appointments_tenant_branch_id", "UNIQUE"))
+      .isTrue();
     assertThat(constraintExists("appointments", "ck_appointments_end_after_start", "CHECK"))
       .isTrue();
     assertThat(
@@ -159,6 +187,43 @@ class FlywayMigrationIntegrationTest {
       "barber_services",
       "fk_barber_services_service",
       "FOREIGN KEY"
+    )).isTrue();
+    assertThat(constraintExists("receipts", "uq_receipts_tenant_id", "UNIQUE")).isTrue();
+    assertThat(constraintExists(
+      "receipts",
+      "uq_receipts_tenant_branch_number",
+      "UNIQUE"
+    )).isTrue();
+    assertThat(constraintExists("receipts", "fk_receipts_branch", "FOREIGN KEY")).isTrue();
+    assertThat(constraintExists("receipts", "fk_receipts_client", "FOREIGN KEY")).isTrue();
+    assertThat(constraintExists("receipts", "fk_receipts_appointment", "FOREIGN KEY")).isTrue();
+    assertThat(constraintExists("receipts", "ck_receipts_status_valid", "CHECK")).isTrue();
+    assertThat(constraintExists("receipts", "ck_receipts_total_formula", "CHECK")).isTrue();
+    assertThat(constraintExists("receipts", "ck_receipts_void_state", "CHECK")).isTrue();
+    assertThat(constraintExists(
+      "receipt_items",
+      "fk_receipt_items_receipt",
+      "FOREIGN KEY"
+    )).isTrue();
+    assertThat(constraintExists(
+      "receipt_items",
+      "fk_receipt_items_service",
+      "FOREIGN KEY"
+    )).isTrue();
+    assertThat(constraintExists(
+      "receipt_items",
+      "ck_receipt_items_line_total_formula",
+      "CHECK"
+    )).isTrue();
+    assertThat(constraintExists(
+      "receipt_payments",
+      "fk_receipt_payments_receipt",
+      "FOREIGN KEY"
+    )).isTrue();
+    assertThat(constraintExists(
+      "receipt_payments",
+      "ck_receipt_payments_method_valid",
+      "CHECK"
     )).isTrue();
 
     assertThat(constraintDefinition(
@@ -196,6 +261,8 @@ class FlywayMigrationIntegrationTest {
     assertThat(constraintDefinition("appointments", "fk_appointments_barber"))
       .contains("FOREIGN KEY (tenant_id, barber_id)")
       .contains("REFERENCES users(tenant_id, id)");
+    assertThat(constraintDefinition("appointments", "uq_appointments_tenant_branch_id"))
+      .contains("UNIQUE (tenant_id, branch_id, id)");
     assertThat(constraintDefinition("appointments", "fk_appointments_service"))
       .contains("FOREIGN KEY (tenant_id, service_id)")
       .contains("REFERENCES services(tenant_id, id)");
@@ -230,6 +297,50 @@ class FlywayMigrationIntegrationTest {
       .contains("FOREIGN KEY (tenant_id, service_id)")
       .contains("REFERENCES services(tenant_id, id)")
       .contains("ON DELETE RESTRICT");
+    assertThat(constraintDefinition("receipts", "uq_receipts_tenant_id"))
+      .contains("UNIQUE (tenant_id, id)");
+    assertThat(constraintDefinition("receipts", "uq_receipts_tenant_branch_number"))
+      .contains("UNIQUE (tenant_id, branch_id, number)");
+    assertThat(constraintDefinition("receipts", "fk_receipts_branch"))
+      .contains("FOREIGN KEY (tenant_id, branch_id)")
+      .contains("REFERENCES branches(tenant_id, id)");
+    assertThat(constraintDefinition("receipts", "fk_receipts_client"))
+      .contains("FOREIGN KEY (tenant_id, branch_id, client_id)")
+      .contains("REFERENCES clients(tenant_id, branch_id, id)");
+    assertThat(constraintDefinition("receipts", "fk_receipts_appointment"))
+      .contains("FOREIGN KEY (tenant_id, branch_id, appointment_id)")
+      .contains("REFERENCES appointments(tenant_id, branch_id, id)");
+    assertThat(constraintDefinition("receipts", "ck_receipts_status_valid"))
+      .contains("status")
+      .contains("issued")
+      .contains("voided");
+    assertThat(constraintDefinition("receipts", "ck_receipts_total_formula"))
+      .contains("total = ((subtotal - discount) + tax)");
+    assertThat(constraintDefinition("receipts", "ck_receipts_void_state"))
+      .contains("status = 'issued'")
+      .contains("status = 'voided'")
+      .contains("void_reason")
+      .contains("voided_at");
+    assertThat(constraintDefinition("receipt_items", "fk_receipt_items_receipt"))
+      .contains("FOREIGN KEY (tenant_id, receipt_id)")
+      .contains("REFERENCES receipts(tenant_id, id)")
+      .contains("ON DELETE CASCADE");
+    assertThat(constraintDefinition("receipt_items", "fk_receipt_items_service"))
+      .contains("FOREIGN KEY (tenant_id, service_id)")
+      .contains("REFERENCES services(tenant_id, id)")
+      .contains("ON DELETE RESTRICT");
+    assertThat(constraintDefinition("receipt_items", "ck_receipt_items_line_total_formula"))
+      .contains("line_total = ((quantity)::numeric * unit_price)");
+    assertThat(constraintDefinition("receipt_payments", "fk_receipt_payments_receipt"))
+      .contains("FOREIGN KEY (tenant_id, receipt_id)")
+      .contains("REFERENCES receipts(tenant_id, id)")
+      .contains("ON DELETE CASCADE");
+    assertThat(constraintDefinition("receipt_payments", "ck_receipt_payments_method_valid"))
+      .contains("method")
+      .contains("cash")
+      .contains("card")
+      .contains("transfer")
+      .contains("other");
 
     assertThat(indexDefinition("ix_user_branch_access_tenant_user"))
       .contains("ON public.user_branch_access")
@@ -286,6 +397,26 @@ class FlywayMigrationIntegrationTest {
     assertThat(indexDefinition("idx_barber_services_tenant_service"))
       .contains("ON public.barber_services")
       .contains("(tenant_id, service_id)");
+    assertThat(indexDefinition("idx_receipts_tenant_branch_issued_at"))
+      .contains("ON public.receipts")
+      .contains("(tenant_id, branch_id, issued_at DESC)");
+    assertThat(indexDefinition("idx_receipts_tenant_branch_status_issued_at"))
+      .contains("ON public.receipts")
+      .contains("(tenant_id, branch_id, status, issued_at DESC)");
+    assertThat(indexDefinition("idx_receipts_number"))
+      .contains("ON public.receipts")
+      .contains("(tenant_id, branch_id, number)");
+    assertThat(indexDefinition("ux_receipts_tenant_branch_appointment_issued"))
+      .contains("CREATE UNIQUE INDEX")
+      .contains("ON public.receipts")
+      .contains("(tenant_id, branch_id, appointment_id)")
+      .contains("WHERE ((appointment_id IS NOT NULL) AND (status = 'issued'::text))");
+    assertThat(indexDefinition("idx_receipt_items_receipt"))
+      .contains("ON public.receipt_items")
+      .contains("(tenant_id, receipt_id)");
+    assertThat(indexDefinition("idx_receipt_payments_receipt"))
+      .contains("ON public.receipt_payments")
+      .contains("(tenant_id, receipt_id)");
   }
 
   private boolean tableExists(String tableName) {

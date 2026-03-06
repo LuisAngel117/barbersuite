@@ -29,6 +29,8 @@ tags:
     description: Branch-scoped staff discovery endpoints.
   - name: Appointments
     description: Scheduling and appointment management.
+  - name: Cash
+    description: Branch-scoped cash desk and internal receipt endpoints.
   - name: Invoices
     description: Billing, receipts, and fiscal documents.
   - name: Reports
@@ -787,6 +789,237 @@ components:
         notes:
           type: string
           example: Cliente llegó 10 minutos tarde.
+    ReceiptStatus:
+      type: string
+      enum: [issued, voided]
+      example: issued
+    PaymentMethod:
+      type: string
+      enum: [cash, card, transfer, other]
+      example: cash
+    ReceiptItem:
+      type: object
+      required: [id, description, quantity, unitPrice, lineTotal]
+      properties:
+        id:
+          type: string
+          format: uuid
+        serviceId:
+          type: string
+          format: uuid
+        description:
+          type: string
+          minLength: 1
+          example: Corte clásico
+        quantity:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 1
+        unitPrice:
+          type: number
+          format: decimal
+          multipleOf: 0.01
+          example: 10.00
+        lineTotal:
+          type: number
+          format: decimal
+          multipleOf: 0.01
+          example: 10.00
+    Payment:
+      type: object
+      required: [id, method, amount]
+      properties:
+        id:
+          type: string
+          format: uuid
+        method:
+          $ref: "#/components/schemas/PaymentMethod"
+        amount:
+          type: number
+          format: decimal
+          multipleOf: 0.01
+          example: 10.00
+        reference:
+          type: string
+          example: Voucher 34829
+    Receipt:
+      type: object
+      required:
+        - id
+        - number
+        - status
+        - issuedAt
+        - subtotal
+        - discount
+        - tax
+        - total
+        - items
+        - payments
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        number:
+          type: string
+          example: BR-DEMO-2026-000001
+        status:
+          $ref: "#/components/schemas/ReceiptStatus"
+        clientId:
+          type: string
+          format: uuid
+        appointmentId:
+          type: string
+          format: uuid
+        issuedAt:
+          type: string
+          format: date-time
+          example: 2026-03-06T20:15:00Z
+        subtotal:
+          type: number
+          format: decimal
+          multipleOf: 0.01
+          example: 10.00
+        discount:
+          type: number
+          format: decimal
+          multipleOf: 0.01
+          example: 0.00
+        tax:
+          type: number
+          format: decimal
+          multipleOf: 0.01
+          example: 0.00
+        total:
+          type: number
+          format: decimal
+          multipleOf: 0.01
+          example: 10.00
+        notes:
+          type: string
+          example: Pago recibido al finalizar la atención.
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReceiptItem"
+        payments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Payment"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    CreateReceiptItemRequest:
+      type: object
+      required: [description, quantity, unitPrice]
+      properties:
+        serviceId:
+          type: string
+          format: uuid
+        description:
+          type: string
+          minLength: 1
+          example: Corte + barba
+        quantity:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 1
+        unitPrice:
+          type: number
+          format: decimal
+          multipleOf: 0.01
+          example: 15.00
+    CreateReceiptPaymentRequest:
+      type: object
+      required: [method, amount]
+      properties:
+        method:
+          $ref: "#/components/schemas/PaymentMethod"
+        amount:
+          type: number
+          format: decimal
+          multipleOf: 0.01
+          example: 15.00
+        reference:
+          type: string
+          example: Transferencia #83922
+    CreateReceiptRequest:
+      type: object
+      required: [items, payments]
+      properties:
+        clientId:
+          type: string
+          format: uuid
+        appointmentId:
+          type: string
+          format: uuid
+        notes:
+          type: string
+          example: Pago de cita del turno de la mañana.
+        discount:
+          type: number
+          format: decimal
+          multipleOf: 0.01
+          default: 0.00
+          example: 0.00
+        tax:
+          type: number
+          format: decimal
+          multipleOf: 0.01
+          default: 0.00
+          example: 0.00
+        items:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/CreateReceiptItemRequest"
+        payments:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/CreateReceiptPaymentRequest"
+    VoidReceiptRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          minLength: 2
+          example: Error en el registro del cobro.
+    ReceiptPage:
+      type: object
+      required: [items, page, size, totalItems, totalPages]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Receipt"
+        page:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 0
+        size:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 20
+        totalItems:
+          type: integer
+          format: int64
+          minimum: 0
+          example: 42
+        totalPages:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 3
 
 paths:
   /health:
@@ -1671,3 +1904,201 @@ paths:
           $ref: "#/components/responses/NotFoundProblem"
         "409":
           $ref: "#/components/responses/AppointmentOverlapProblem"
+
+  /receipts:
+    get:
+      operationId: listReceipts
+      tags: [Cash]
+      summary: List internal receipts in the authenticated branch context
+      description: |
+        Branch-scoped cash endpoint.
+        Requires `X-Branch-Id`.
+        `ADMIN`, `MANAGER`, and `RECEPTION` can query the cash desk for the selected branch.
+        `from` and `to` are interpreted as branch-local dates using the branch IANA time zone.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/XBranchId"
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: Inclusive branch-local start day for cash desk reporting.
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: Inclusive branch-local end day for cash desk reporting.
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/ReceiptStatus"
+          description: Restrict receipts by cash workflow status.
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Free-text search by receipt number or client.
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            default: 0
+          description: Zero-based page number.
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Page size.
+        - name: sort
+          in: query
+          required: false
+          schema:
+            type: string
+            example: issuedAt,desc
+          description: Sorting expression following the shared `sort` convention.
+      responses:
+        "200":
+          description: Receipts visible in the selected branch context
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReceiptPage"
+        "400":
+          $ref: "#/components/responses/BranchScopedBadRequestProblem"
+        "401":
+          $ref: "#/components/responses/UnauthorizedProblem"
+        "403":
+          $ref: "#/components/responses/ForbiddenProblem"
+    post:
+      operationId: createReceipt
+      tags: [Cash]
+      summary: Issue an internal receipt in the authenticated branch context
+      description: |
+        Branch-scoped cash endpoint.
+        Requires `X-Branch-Id`.
+        `ADMIN`, `MANAGER`, and `RECEPTION` can issue receipts.
+        Validation errors must return `400 VALIDATION_ERROR`.
+        If the selected appointment already has an issued receipt, the backend may return `409 CONFLICT`.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/XBranchId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateReceiptRequest"
+      responses:
+        "201":
+          description: Receipt issued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Receipt"
+        "400":
+          $ref: "#/components/responses/BranchScopedBadRequestProblem"
+        "401":
+          $ref: "#/components/responses/UnauthorizedProblem"
+        "403":
+          $ref: "#/components/responses/ForbiddenProblem"
+        "404":
+          $ref: "#/components/responses/NotFoundProblem"
+        "409":
+          $ref: "#/components/responses/ConflictProblem"
+
+  /receipts/{receiptId}:
+    get:
+      operationId: getReceiptById
+      tags: [Cash]
+      summary: Get a receipt by id in the authenticated branch context
+      description: |
+        Branch-scoped cash endpoint.
+        Requires `X-Branch-Id`.
+        `ADMIN`, `MANAGER`, and `RECEPTION` can read receipt details within the selected branch scope.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/XBranchId"
+        - name: receiptId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Receipt identifier scoped to `(tenant, branch)`.
+      responses:
+        "200":
+          description: Receipt resolved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Receipt"
+        "400":
+          $ref: "#/components/responses/BranchScopedBadRequestProblem"
+        "401":
+          $ref: "#/components/responses/UnauthorizedProblem"
+        "403":
+          $ref: "#/components/responses/ForbiddenProblem"
+        "404":
+          $ref: "#/components/responses/NotFoundProblem"
+
+  /receipts/{receiptId}/void:
+    post:
+      operationId: voidReceipt
+      tags: [Cash]
+      summary: Void an issued receipt in the authenticated branch context
+      description: |
+        Branch-scoped cash endpoint.
+        Requires `X-Branch-Id`.
+        Only `ADMIN` and `MANAGER` can void receipts.
+        Voiding requires a reason and returns the updated receipt with `status=voided`.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/XBranchId"
+        - name: receiptId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Receipt identifier scoped to `(tenant, branch)`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VoidReceiptRequest"
+      responses:
+        "200":
+          description: Receipt voided
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Receipt"
+        "400":
+          $ref: "#/components/responses/BranchScopedBadRequestProblem"
+        "401":
+          $ref: "#/components/responses/UnauthorizedProblem"
+        "403":
+          $ref: "#/components/responses/ForbiddenProblem"
+        "404":
+          $ref: "#/components/responses/NotFoundProblem"
+        "409":
+          $ref: "#/components/responses/ConflictProblem"

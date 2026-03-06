@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { apiFetch } from "@/lib/api-client";
 
 type BranchOption = {
   id: string;
@@ -30,7 +31,7 @@ export function BranchSelector({
     setPendingValue(nextBranchId);
     setError(null);
 
-    const response = await fetch("/api/branch/select", {
+    const response = await apiFetch("/api/branch/select", {
       method: "POST",
       headers: {
         "content-type": "application/json",

@@ -11,6 +11,7 @@ import {
   toProblemBanner,
   type ProblemBannerState,
 } from "@/lib/problem";
+import { apiFetch } from "@/lib/api-client";
 import { ClientForm, type ClientFormSubmission } from "@/components/clients/client-form";
 import { ProblemBanner } from "@/components/ui/problem-banner";
 
@@ -113,7 +114,7 @@ export function ClientsTable({ branchId }: { branchId: string }) {
     setIsSubmitting(true);
     setProblem(null);
 
-    const response = await fetch(target, {
+    const response = await apiFetch(target, {
       method,
       headers: {
         "content-type": "application/json",
@@ -143,7 +144,7 @@ export function ClientsTable({ branchId }: { branchId: string }) {
     setPendingClientId(client.id);
     setProblem(null);
 
-    const response = await fetch(`/api/clients/${client.id}`, {
+    const response = await apiFetch(`/api/clients/${client.id}`, {
       method: "PATCH",
       headers: {
         "content-type": "application/json",

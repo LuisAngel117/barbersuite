@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { ACCESS_TOKEN_COOKIE } from "@/lib/auth-cookie";
 import { BRANCH_COOKIE } from "@/lib/branch-cookie";
 import { buildBackendUrl } from "@/lib/backend";
+import { problemResponse } from "@/lib/problem-response";
 
 type CookieReader = {
   get(name: string): { value: string } | undefined;
@@ -33,31 +34,6 @@ export function isUuid(value: string) {
   return UUID_PATTERN.test(value);
 }
 
-export function problemResponse(
-  status: number,
-  title: string,
-  detail: string,
-  code: string,
-  instance: string,
-) {
-  return new NextResponse(
-    JSON.stringify({
-      type: "about:blank",
-      title,
-      status,
-      detail,
-      instance,
-      code,
-    }),
-    {
-      status,
-      headers: {
-        "content-type": "application/problem+json",
-      },
-    },
-  );
-}
-
 export async function requireBranchIdOrProblem(request: Request) {
   const branchId = await getBranchIdFromCookies();
   const instance = new URL(request.url).pathname;
@@ -67,9 +43,9 @@ export async function requireBranchIdOrProblem(request: Request) {
       branchId: null,
       response: problemResponse(
         400,
+        "BRANCH_REQUIRED",
         "Bad Request",
         "Header X-Branch-Id is required for this endpoint.",
-        "BRANCH_REQUIRED",
         instance,
       ),
     };
@@ -80,9 +56,9 @@ export async function requireBranchIdOrProblem(request: Request) {
       branchId: null,
       response: problemResponse(
         400,
+        "VALIDATION_ERROR",
         "Bad Request",
         "Header X-Branch-Id must be a valid UUID.",
-        "VALIDATION_ERROR",
         instance,
       ),
     };

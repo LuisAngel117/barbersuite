@@ -1,13 +1,42 @@
 import { expect, test } from "@playwright/test";
-import { signupAndReachDashboard, toTestIdSegment } from "./helpers";
+import {
+  expectCookieValue,
+  postJsonThroughBrowser,
+  signupAndReachDashboard,
+  toTestIdSegment,
+} from "./helpers";
 
 test("signup, operate services, and logout", async ({ page }) => {
   const { suffix } = await signupAndReachDashboard(page, "services");
+  const csrfToken = await expectCookieValue(page, "bs_csrf");
+  const apiServiceName = `Api Corte ${suffix}`;
   const serviceName = `Corte ${suffix}`;
+  const apiServiceRowId = `services-row-${toTestIdSegment(apiServiceName)}`;
   const serviceRowId = `services-row-${toTestIdSegment(serviceName)}`;
+
+  const blockedCreate = await postJsonThroughBrowser(page, "/api/services", {
+    name: apiServiceName,
+    durationMinutes: 25,
+    price: 9.5,
+  });
+  expect(blockedCreate.status).toBe(403);
+  expect(blockedCreate.body?.code).toBe("CSRF_REQUIRED");
+
+  const allowedCreate = await postJsonThroughBrowser(
+    page,
+    "/api/services",
+    {
+      name: apiServiceName,
+      durationMinutes: 25,
+      price: 9.5,
+    },
+    csrfToken,
+  );
+  expect(allowedCreate.status).toBe(201);
 
   await page.getByTestId("nav-services").click();
   await expect(page).toHaveURL(/\/app\/services$/);
+  await expect(page.getByTestId(apiServiceRowId)).toBeVisible();
 
   await page.getByTestId("services-add").click();
   await page.getByTestId("services-name").fill(serviceName);

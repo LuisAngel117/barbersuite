@@ -1,3 +1,4 @@
+import { setCsrfCookie, createCsrfToken } from "@/lib/csrf-cookie";
 import { NextResponse } from "next/server";
 import { setAuthCookie } from "@/lib/auth-cookie";
 import {
@@ -8,8 +9,26 @@ import {
   type ProblemPayload,
   type TokenPayload,
 } from "@/lib/backend";
+import { resolveSessionTtlSeconds } from "@/lib/cookie-options";
+import {
+  isRequestSecurityError,
+  requireSameOrigin,
+} from "@/lib/security";
+import { problemResponse } from "@/lib/problem-response";
 
 export async function POST(request: Request) {
+  const instance = new URL(request.url).pathname;
+
+  try {
+    requireSameOrigin(request);
+  } catch (error) {
+    if (isRequestSecurityError(error)) {
+      return problemResponse(error.status, error.code, error.title, error.detail, instance);
+    }
+
+    throw error;
+  }
+
   const body = await readJson<LoginProxyPayload>(request);
   if (!body) {
     return NextResponse.json(
@@ -56,8 +75,10 @@ export async function POST(request: Request) {
       );
     }
 
+    const maxAgeSeconds = resolveSessionTtlSeconds(payload.expiresIn);
     const response = NextResponse.json({ ok: true });
-    setAuthCookie(response, payload.accessToken);
+    setAuthCookie(response, payload.accessToken, maxAgeSeconds);
+    setCsrfCookie(response, createCsrfToken(), maxAgeSeconds);
     return response;
   } catch {
     return NextResponse.json(

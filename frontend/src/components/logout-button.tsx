@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { apiFetch } from "@/lib/api-client";
 
 type LogoutButtonProps = {
   className?: string;
@@ -19,7 +20,7 @@ export function LogoutButton({
   async function handleClick() {
     setError(null);
 
-    const response = await fetch("/api/auth/logout", {
+    const response = await apiFetch("/api/auth/logout", {
       method: "POST",
       cache: "no-store",
     });

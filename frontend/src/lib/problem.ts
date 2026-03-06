@@ -32,6 +32,12 @@ export async function readApiResponse<T>(response: Response) {
 
 export function problemMessage(problem: ProblemPayload | null, fallback: string) {
   switch (problem?.code) {
+    case "CSRF_REQUIRED":
+      return "Tu sesión requiere un token CSRF válido para completar esta acción. Recarga la página e inténtalo de nuevo.";
+    case "CSRF_FAILED":
+      return "No pudimos validar la seguridad de la acción. Recarga la página y vuelve a intentarlo.";
+    case "ORIGIN_FORBIDDEN":
+      return "La acción fue bloqueada porque el origen del request no coincide con la aplicación actual.";
     case "BRANCH_REQUIRED":
       return "Selecciona una sucursal arriba para continuar.";
     case "BRANCH_FORBIDDEN":

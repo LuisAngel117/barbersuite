@@ -48,6 +48,52 @@ export async function signupAndReachDashboard(
   };
 }
 
+export async function getCookieValue(page: Page, name: string) {
+  const cookies = await page.context().cookies("http://localhost:3000");
+  return cookies.find((cookie) => cookie.name === name)?.value ?? null;
+}
+
+export async function expectCookieValue(page: Page, name: string) {
+  await expect.poll(async () => getCookieValue(page, name)).not.toBeNull();
+  return (await getCookieValue(page, name)) as string;
+}
+
+export async function postJsonThroughBrowser(
+  page: Page,
+  path: string,
+  payload: unknown,
+  csrfToken?: string,
+) {
+  return page.evaluate(
+    async ({ innerPath, innerPayload, innerCsrfToken }) => {
+      const headers: Record<string, string> = {
+        "content-type": "application/json",
+      };
+
+      if (innerCsrfToken) {
+        headers["X-CSRF-Token"] = innerCsrfToken;
+      }
+
+      const response = await fetch(innerPath, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(innerPayload),
+        credentials: "same-origin",
+      });
+
+      return {
+        status: response.status,
+        body: await response.json().catch(() => null),
+      };
+    },
+    {
+      innerPath: path,
+      innerPayload: payload,
+      innerCsrfToken: csrfToken ?? null,
+    },
+  );
+}
+
 export async function selectFirstBranch(page: Page) {
   const selector = page.getByTestId("branch-selector");
   await expect(selector).toBeVisible();

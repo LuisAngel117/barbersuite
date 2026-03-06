@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
+import {
+  cookieSecureEnabled,
+  DEFAULT_SESSION_TTL_SECONDS,
+} from "@/lib/cookie-options";
 
 export const ACCESS_TOKEN_COOKIE = "bs_access_token";
-
-function cookieSecureEnabled() {
-  return process.env.COOKIE_SECURE === "true";
-}
 
 const authCookieOptions = {
   httpOnly: true,
@@ -13,8 +13,15 @@ const authCookieOptions = {
   path: "/",
 };
 
-export function setAuthCookie(response: NextResponse, accessToken: string) {
-  response.cookies.set(ACCESS_TOKEN_COOKIE, accessToken, authCookieOptions);
+export function setAuthCookie(
+  response: NextResponse,
+  accessToken: string,
+  maxAgeSeconds = DEFAULT_SESSION_TTL_SECONDS,
+) {
+  response.cookies.set(ACCESS_TOKEN_COOKIE, accessToken, {
+    ...authCookieOptions,
+    maxAge: maxAgeSeconds,
+  });
 }
 
 export function clearAuthCookie(response: NextResponse) {

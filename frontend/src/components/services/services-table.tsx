@@ -8,6 +8,7 @@ import {
   toProblemBanner,
   type ProblemBannerState,
 } from "@/lib/problem";
+import { apiFetch } from "@/lib/api-client";
 import { ServiceForm, type ServiceFormSubmission } from "@/components/services/service-form";
 import { ProblemBanner } from "@/components/ui/problem-banner";
 
@@ -105,7 +106,7 @@ export function ServicesTable() {
     setIsSubmitting(true);
     setProblem(null);
 
-    const response = await fetch(target, {
+    const response = await apiFetch(target, {
       method,
       headers: {
         "content-type": "application/json",
@@ -141,7 +142,7 @@ export function ServicesTable() {
     setPendingServiceId(service.id);
     setProblem(null);
 
-    const response = await fetch(`/api/services/${service.id}`, {
+    const response = await apiFetch(`/api/services/${service.id}`, {
       method: "PATCH",
       headers: {
         "content-type": "application/json",

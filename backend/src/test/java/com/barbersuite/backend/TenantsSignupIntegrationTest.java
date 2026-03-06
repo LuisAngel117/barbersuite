@@ -1,6 +1,7 @@
 package com.barbersuite.backend;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -162,6 +164,34 @@ class TenantsSignupIntegrationTest {
         .value("VALIDATION_ERROR"))
       .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.instance")
         .value("/api/v1/tenants/signup"));
+  }
+
+  @Test
+  void databaseRejectsDuplicateAdminEmailAcrossTenants() {
+    seedExistingUser("owner@barbersuite.test");
+    UUID anotherTenantId = UUID.fromString("cccccccc-cccc-7ccc-8ccc-cccccccccccc");
+    UUID anotherUserId = UUID.fromString("dddddddd-dddd-7ddd-8ddd-dddddddddddd");
+
+    jdbcTemplate.update(
+      """
+      insert into tenants (id, name)
+      values (?, ?)
+      """,
+      anotherTenantId,
+      "Another Tenant"
+    );
+
+    assertThatThrownBy(() -> jdbcTemplate.update(
+      """
+      insert into users (id, tenant_id, email, password_hash)
+      values (?, ?, ?, ?)
+      """,
+      anotherUserId,
+      anotherTenantId,
+      "OWNER@BARBERSUITE.TEST",
+      "$2a$10$anotherhashvalue"
+    ))
+      .isInstanceOf(DataIntegrityViolationException.class);
   }
 
   private Map<String, String> validSignupRequest(String adminEmail, String timeZone) {

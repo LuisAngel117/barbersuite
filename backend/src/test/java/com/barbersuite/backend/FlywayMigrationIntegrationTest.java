@@ -30,7 +30,7 @@ class FlywayMigrationIntegrationTest {
     assertThat(jdbcTemplate.queryForObject("select version()", String.class))
       .contains("PostgreSQL");
     assertThat(flyway.info().current()).isNotNull();
-    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("3");
+    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("4");
 
     assertThat(
       List.of("tenants", "branches", "users", "receipt_sequences", "user_roles", "user_branch_access")
@@ -105,6 +105,10 @@ class FlywayMigrationIntegrationTest {
     assertThat(indexDefinition("ix_user_branch_access_tenant_branch"))
       .contains("ON public.user_branch_access")
       .contains("(tenant_id, branch_id)");
+    assertThat(indexDefinition("ux_users_email_global_lower"))
+      .contains("CREATE UNIQUE INDEX")
+      .contains("ON public.users")
+      .contains("lower");
   }
 
   private boolean tableExists(String tableName) {

@@ -12,6 +12,9 @@ permissions:
 jobs:
   backend-test:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
 
     steps:
       - name: Checkout
@@ -25,7 +28,7 @@ jobs:
           cache: maven
 
       - name: Ensure Maven wrapper is executable
-        run: chmod +x ./backend/mvnw
+        run: chmod +x ./mvnw
 
       - name: Run backend tests
-        run: ./backend/mvnw -q test
+        run: ./mvnw -q test

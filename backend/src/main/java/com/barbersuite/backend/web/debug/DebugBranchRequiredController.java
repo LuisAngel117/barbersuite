@@ -4,7 +4,6 @@ import com.barbersuite.backend.context.BranchContext;
 import com.barbersuite.backend.context.TenantContext;
 import com.barbersuite.backend.web.branch.BranchRequired;
 import java.util.List;
-import java.util.UUID;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,18 +23,10 @@ public class DebugBranchRequiredController {
   @GetMapping("/protected")
   ProtectedDebugResponse protectedEndpoint(@AuthenticationPrincipal Jwt jwt) {
     return new ProtectedDebugResponse(
-      resolveTenantId(jwt).toString(),
+      TenantContext.requireCurrentTenantId().toString(),
       jwt.getClaimAsString("userId"),
       jwt.getClaimAsStringList("roles")
     );
-  }
-
-  private UUID resolveTenantId(Jwt jwt) {
-    return TenantContext.getCurrentTenantId().orElseGet(() -> {
-      UUID tenantId = UUID.fromString(jwt.getClaimAsString("tenantId"));
-      TenantContext.setCurrentTenantId(tenantId);
-      return tenantId;
-    });
   }
 
   record BranchDebugResponse(String branchId) {

@@ -99,10 +99,20 @@ class TenantsSignupIntegrationTest {
       userId
     )).isEqualTo("owner@barbersuite.test");
     assertThat(jdbcTemplate.queryForObject(
+      "select full_name from users where id = ?",
+      String.class,
+      userId
+    )).isEqualTo("Ana Perez");
+    assertThat(jdbcTemplate.queryForObject(
       "select code from branches where id = ?",
       String.class,
       branchId
     )).isEqualTo("UIO01");
+    assertThat(jdbcTemplate.queryForObject(
+      "select active from branches where id = ?",
+      Boolean.class,
+      branchId
+    )).isTrue();
     assertThat(countRows(
       """
       select count(*)
@@ -183,11 +193,12 @@ class TenantsSignupIntegrationTest {
 
     assertThatThrownBy(() -> jdbcTemplate.update(
       """
-      insert into users (id, tenant_id, email, password_hash)
-      values (?, ?, ?, ?)
+      insert into users (id, tenant_id, full_name, email, password_hash)
+      values (?, ?, ?, ?, ?)
       """,
       anotherUserId,
       anotherTenantId,
+      "Another Owner",
       "OWNER@BARBERSUITE.TEST",
       "$2a$10$anotherhashvalue"
     ))
@@ -233,11 +244,12 @@ class TenantsSignupIntegrationTest {
     );
     jdbcTemplate.update(
       """
-      insert into users (id, tenant_id, email, password_hash)
-      values (?, ?, ?, ?)
+      insert into users (id, tenant_id, full_name, email, password_hash)
+      values (?, ?, ?, ?, ?)
       """,
       EXISTING_USER_ID,
       EXISTING_TENANT_ID,
+      "Existing Owner",
       email,
       "$2a$10$existinghashvalue"
     );

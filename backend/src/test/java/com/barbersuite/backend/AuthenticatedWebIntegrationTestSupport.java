@@ -26,6 +26,11 @@ abstract class AuthenticatedWebIntegrationTestSupport {
   protected static final UUID USER_BRANCH_ACCESS_ID = UUID.fromString(
     "44444444-4444-7444-8444-444444444444"
   );
+  protected static final String TENANT_NAME = "BarberSuite Test Tenant";
+  protected static final String BRANCH_CODE = "UIO";
+  protected static final String BRANCH_NAME = "Sucursal UIO";
+  protected static final String BRANCH_TIME_ZONE = "America/Guayaquil";
+  protected static final String FULL_NAME = "Ana Admin";
   protected static final String EMAIL = "admin@barbersuite.test";
   protected static final String PASSWORD = "Admin123!";
 
@@ -33,7 +38,7 @@ abstract class AuthenticatedWebIntegrationTestSupport {
   private WebApplicationContext webApplicationContext;
 
   @Autowired
-  private JdbcTemplate jdbcTemplate;
+  protected JdbcTemplate jdbcTemplate;
 
   @Autowired
   private PasswordEncoder passwordEncoder;
@@ -89,23 +94,25 @@ abstract class AuthenticatedWebIntegrationTestSupport {
 
     jdbcTemplate.update(
       """
-      insert into branches (id, tenant_id, code, name, time_zone)
-      values (?, ?, ?, ?, ?)
+      insert into branches (id, tenant_id, code, name, time_zone, active)
+      values (?, ?, ?, ?, ?, ?)
       """,
       BRANCH_ID,
       TENANT_ID,
-      "UIO",
-      "Sucursal UIO",
-      "America/Guayaquil"
+      BRANCH_CODE,
+      BRANCH_NAME,
+      BRANCH_TIME_ZONE,
+      true
     );
 
     jdbcTemplate.update(
       """
-      insert into users (id, tenant_id, email, password_hash)
-      values (?, ?, ?, ?)
+      insert into users (id, tenant_id, full_name, email, password_hash)
+      values (?, ?, ?, ?, ?)
       """,
       USER_ID,
       TENANT_ID,
+      FULL_NAME,
       EMAIL,
       passwordEncoder.encode(PASSWORD)
     );

@@ -47,25 +47,33 @@ public class JdbcSignupRepository {
   ) {
     jdbcTemplate.update(
       """
-      insert into branches (id, tenant_id, code, name, time_zone)
-      values (?, ?, ?, ?, ?)
+      insert into branches (id, tenant_id, code, name, time_zone, active)
+      values (?, ?, ?, ?, ?, ?)
       """,
       branchId,
       tenantId,
       branchCode,
       branchName,
-      timeZone
+      timeZone,
+      true
     );
   }
 
-  public void insertUser(UUID userId, UUID tenantId, String adminEmail, String passwordHash) {
+  public void insertUser(
+    UUID userId,
+    UUID tenantId,
+    String fullName,
+    String adminEmail,
+    String passwordHash
+  ) {
     jdbcTemplate.update(
       """
-      insert into users (id, tenant_id, email, password_hash)
-      values (?, ?, ?, ?)
+      insert into users (id, tenant_id, full_name, email, password_hash)
+      values (?, ?, ?, ?, ?)
       """,
       userId,
       tenantId,
+      fullName,
       adminEmail,
       passwordHash
     );

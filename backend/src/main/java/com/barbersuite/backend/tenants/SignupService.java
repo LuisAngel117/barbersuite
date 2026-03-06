@@ -46,6 +46,7 @@ public class SignupService {
   @Transactional
   public SignupResponse signup(SignupRequest signupRequest) {
     String normalizedEmail = signupRequest.adminEmail().trim().toLowerCase(Locale.ROOT);
+    String normalizedFullName = signupRequest.adminFullName().trim();
     if (signupRepository.existsUserByEmail(normalizedEmail)) {
       throw new AdminEmailAlreadyExistsException();
     }
@@ -68,6 +69,7 @@ public class SignupService {
       signupRepository.insertUser(
         userId,
         tenantId,
+        normalizedFullName,
         normalizedEmail,
         passwordEncoder.encode(signupRequest.adminPassword())
       );

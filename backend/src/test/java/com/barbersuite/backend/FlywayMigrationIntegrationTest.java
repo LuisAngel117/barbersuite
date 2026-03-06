@@ -30,7 +30,7 @@ class FlywayMigrationIntegrationTest {
     assertThat(jdbcTemplate.queryForObject("select version()", String.class))
       .contains("PostgreSQL");
     assertThat(flyway.info().current()).isNotNull();
-    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("4");
+    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("5");
 
     assertThat(
       List.of("tenants", "branches", "users", "receipt_sequences", "user_roles", "user_branch_access")
@@ -39,7 +39,9 @@ class FlywayMigrationIntegrationTest {
     assertThat(columnType("tenants", "id")).isEqualTo("uuid");
     assertThat(columnType("branches", "id")).isEqualTo("uuid");
     assertThat(columnType("users", "id")).isEqualTo("uuid");
+    assertThat(columnType("users", "full_name")).isEqualTo("character varying");
     assertThat(columnType("receipt_sequences", "id")).isEqualTo("uuid");
+    assertThat(columnType("branches", "active")).isEqualTo("boolean");
     assertThat(columnType("user_roles", "tenant_id")).isEqualTo("uuid");
     assertThat(columnType("user_roles", "user_id")).isEqualTo("uuid");
     assertThat(columnType("user_branch_access", "id")).isEqualTo("uuid");
@@ -51,6 +53,7 @@ class FlywayMigrationIntegrationTest {
     assertThat(constraintExists("branches", "uq_branches_tenant_branch", "UNIQUE")).isTrue();
     assertThat(constraintExists("users", "uq_users_tenant_email", "UNIQUE")).isTrue();
     assertThat(constraintExists("users", "uq_users_tenant_user", "UNIQUE")).isTrue();
+    assertThat(constraintExists("users", "ck_users_full_name_not_blank", "CHECK")).isTrue();
     assertThat(constraintExists(
       "receipt_sequences",
       "uq_receipt_sequences_tenant_branch_year",

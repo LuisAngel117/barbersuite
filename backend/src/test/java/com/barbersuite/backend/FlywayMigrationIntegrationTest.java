@@ -30,10 +30,19 @@ class FlywayMigrationIntegrationTest {
     assertThat(jdbcTemplate.queryForObject("select version()", String.class))
       .contains("PostgreSQL");
     assertThat(flyway.info().current()).isNotNull();
-    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("5");
+    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("7");
 
     assertThat(
-      List.of("tenants", "branches", "users", "receipt_sequences", "user_roles", "user_branch_access")
+      List.of(
+        "tenants",
+        "branches",
+        "users",
+        "receipt_sequences",
+        "user_roles",
+        "user_branch_access",
+        "services",
+        "clients"
+      )
     )
       .allMatch(this::tableExists);
     assertThat(columnType("tenants", "id")).isEqualTo("uuid");
@@ -48,6 +57,12 @@ class FlywayMigrationIntegrationTest {
     assertThat(columnType("user_branch_access", "tenant_id")).isEqualTo("uuid");
     assertThat(columnType("user_branch_access", "user_id")).isEqualTo("uuid");
     assertThat(columnType("user_branch_access", "branch_id")).isEqualTo("uuid");
+    assertThat(columnType("services", "id")).isEqualTo("uuid");
+    assertThat(columnType("services", "tenant_id")).isEqualTo("uuid");
+    assertThat(columnType("services", "price")).isEqualTo("numeric");
+    assertThat(columnType("clients", "id")).isEqualTo("uuid");
+    assertThat(columnType("clients", "tenant_id")).isEqualTo("uuid");
+    assertThat(columnType("clients", "branch_id")).isEqualTo("uuid");
 
     assertThat(constraintExists("branches", "uq_branches_tenant_code", "UNIQUE")).isTrue();
     assertThat(constraintExists("branches", "uq_branches_tenant_branch", "UNIQUE")).isTrue();
@@ -88,6 +103,15 @@ class FlywayMigrationIntegrationTest {
       "fk_user_branch_access_branch",
       "FOREIGN KEY"
     )).isTrue();
+    assertThat(constraintExists("services", "fk_services_tenant", "FOREIGN KEY")).isTrue();
+    assertThat(constraintExists(
+      "services",
+      "ck_services_duration_minutes_range",
+      "CHECK"
+    )).isTrue();
+    assertThat(constraintExists("services", "ck_services_price_non_negative", "CHECK")).isTrue();
+    assertThat(constraintExists("clients", "fk_clients_branch", "FOREIGN KEY")).isTrue();
+    assertThat(constraintExists("clients", "ck_clients_full_name_min_length", "CHECK")).isTrue();
 
     assertThat(constraintDefinition(
       "user_branch_access",
@@ -101,6 +125,16 @@ class FlywayMigrationIntegrationTest {
       .contains("FOREIGN KEY (tenant_id, branch_id)")
       .contains("REFERENCES branches(tenant_id, id)")
       .contains("ON DELETE CASCADE");
+    assertThat(constraintDefinition("services", "ck_services_duration_minutes_range"))
+      .contains("duration_minutes >= 5")
+      .contains("duration_minutes <= 480");
+    assertThat(constraintDefinition("services", "ck_services_price_non_negative"))
+      .contains("price >=")
+      .contains("0");
+    assertThat(constraintDefinition("clients", "fk_clients_branch"))
+      .contains("FOREIGN KEY (tenant_id, branch_id)")
+      .contains("REFERENCES branches(tenant_id, id)")
+      .contains("ON DELETE RESTRICT");
 
     assertThat(indexDefinition("ix_user_branch_access_tenant_user"))
       .contains("ON public.user_branch_access")
@@ -112,6 +146,27 @@ class FlywayMigrationIntegrationTest {
       .contains("CREATE UNIQUE INDEX")
       .contains("ON public.users")
       .contains("lower");
+    assertThat(indexDefinition("ux_services_tenant_name_ci"))
+      .contains("CREATE UNIQUE INDEX")
+      .contains("ON public.services")
+      .contains("(tenant_id, lower(name))");
+    assertThat(indexDefinition("idx_services_tenant_active"))
+      .contains("ON public.services")
+      .contains("(tenant_id, active)");
+    assertThat(indexDefinition("idx_clients_tenant_branch_created_at"))
+      .contains("ON public.clients")
+      .contains("(tenant_id, branch_id, created_at DESC)");
+    assertThat(indexDefinition("idx_clients_tenant_branch_name_ci"))
+      .contains("ON public.clients")
+      .contains("(tenant_id, branch_id, lower(full_name))");
+    assertThat(indexDefinition("idx_clients_tenant_branch_phone"))
+      .contains("ON public.clients")
+      .contains("(tenant_id, branch_id, phone)")
+      .contains("WHERE (phone IS NOT NULL)");
+    assertThat(indexDefinition("idx_clients_tenant_branch_email_ci"))
+      .contains("ON public.clients")
+      .contains("(tenant_id, branch_id, lower(email))")
+      .contains("WHERE (email IS NOT NULL)");
   }
 
   private boolean tableExists(String tableName) {

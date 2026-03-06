@@ -103,7 +103,7 @@ docker compose -f docker-compose.yml -f docker-compose.app.yml ps
 Health esperado:
 
 ```text
-http://localhost:8080/api/v1/health
+http://localhost:8080/actuator/health
 ```
 
 La respuesta debe ser `200 OK`.

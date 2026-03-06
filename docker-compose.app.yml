@@ -16,5 +16,3 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-change-me-local}
       SPRING_FLYWAY_ENABLED: "true"
       JWT_SECRET: ${JWT_SECRET:-change-me-local-barbersuite-jwt-secret-please-override}
-      MANAGEMENT_ENDPOINTS_WEB_BASE_PATH: /api/v1
-      MANAGEMENT_ENDPOINTS_WEB_PATH_MAPPING_HEALTH: health

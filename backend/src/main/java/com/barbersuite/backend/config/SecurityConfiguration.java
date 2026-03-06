@@ -6,12 +6,14 @@ import static org.springframework.http.HttpMethod.GET;
 
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import com.nimbusds.jose.proc.SecurityContext;
+import com.barbersuite.backend.observability.RequestIdFilter;
 import com.barbersuite.backend.security.TenantContextFilter;
 import com.barbersuite.backend.security.ProblemAccessDeniedHandler;
 import com.barbersuite.backend.security.ProblemAuthenticationEntryPoint;
 import java.nio.charset.StandardCharsets;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import org.springframework.boot.security.autoconfigure.actuate.web.servlet.EndpointRequest;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -40,7 +42,9 @@ public class SecurityConfiguration {
   @Bean
   SecurityFilterChain securityFilterChain(
     HttpSecurity http,
-    Converter<Jwt, ? extends AbstractAuthenticationToken> jwtAuthenticationConverter
+    Converter<Jwt, ? extends AbstractAuthenticationToken> jwtAuthenticationConverter,
+    RequestIdFilter requestIdFilter,
+    TenantContextFilter tenantContextFilter
   ) throws Exception {
     com.fasterxml.jackson.databind.ObjectMapper objectMapper =
       new com.fasterxml.jackson.databind.ObjectMapper();
@@ -49,10 +53,10 @@ public class SecurityConfiguration {
       .csrf(AbstractHttpConfigurer::disable)
       .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
       .authorizeHttpRequests(authorize -> authorize
+        .requestMatchers(EndpointRequest.to("health", "prometheus")).permitAll()
         .requestMatchers(POST, "/api/v1/auth/login").permitAll()
         .requestMatchers(POST, "/api/v1/tenants/signup").permitAll()
-        .requestMatchers("/actuator/health", "/actuator/health/**", "/api/v1/health", "/api/v1/health/**")
-        .permitAll()
+        .requestMatchers(GET, "/api/v1/health", "/api/v1/health/**").permitAll()
         .requestMatchers("/api/v1/branches", "/api/v1/branches/**").hasAnyRole("ADMIN", "MANAGER")
         .requestMatchers(GET, "/api/v1/clients", "/api/v1/clients/**").authenticated()
         .requestMatchers(POST, "/api/v1/clients").authenticated()
@@ -69,9 +73,15 @@ public class SecurityConfiguration {
       .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(
         jwtAuthenticationConverter
       )))
-      .addFilterAfter(new TenantContextFilter(), BearerTokenAuthenticationFilter.class);
+      .addFilterBefore(requestIdFilter, BearerTokenAuthenticationFilter.class)
+      .addFilterAfter(tenantContextFilter, BearerTokenAuthenticationFilter.class);
 
     return http.build();
+  }
+
+  @Bean
+  TenantContextFilter tenantContextFilter() {
+    return new TenantContextFilter();
   }
 
   @Bean

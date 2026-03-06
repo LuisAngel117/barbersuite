@@ -32,7 +32,7 @@ docker compose -f docker-compose.yml -f docker-compose.app.yml -f docker-compose
 ```
 
 Checks rapidos:
-- Backend health: `http://localhost:8080/api/v1/health`
+- Backend health: `http://localhost:8080/actuator/health`
 - Frontend: `http://localhost:3000`
 - MailHog UI: `http://localhost:8025`
 
@@ -107,7 +107,7 @@ Si quieres resetear la demo por completo, incluyendo la base Docker:
 ## Troubleshooting
 
 ### El backend no responde en 8080
-- Revisa si `http://localhost:8080/api/v1/health` devuelve `200`
+- Revisa si `http://localhost:8080/actuator/health` devuelve `200`
 - Ejecuta `docker compose -f docker-compose.yml -f docker-compose.app.yml -f docker-compose.frontend.yml ps`
 - Mira logs:
 

@@ -36,7 +36,7 @@ Si ya tienes frontend o backend locales corriendo, libera primero los puertos `3
 
 Luego abre:
 - Frontend: `http://localhost:3000`
-- Backend health: `http://localhost:8080/api/v1/health`
+- Backend health: `http://localhost:8080/actuator/health`
 
 Guia completa:
 - `/docs/00-product/demo.md`

@@ -27,6 +27,8 @@ tags:
     description: Tenant-scoped staff administration endpoints.
   - name: Staff
     description: Branch-scoped staff discovery endpoints.
+  - name: Availability
+    description: Branch-scoped barber availability and slot discovery endpoints.
   - name: Appointments
     description: Scheduling and appointment management.
   - name: Cash
@@ -1238,6 +1240,119 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/BarberSummaryItem"
+    AvailabilityTime:
+      type: string
+      pattern: '^\d{2}:\d{2}$'
+      example: "09:00"
+    WeeklyAvailabilityInterval:
+      type: object
+      required: [dayOfWeek, start, end]
+      properties:
+        dayOfWeek:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 7
+          example: 1
+        start:
+          $ref: "#/components/schemas/AvailabilityTime"
+        end:
+          $ref: "#/components/schemas/AvailabilityTime"
+    AvailabilityExceptionType:
+      type: string
+      enum: [closed, override]
+      example: closed
+    AvailabilityExceptionInterval:
+      type: object
+      required: [start, end]
+      properties:
+        start:
+          $ref: "#/components/schemas/AvailabilityTime"
+        end:
+          $ref: "#/components/schemas/AvailabilityTime"
+    AvailabilityException:
+      type: object
+      required: [date, type]
+      properties:
+        date:
+          type: string
+          format: date
+          example: 2026-03-10
+        type:
+          $ref: "#/components/schemas/AvailabilityExceptionType"
+        note:
+          type: string
+          example: vacaciones
+        intervals:
+          type: array
+          items:
+            $ref: "#/components/schemas/AvailabilityExceptionInterval"
+          description: Required when `type=override`; omitted or empty for `closed`.
+    AvailabilityBarber:
+      type: object
+      required: [barberId, barberName, weekly, exceptions]
+      properties:
+        barberId:
+          type: string
+          format: uuid
+        barberName:
+          type: string
+          example: Diego Herrera
+        weekly:
+          type: array
+          items:
+            $ref: "#/components/schemas/WeeklyAvailabilityInterval"
+        exceptions:
+          type: array
+          items:
+            $ref: "#/components/schemas/AvailabilityException"
+    AvailabilityBarberListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AvailabilityBarber"
+    PutBarberAvailabilityRequest:
+      type: object
+      required: [weekly, exceptions]
+      properties:
+        weekly:
+          type: array
+          description: Complete replacement set of weekly recurring intervals for this barber and branch.
+          items:
+            $ref: "#/components/schemas/WeeklyAvailabilityInterval"
+        exceptions:
+          type: array
+          description: Complete replacement set of local-date exceptions for this barber and branch.
+          items:
+            $ref: "#/components/schemas/AvailabilityException"
+    AvailabilitySlotsBarberItem:
+      type: object
+      required: [barberId, barberName, slots]
+      properties:
+        barberId:
+          type: string
+          format: uuid
+        barberName:
+          type: string
+          example: Diego Herrera
+        slots:
+          type: array
+          items:
+            $ref: "#/components/schemas/AvailabilityTime"
+    AvailabilitySlotsResponse:
+      type: object
+      required: [timeZone, items]
+      properties:
+        timeZone:
+          type: string
+          example: America/Guayaquil
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AvailabilitySlotsBarberItem"
     EmailOutboxStatus:
       type: string
       enum: [pending, sent, failed, cancelled]
@@ -2232,6 +2347,135 @@ paths:
           $ref: "#/components/responses/NotFoundProblem"
         "409":
           $ref: "#/components/responses/AppointmentOverlapProblem"
+
+  /availability/barbers:
+    get:
+      operationId: listBarberAvailability
+      tags: [Availability]
+      summary: List weekly availability and exceptions for barbers in the authenticated branch context
+      description: |
+        Branch-scoped availability endpoint.
+        Requires `X-Branch-Id`.
+        Any authenticated role can inspect barber availability inside the selected branch.
+        If `barberId` is omitted, the backend returns all barbers visible in the branch together with their weekly schedules and local-date exceptions.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/XBranchId"
+        - name: barberId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Restrict the response to a single barber inside the selected branch.
+      responses:
+        "200":
+          description: Availability for the requested branch and barber filter
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AvailabilityBarberListResponse"
+        "400":
+          $ref: "#/components/responses/BranchScopedBadRequestProblem"
+        "401":
+          $ref: "#/components/responses/UnauthorizedProblem"
+        "403":
+          $ref: "#/components/responses/BranchForbiddenProblem"
+
+  /availability/barbers/{barberId}:
+    put:
+      operationId: replaceBarberAvailability
+      tags: [Availability]
+      summary: Replace weekly availability and exceptions for a barber in the authenticated branch context
+      description: |
+        Branch-scoped availability endpoint.
+        Requires `X-Branch-Id`.
+        Only `ADMIN` and `MANAGER` can edit barber availability.
+        The request uses replace semantics: `weekly` and `exceptions` replace the entire current set for the selected barber in the selected branch.
+        The backend must validate `dayOfWeek` in the ISO range `1..7`, `start < end`, and reject overlapping intervals within the same day or override date with `400 VALIDATION_ERROR`.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/XBranchId"
+        - name: barberId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Barber identifier scoped to the authenticated tenant.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PutBarberAvailabilityRequest"
+      responses:
+        "200":
+          description: Availability replaced
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AvailabilityBarber"
+        "400":
+          $ref: "#/components/responses/BranchScopedBadRequestProblem"
+        "401":
+          $ref: "#/components/responses/UnauthorizedProblem"
+        "403":
+          $ref: "#/components/responses/ForbiddenProblem"
+        "404":
+          $ref: "#/components/responses/NotFoundProblem"
+
+  /availability/slots:
+    get:
+      operationId: listAvailabilitySlots
+      tags: [Availability]
+      summary: List available slots for a branch-local day
+      description: |
+        Branch-scoped availability endpoint.
+        Requires `X-Branch-Id`.
+        Any authenticated role can query available slots in the selected branch.
+        `date` is interpreted as a branch-local day using the branch IANA time zone.
+        Slot generation in v1 uses a fixed granularity of 15 minutes.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/XBranchId"
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          description: Branch-local day (`YYYY-MM-DD`) to inspect.
+        - name: serviceId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Service whose duration determines which slots fit.
+        - name: barberId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Restrict slots to a single barber inside the selected branch.
+      responses:
+        "200":
+          description: Available slots for the requested day and service
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AvailabilitySlotsResponse"
+        "400":
+          $ref: "#/components/responses/BranchScopedBadRequestProblem"
+        "401":
+          $ref: "#/components/responses/UnauthorizedProblem"
+        "403":
+          $ref: "#/components/responses/BranchForbiddenProblem"
 
   /receipts:
     get:

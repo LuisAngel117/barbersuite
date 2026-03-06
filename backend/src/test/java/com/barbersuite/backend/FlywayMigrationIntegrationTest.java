@@ -30,7 +30,7 @@ class FlywayMigrationIntegrationTest {
     assertThat(jdbcTemplate.queryForObject("select version()", String.class))
       .contains("PostgreSQL");
     assertThat(flyway.info().current()).isNotNull();
-    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("14");
+    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("15");
 
     assertThat(
       List.of(
@@ -47,7 +47,10 @@ class FlywayMigrationIntegrationTest {
         "receipts",
         "receipt_items",
         "receipt_payments",
-        "email_outbox"
+        "email_outbox",
+        "barber_weekly_availability",
+        "barber_availability_exceptions",
+        "barber_exception_intervals"
       )
     )
       .allMatch(this::tableExists);
@@ -125,6 +128,24 @@ class FlywayMigrationIntegrationTest {
     assertThat(columnType("email_outbox", "processing_started_at")).isEqualTo("timestamp with time zone");
     assertThat(columnType("email_outbox", "created_at")).isEqualTo("timestamp with time zone");
     assertThat(columnType("email_outbox", "updated_at")).isEqualTo("timestamp with time zone");
+    assertThat(columnType("barber_weekly_availability", "id")).isEqualTo("uuid");
+    assertThat(columnType("barber_weekly_availability", "tenant_id")).isEqualTo("uuid");
+    assertThat(columnType("barber_weekly_availability", "branch_id")).isEqualTo("uuid");
+    assertThat(columnType("barber_weekly_availability", "barber_id")).isEqualTo("uuid");
+    assertThat(columnType("barber_weekly_availability", "day_of_week")).isEqualTo("integer");
+    assertThat(columnType("barber_weekly_availability", "start_time")).isEqualTo("time without time zone");
+    assertThat(columnType("barber_weekly_availability", "end_time")).isEqualTo("time without time zone");
+    assertThat(columnType("barber_availability_exceptions", "id")).isEqualTo("uuid");
+    assertThat(columnType("barber_availability_exceptions", "tenant_id")).isEqualTo("uuid");
+    assertThat(columnType("barber_availability_exceptions", "branch_id")).isEqualTo("uuid");
+    assertThat(columnType("barber_availability_exceptions", "barber_id")).isEqualTo("uuid");
+    assertThat(columnType("barber_availability_exceptions", "date")).isEqualTo("date");
+    assertThat(columnType("barber_availability_exceptions", "type")).isEqualTo("text");
+    assertThat(columnType("barber_exception_intervals", "id")).isEqualTo("uuid");
+    assertThat(columnType("barber_exception_intervals", "tenant_id")).isEqualTo("uuid");
+    assertThat(columnType("barber_exception_intervals", "exception_id")).isEqualTo("uuid");
+    assertThat(columnType("barber_exception_intervals", "start_time")).isEqualTo("time without time zone");
+    assertThat(columnType("barber_exception_intervals", "end_time")).isEqualTo("time without time zone");
     assertThat(columnNullable("users", "active")).isFalse();
     assertThat(columnNullable("users", "phone")).isTrue();
     assertThat(columnNullable("email_outbox", "branch_id")).isTrue();
@@ -272,6 +293,61 @@ class FlywayMigrationIntegrationTest {
       "ck_email_outbox_appointment_requires_branch",
       "CHECK"
     )).isTrue();
+    assertThat(constraintExists(
+      "barber_weekly_availability",
+      "fk_barber_weekly_availability_branch",
+      "FOREIGN KEY"
+    )).isTrue();
+    assertThat(constraintExists(
+      "barber_weekly_availability",
+      "fk_barber_weekly_availability_barber",
+      "FOREIGN KEY"
+    )).isTrue();
+    assertThat(constraintExists(
+      "barber_weekly_availability",
+      "ck_barber_weekly_availability_day_of_week",
+      "CHECK"
+    )).isTrue();
+    assertThat(constraintExists(
+      "barber_weekly_availability",
+      "ck_barber_weekly_availability_time_range",
+      "CHECK"
+    )).isTrue();
+    assertThat(constraintExists(
+      "barber_availability_exceptions",
+      "uq_barber_availability_exceptions_tenant_id",
+      "UNIQUE"
+    )).isTrue();
+    assertThat(constraintExists(
+      "barber_availability_exceptions",
+      "uq_barber_availability_exceptions_tenant_branch_barber_date",
+      "UNIQUE"
+    )).isTrue();
+    assertThat(constraintExists(
+      "barber_availability_exceptions",
+      "fk_barber_availability_exceptions_branch",
+      "FOREIGN KEY"
+    )).isTrue();
+    assertThat(constraintExists(
+      "barber_availability_exceptions",
+      "fk_barber_availability_exceptions_barber",
+      "FOREIGN KEY"
+    )).isTrue();
+    assertThat(constraintExists(
+      "barber_availability_exceptions",
+      "ck_barber_availability_exceptions_type",
+      "CHECK"
+    )).isTrue();
+    assertThat(constraintExists(
+      "barber_exception_intervals",
+      "fk_barber_exception_intervals_exception",
+      "FOREIGN KEY"
+    )).isTrue();
+    assertThat(constraintExists(
+      "barber_exception_intervals",
+      "ck_barber_exception_intervals_time_range",
+      "CHECK"
+    )).isTrue();
 
     assertThat(constraintDefinition(
       "user_branch_access",
@@ -415,6 +491,71 @@ class FlywayMigrationIntegrationTest {
     )
       .contains("appointment_id IS NULL")
       .contains("branch_id IS NOT NULL");
+    assertThat(constraintDefinition(
+      "barber_weekly_availability",
+      "fk_barber_weekly_availability_branch"
+    ))
+      .contains("FOREIGN KEY (tenant_id, branch_id)")
+      .contains("REFERENCES branches(tenant_id, id)")
+      .contains("ON DELETE CASCADE");
+    assertThat(constraintDefinition(
+      "barber_weekly_availability",
+      "fk_barber_weekly_availability_barber"
+    ))
+      .contains("FOREIGN KEY (tenant_id, barber_id)")
+      .contains("REFERENCES users(tenant_id, id)")
+      .contains("ON DELETE CASCADE");
+    assertThat(constraintDefinition(
+      "barber_weekly_availability",
+      "ck_barber_weekly_availability_day_of_week"
+    ))
+      .contains("day_of_week >= 1")
+      .contains("day_of_week <= 7");
+    assertThat(constraintDefinition(
+      "barber_weekly_availability",
+      "ck_barber_weekly_availability_time_range"
+    ))
+      .contains("end_time > start_time");
+    assertThat(constraintDefinition(
+      "barber_availability_exceptions",
+      "uq_barber_availability_exceptions_tenant_id"
+    )).contains("UNIQUE (tenant_id, id)");
+    assertThat(constraintDefinition(
+      "barber_availability_exceptions",
+      "uq_barber_availability_exceptions_tenant_branch_barber_date"
+    )).contains("UNIQUE (tenant_id, branch_id, barber_id, date)");
+    assertThat(constraintDefinition(
+      "barber_availability_exceptions",
+      "fk_barber_availability_exceptions_branch"
+    ))
+      .contains("FOREIGN KEY (tenant_id, branch_id)")
+      .contains("REFERENCES branches(tenant_id, id)")
+      .contains("ON DELETE CASCADE");
+    assertThat(constraintDefinition(
+      "barber_availability_exceptions",
+      "fk_barber_availability_exceptions_barber"
+    ))
+      .contains("FOREIGN KEY (tenant_id, barber_id)")
+      .contains("REFERENCES users(tenant_id, id)")
+      .contains("ON DELETE CASCADE");
+    assertThat(constraintDefinition(
+      "barber_availability_exceptions",
+      "ck_barber_availability_exceptions_type"
+    ))
+      .contains("closed")
+      .contains("override");
+    assertThat(constraintDefinition(
+      "barber_exception_intervals",
+      "fk_barber_exception_intervals_exception"
+    ))
+      .contains("FOREIGN KEY (tenant_id, exception_id)")
+      .contains("REFERENCES barber_availability_exceptions(tenant_id, id)")
+      .contains("ON DELETE CASCADE");
+    assertThat(constraintDefinition(
+      "barber_exception_intervals",
+      "ck_barber_exception_intervals_time_range"
+    ))
+      .contains("end_time > start_time");
 
     assertThat(indexDefinition("ix_user_branch_access_tenant_user"))
       .contains("ON public.user_branch_access")
@@ -506,6 +647,15 @@ class FlywayMigrationIntegrationTest {
       .contains("ON public.email_outbox")
       .contains("(tenant_id, branch_id, appointment_id, kind)")
       .contains("WHERE (appointment_id IS NOT NULL)");
+    assertThat(indexDefinition("idx_weekly_lookup"))
+      .contains("ON public.barber_weekly_availability")
+      .contains("(tenant_id, branch_id, barber_id, day_of_week)");
+    assertThat(indexDefinition("idx_exceptions_lookup"))
+      .contains("ON public.barber_availability_exceptions")
+      .contains("(tenant_id, branch_id, barber_id, date)");
+    assertThat(indexDefinition("idx_barber_exception_intervals_exception"))
+      .contains("ON public.barber_exception_intervals")
+      .contains("(tenant_id, exception_id)");
   }
 
   private boolean tableExists(String tableName) {

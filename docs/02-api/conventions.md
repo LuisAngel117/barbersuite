@@ -32,10 +32,11 @@ Endpoints tenant-scoped (catálogo global, usuarios/roles del tenant) **no** req
 ### Staff admin vs staff operativo
 - `StaffAdmin` (`/staff/barbers`, `/staff/barbers/{barberId}`) es tenant-scoped y NO requiere `X-Branch-Id`.
 - `Staff` operativo (`GET /barbers`) es branch-scoped y requiere `X-Branch-Id` porque lista solo barberos con acceso a la sucursal seleccionada.
+- `Availability` (`/availability/*`) es branch-scoped y requiere `X-Branch-Id`.
 - `Cash` (`/receipts`, `/receipts/{receiptId}`, `/receipts/{receiptId}/void`) es branch-scoped y requiere `X-Branch-Id`.
 - `Reports` (`/reports/*`) es branch-scoped y requiere `X-Branch-Id`.
 - `Notifications` (`/notifications/email/*`) es tenant-scoped y NO requiere `X-Branch-Id`.
-- En endpoints branch-scoped con filtros de fecha (`/appointments`, `/receipts`, `/reports/*`), `date`, `from` y `to` se interpretan en la `time_zone` de la branch.
+- En endpoints branch-scoped con filtros de fecha (`/appointments`, `/receipts`, `/reports/*`, `/availability/slots`), `date`, `from` y `to` se interpretan en la `time_zone` de la branch.
 
 ### Error estándar
 Si falta `X-Branch-Id` donde se requiere, devolver Problem Details con:

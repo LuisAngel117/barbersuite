@@ -2,6 +2,7 @@ package com.barbersuite.backend.web.branch;
 
 import com.barbersuite.backend.branchaccess.JdbcBranchAccessRepository;
 import com.barbersuite.backend.context.BranchContext;
+import com.barbersuite.backend.observability.BranchAccessMetrics;
 import com.barbersuite.backend.web.RequestHeaderNames;
 import com.barbersuite.backend.web.error.BranchForbiddenException;
 import com.barbersuite.backend.web.error.BranchRequiredException;
@@ -21,9 +22,14 @@ import org.springframework.web.servlet.HandlerInterceptor;
 public class BranchContextInterceptor implements HandlerInterceptor {
 
   private final JdbcBranchAccessRepository branchAccessRepository;
+  private final BranchAccessMetrics branchAccessMetrics;
 
-  public BranchContextInterceptor(JdbcBranchAccessRepository branchAccessRepository) {
+  public BranchContextInterceptor(
+    JdbcBranchAccessRepository branchAccessRepository,
+    BranchAccessMetrics branchAccessMetrics
+  ) {
     this.branchAccessRepository = branchAccessRepository;
+    this.branchAccessMetrics = branchAccessMetrics;
   }
 
   @Override
@@ -44,6 +50,7 @@ public class BranchContextInterceptor implements HandlerInterceptor {
     UUID userId = uuidClaim(jwt, "userId");
 
     if (!branchAccessRepository.hasAccess(tenantId, userId, branchId)) {
+      branchAccessMetrics.recordBranchForbidden();
       throw new BranchForbiddenException();
     }
 
@@ -64,6 +71,7 @@ public class BranchContextInterceptor implements HandlerInterceptor {
   private UUID resolveRequiredBranchId(HttpServletRequest request) {
     String headerValue = request.getHeader(RequestHeaderNames.BRANCH_ID);
     if (headerValue == null || headerValue.isBlank()) {
+      branchAccessMetrics.recordBranchRequired();
       throw new BranchRequiredException();
     }
 

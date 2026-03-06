@@ -1,5 +1,6 @@
 package com.barbersuite.backend.services;
 
+import com.barbersuite.backend.observability.BusinessMetrics;
 import com.barbersuite.backend.web.error.ServiceNameAlreadyExistsException;
 import com.barbersuite.backend.web.error.ServiceNotFoundException;
 import com.barbersuite.backend.web.error.ValidationErrorException;
@@ -24,9 +25,14 @@ public class ServicesService {
   private static final String SERVICE_NAME_UNIQUE_INDEX = "ux_services_tenant_name_ci";
 
   private final JdbcServiceRepository serviceRepository;
+  private final BusinessMetrics businessMetrics;
 
-  public ServicesService(JdbcServiceRepository serviceRepository) {
+  public ServicesService(
+    JdbcServiceRepository serviceRepository,
+    BusinessMetrics businessMetrics
+  ) {
     this.serviceRepository = serviceRepository;
+    this.businessMetrics = businessMetrics;
   }
 
   @Transactional(readOnly = true)
@@ -61,6 +67,7 @@ public class ServicesService {
       throw exception;
     }
 
+    businessMetrics.recordServiceCreated();
     return new ServiceResponse(serviceId, name, durationMinutes, price, true);
   }
 

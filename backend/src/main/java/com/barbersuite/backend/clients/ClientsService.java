@@ -1,6 +1,7 @@
 package com.barbersuite.backend.clients;
 
 import com.barbersuite.backend.context.BranchContext;
+import com.barbersuite.backend.observability.BusinessMetrics;
 import com.barbersuite.backend.web.clients.ClientPage;
 import com.barbersuite.backend.web.clients.ClientResponse;
 import com.barbersuite.backend.web.clients.CreateClientRequest;
@@ -17,9 +18,14 @@ import org.springframework.transaction.annotation.Transactional;
 public class ClientsService {
 
   private final JdbcClientsRepository clientsRepository;
+  private final BusinessMetrics businessMetrics;
 
-  public ClientsService(JdbcClientsRepository clientsRepository) {
+  public ClientsService(
+    JdbcClientsRepository clientsRepository,
+    BusinessMetrics businessMetrics
+  ) {
     this.clientsRepository = clientsRepository;
+    this.businessMetrics = businessMetrics;
   }
 
   @Transactional(readOnly = true)
@@ -28,8 +34,13 @@ public class ClientsService {
 
     UUID tenantId = tenantId(jwt);
     UUID branchId = BranchContext.requireCurrentBranchId();
-    long totalItems = clientsRepository.count(tenantId, branchId, query);
-    List<ClientResponse> items = clientsRepository.list(tenantId, branchId, query, page, size)
+    String normalizedQuery = normalizeQuery(query);
+    if (normalizedQuery != null) {
+      businessMetrics.recordClientSearch();
+    }
+
+    long totalItems = clientsRepository.count(tenantId, branchId, normalizedQuery);
+    List<ClientResponse> items = clientsRepository.list(tenantId, branchId, normalizedQuery, page, size)
       .stream()
       .map(this::toResponse)
       .toList();
@@ -55,6 +66,7 @@ public class ClientsService {
       true
     );
 
+    businessMetrics.recordClientCreated();
     return clientsRepository.findById(tenantId, branchId, clientId)
       .map(this::toResponse)
       .orElseThrow(ClientNotFoundException::new);
@@ -169,5 +181,9 @@ public class ClientsService {
 
     String normalizedValue = rawValue.trim();
     return normalizedValue.isEmpty() ? null : normalizedValue;
+  }
+
+  private String normalizeQuery(String rawQuery) {
+    return normalizeNullable(rawQuery);
   }
 }

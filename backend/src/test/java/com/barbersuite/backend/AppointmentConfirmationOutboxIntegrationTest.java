@@ -145,6 +145,7 @@ class AppointmentConfirmationOutboxIntegrationTest extends AuthenticatedWebInteg
   private UUID seedBarberWithAccess(UUID barberId, String fullName, String email) {
     seedUserAndIssueToken(barberId, fullName, email, PASSWORD, "BARBER");
     grantBranchAccess(barberId, BRANCH_ID);
+    seedDefaultBarberAvailability(barberId);
     return barberId;
   }
 

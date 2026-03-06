@@ -179,6 +179,7 @@ class AppointmentsIntegrationTest extends AuthenticatedWebIntegrationTestSupport
       "BARBER"
     );
     grantBranchAccess(barberId, BRANCH_ID);
+    seedDefaultBarberAvailability(barberId);
 
     UUID serviceId = createService(adminToken, "Corte barber", 25, 9.50);
     UUID clientId = createClient(adminToken, "Cliente Barber", "cliente-barber@example.com");
@@ -233,6 +234,7 @@ class AppointmentsIntegrationTest extends AuthenticatedWebIntegrationTestSupport
   private UUID seedBarberWithAccess(UUID barberId, String fullName, String email) {
     seedUserAndIssueToken(barberId, fullName, email, PASSWORD, "BARBER");
     grantBranchAccess(barberId, BRANCH_ID);
+    seedDefaultBarberAvailability(barberId);
     return barberId;
   }
 

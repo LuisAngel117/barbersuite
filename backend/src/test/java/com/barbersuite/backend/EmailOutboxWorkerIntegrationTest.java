@@ -142,10 +142,13 @@ class EmailOutboxWorkerIntegrationTest extends AuthenticatedWebIntegrationTestSu
     jdbcTemplate.update(
       """
       update email_outbox
-      set scheduled_at = now()
+      set status = 'pending',
+          scheduled_at = ?,
+          processing_started_at = null
       where tenant_id = ?
         and id = ?
       """,
+      java.sql.Timestamp.from(Instant.now().minusSeconds(5)),
       TENANT_ID,
       outboxId
     );

@@ -39,7 +39,7 @@ public class ApiExceptionHandler {
   ) {
     return problemResponse(
       HttpStatus.CONFLICT,
-      exception instanceof AppointmentOverlapException ? "Appointment overlap" : "Conflict",
+      conflictTitle(exception),
       exception.getMessage(),
       exception.getCode(),
       request,
@@ -138,5 +138,15 @@ public class ApiExceptionHandler {
     return ResponseEntity.status(status)
       .contentType(MediaType.APPLICATION_PROBLEM_JSON)
       .body(problemDetail);
+  }
+
+  private String conflictTitle(ApiConflictException exception) {
+    if (exception instanceof AppointmentOverlapException) {
+      return "Appointment overlap";
+    }
+    if (exception instanceof AppointmentOutsideAvailabilityException) {
+      return "Appointment outside availability";
+    }
+    return "Conflict";
   }
 }

@@ -253,7 +253,9 @@ class AvailabilityIntegrationTest extends AuthenticatedWebIntegrationTestSupport
       .andReturn();
 
     JsonNode payload = objectMapper.readTree(mvcResult.getResponse().getContentAsByteArray());
-    return UUID.fromString(payload.get("id").asText());
+    UUID barberId = UUID.fromString(payload.get("id").asText());
+    seedDefaultBarberAvailability(barberId);
+    return barberId;
   }
 
   private UUID createService(String token, String name, int durationMinutes, String price)

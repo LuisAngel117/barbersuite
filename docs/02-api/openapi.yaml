@@ -93,19 +93,31 @@ components:
             detail: A unique value already exists for this tenant.
             instance: https://api.barbersuite.local/api/v1/branches
             code: CONFLICT
-    AppointmentOverlapProblem:
-      description: Appointment time range conflicts with another appointment for the same barber in the same branch
+    AppointmentConflictProblem:
+      description: Appointment scheduling conflict caused by barber overlap or availability rules
       content:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/ProblemDetails"
-          example:
-            type: about:blank
-            title: Conflict
-            status: 409
-            detail: The requested time range overlaps another appointment for the same barber.
-            instance: https://api.barbersuite.local/api/v1/appointments
-            code: APPOINTMENT_OVERLAP
+          examples:
+            overlap:
+              summary: Appointment overlaps another active appointment
+              value:
+                type: about:blank
+                title: Appointment overlap
+                status: 409
+                detail: The requested time range overlaps another appointment for the same barber.
+                instance: https://api.barbersuite.local/api/v1/appointments
+                code: APPOINTMENT_OVERLAP
+            outsideAvailability:
+              summary: Appointment falls outside configured barber availability
+              value:
+                type: about:blank
+                title: Appointment outside availability
+                status: 409
+                detail: Appointment is outside barber availability.
+                instance: https://api.barbersuite.local/api/v1/appointments
+                code: APPOINTMENT_OUTSIDE_AVAILABILITY
     BranchScopedBadRequestProblem:
       description: Missing `X-Branch-Id` or invalid request payload on a branch-scoped endpoint
       content:
@@ -2239,6 +2251,8 @@ paths:
         The backend converts `startAtLocal` to UTC using the branch IANA time zone.
         If `durationMinutes` is omitted, the backend uses the selected service duration.
         Validation errors must return `400 VALIDATION_ERROR`.
+        If the requested range falls outside the barber availability windows, the backend must
+        return `409 APPOINTMENT_OUTSIDE_AVAILABILITY`.
         Related resources must resolve inside the authenticated tenant and selected branch scope.
       security:
         - bearerAuth: []
@@ -2266,7 +2280,7 @@ paths:
         "404":
           $ref: "#/components/responses/NotFoundProblem"
         "409":
-          $ref: "#/components/responses/AppointmentOverlapProblem"
+          $ref: "#/components/responses/AppointmentConflictProblem"
 
   /appointments/{appointmentId}:
     get:
@@ -2313,6 +2327,8 @@ paths:
         `ADMIN`, `MANAGER`, and `RECEPTION` can patch appointments. `BARBER` must receive `403 FORBIDDEN`.
         Empty patches must return `400 VALIDATION_ERROR`.
         Moving the time range into an overlap for the same barber in the same branch must return `409 APPOINTMENT_OVERLAP`.
+        Moving the time range outside the barber availability windows must return
+        `409 APPOINTMENT_OUTSIDE_AVAILABILITY`.
       security:
         - bearerAuth: []
       parameters:
@@ -2346,7 +2362,7 @@ paths:
         "404":
           $ref: "#/components/responses/NotFoundProblem"
         "409":
-          $ref: "#/components/responses/AppointmentOverlapProblem"
+          $ref: "#/components/responses/AppointmentConflictProblem"
 
   /availability/barbers:
     get:

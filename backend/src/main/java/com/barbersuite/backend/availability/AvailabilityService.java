@@ -13,6 +13,7 @@ import com.barbersuite.backend.web.availability.dto.AvailabilitySlotsResponse;
 import com.barbersuite.backend.web.availability.dto.ExceptionInterval;
 import com.barbersuite.backend.web.availability.dto.PutAvailabilityRequest;
 import com.barbersuite.backend.web.availability.dto.WeeklyInterval;
+import com.barbersuite.backend.web.error.AppointmentOutsideAvailabilityException;
 import com.barbersuite.backend.web.error.BarberNotFoundException;
 import com.barbersuite.backend.web.error.BranchNotFoundException;
 import com.barbersuite.backend.web.error.ServiceNotFoundException;
@@ -142,6 +143,49 @@ public class AvailabilityService {
     }
 
     return new AvailabilitySlotsResponse(scope.timeZone(), items);
+  }
+
+  @Transactional(readOnly = true)
+  public void assertWithinAvailability(
+    UUID tenantId,
+    UUID branchId,
+    UUID barberId,
+    Instant startAtUtc,
+    Instant endAtUtc
+  ) {
+    RequestScope scope = requestScope(tenantId, branchId);
+    JdbcBarbersRepository.BarberRow barber = barbersRepository
+      .findByTenantAndBranchAndUserId(tenantId, branchId, barberId)
+      .orElseThrow(BarberNotFoundException::new);
+    if (!barber.active()) {
+      throw new BarberNotFoundException();
+    }
+
+    LocalDateTime startLocal = LocalDateTime.ofInstant(startAtUtc, scope.zoneId());
+    LocalDateTime endLocal = LocalDateTime.ofInstant(endAtUtc, scope.zoneId());
+    if (!startLocal.toLocalDate().equals(endLocal.toLocalDate())) {
+      throw new AppointmentOutsideAvailabilityException();
+    }
+
+    BarberAvailability availability = loadAvailabilityByBarber(scope, List.of(barber)).getOrDefault(
+      barberId,
+      BarberAvailability.empty()
+    );
+    LocalDate targetDate = startLocal.toLocalDate();
+    List<TimeWindow> windows = windowsForDate(
+      availability,
+      targetDate,
+      targetDate.getDayOfWeek().getValue(),
+      barber.active()
+    );
+
+    boolean fitsWindow = windows.stream().anyMatch(window ->
+      !startLocal.toLocalTime().isBefore(window.start()) &&
+      !endLocal.toLocalTime().isAfter(window.end())
+    );
+    if (!fitsWindow) {
+      throw new AppointmentOutsideAvailabilityException();
+    }
   }
 
   private List<String> availableSlots(
@@ -465,8 +509,10 @@ public class AvailabilityService {
   }
 
   private RequestScope requestScope(Jwt jwt) {
-    UUID tenantId = tenantId(jwt);
-    UUID branchId = BranchContext.requireCurrentBranchId();
+    return requestScope(tenantId(jwt), BranchContext.requireCurrentBranchId());
+  }
+
+  private RequestScope requestScope(UUID tenantId, UUID branchId) {
     String timeZone = branchInfoRepository.findTimeZone(tenantId, branchId)
       .orElseThrow(BranchNotFoundException::new);
     return new RequestScope(tenantId, branchId, timeZone, branchZoneId(timeZone));

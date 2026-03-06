@@ -1,18 +1,17 @@
 package com.barbersuite.backend.appointments;
 
+import com.barbersuite.backend.availability.AvailabilityService;
 import com.barbersuite.backend.branches.JdbcBranchInfoRepository;
 import com.barbersuite.backend.clients.JdbcClientsRepository;
 import com.barbersuite.backend.context.BranchContext;
 import com.barbersuite.backend.notifications.NotificationsService;
 import com.barbersuite.backend.services.JdbcServiceRepository;
-import com.barbersuite.backend.staff.JdbcBarbersRepository;
 import com.barbersuite.backend.web.appointments.AppointmentListResponse;
 import com.barbersuite.backend.web.appointments.AppointmentResponse;
 import com.barbersuite.backend.web.appointments.CreateAppointmentRequest;
 import com.barbersuite.backend.web.appointments.PatchAppointmentRequest;
 import com.barbersuite.backend.web.error.AppointmentNotFoundException;
 import com.barbersuite.backend.web.error.AppointmentOverlapException;
-import com.barbersuite.backend.web.error.BarberNotFoundException;
 import com.barbersuite.backend.web.error.BranchNotFoundException;
 import com.barbersuite.backend.web.error.ClientNotFoundException;
 import com.barbersuite.backend.web.error.ServiceNotFoundException;
@@ -45,24 +44,24 @@ public class AppointmentsService {
   private final JdbcAppointmentsRepository appointmentsRepository;
   private final JdbcBranchInfoRepository branchInfoRepository;
   private final JdbcClientsRepository clientsRepository;
-  private final JdbcBarbersRepository barbersRepository;
   private final JdbcServiceRepository serviceRepository;
   private final NotificationsService notificationsService;
+  private final AvailabilityService availabilityService;
 
   public AppointmentsService(
     JdbcAppointmentsRepository appointmentsRepository,
     JdbcBranchInfoRepository branchInfoRepository,
     JdbcClientsRepository clientsRepository,
-    JdbcBarbersRepository barbersRepository,
     JdbcServiceRepository serviceRepository,
-    NotificationsService notificationsService
+    NotificationsService notificationsService,
+    AvailabilityService availabilityService
   ) {
     this.appointmentsRepository = appointmentsRepository;
     this.branchInfoRepository = branchInfoRepository;
     this.clientsRepository = clientsRepository;
-    this.barbersRepository = barbersRepository;
     this.serviceRepository = serviceRepository;
     this.notificationsService = notificationsService;
+    this.availabilityService = availabilityService;
   }
 
   @Transactional(readOnly = true)
@@ -108,11 +107,17 @@ public class AppointmentsService {
     ZoneId branchZoneId = branchZoneId(tenantId, branchId);
 
     ensureClientExists(tenantId, branchId, request.clientId());
-    ensureBarberExists(tenantId, branchId, request.barberId());
     int durationMinutes = resolveDurationMinutes(tenantId, request.serviceId(), request.durationMinutes());
 
     Instant startAt = parseStartAtLocal(request.startAtLocal(), branchZoneId);
     Instant endAt = startAt.plus(Duration.ofMinutes(durationMinutes));
+    availabilityService.assertWithinAvailability(
+      tenantId,
+      branchId,
+      request.barberId(),
+      startAt,
+      endAt
+    );
     UUID appointmentId = UUID.randomUUID();
 
     try {
@@ -188,6 +193,16 @@ public class AppointmentsService {
     String notes = request.notes() == null
       ? currentAppointment.notes()
       : normalizeNullable(request.notes());
+
+    if (request.startAtLocal() != null || request.durationMinutes() != null) {
+      availabilityService.assertWithinAvailability(
+        tenantId,
+        branchId,
+        currentAppointment.barberId(),
+        startAt,
+        endAt
+      );
+    }
 
     try {
       int rowsUpdated = appointmentsRepository.update(
@@ -269,12 +284,6 @@ public class AppointmentsService {
   private void ensureClientExists(UUID tenantId, UUID branchId, UUID clientId) {
     if (!clientsRepository.existsById(tenantId, branchId, clientId)) {
       throw new ClientNotFoundException();
-    }
-  }
-
-  private void ensureBarberExists(UUID tenantId, UUID branchId, UUID barberId) {
-    if (!barbersRepository.existsByTenantAndBranchAndUserId(tenantId, branchId, barberId)) {
-      throw new BarberNotFoundException();
     }
   }
 

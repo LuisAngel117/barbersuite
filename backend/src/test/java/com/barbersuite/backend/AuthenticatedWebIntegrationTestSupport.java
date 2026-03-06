@@ -10,6 +10,7 @@ import com.barbersuite.backend.auth.JwtTokenService;
 import java.util.Map;
 import java.util.List;
 import java.util.UUID;
+import java.sql.Time;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -128,6 +129,34 @@ abstract class AuthenticatedWebIntegrationTestSupport {
       userId,
       branchId
     );
+  }
+
+  protected void seedDefaultBarberAvailability(UUID barberId) {
+    for (int dayOfWeek = 1; dayOfWeek <= 7; dayOfWeek++) {
+      jdbcTemplate.update(
+        """
+        insert into barber_weekly_availability (
+          id,
+          tenant_id,
+          branch_id,
+          barber_id,
+          day_of_week,
+          start_time,
+          end_time,
+          created_at,
+          updated_at
+        )
+        values (?, ?, ?, ?, ?, ?, ?, now(), now())
+        """,
+        UUID.randomUUID(),
+        TENANT_ID,
+        BRANCH_ID,
+        barberId,
+        dayOfWeek,
+        Time.valueOf("08:00:00"),
+        Time.valueOf("20:00:00")
+      );
+    }
   }
 
   private void reseedAuthData() {

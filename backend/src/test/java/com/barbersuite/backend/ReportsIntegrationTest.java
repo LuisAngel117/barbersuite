@@ -235,7 +235,7 @@ class ReportsIntegrationTest extends AuthenticatedWebIntegrationTestSupport {
       clientOneId,
       barberOneId,
       serviceId,
-      "2026-03-10T23:30"
+      "2026-03-10T11:30"
     );
     UUID appointmentTwoId = createAppointment(
       adminToken,
@@ -348,7 +348,9 @@ class ReportsIntegrationTest extends AuthenticatedWebIntegrationTestSupport {
       .andReturn();
 
     JsonNode payload = objectMapper.readTree(mvcResult.getResponse().getContentAsByteArray());
-    return UUID.fromString(payload.get("id").asText());
+    UUID barberId = UUID.fromString(payload.get("id").asText());
+    seedDefaultBarberAvailability(barberId);
+    return barberId;
   }
 
   private UUID createService(String token, String name, int durationMinutes, BigDecimal price)

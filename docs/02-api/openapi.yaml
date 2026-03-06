@@ -1020,6 +1020,224 @@ components:
           format: int32
           minimum: 0
           example: 3
+    SalesSummary:
+      type: object
+      required:
+        - from
+        - to
+        - currency
+        - receiptsCount
+        - grossSales
+        - voidedCount
+        - avgTicket
+        - taxTotal
+        - discountTotal
+      properties:
+        from:
+          type: string
+          format: date
+          example: 2026-03-01
+        to:
+          type: string
+          format: date
+          example: 2026-03-31
+        currency:
+          type: string
+          example: USD
+        receiptsCount:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 48
+        grossSales:
+          type: number
+          format: decimal
+          multipleOf: 0.01
+          example: 620.50
+        voidedCount:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 2
+        avgTicket:
+          type: number
+          format: decimal
+          multipleOf: 0.01
+          example: 12.93
+        taxTotal:
+          type: number
+          format: decimal
+          multipleOf: 0.01
+          example: 0.00
+        discountTotal:
+          type: number
+          format: decimal
+          multipleOf: 0.01
+          example: 15.00
+    SalesDailyItem:
+      type: object
+      required: [date, receiptsCount, grossSales, taxTotal, discountTotal]
+      properties:
+        date:
+          type: string
+          format: date
+          example: 2026-03-06
+        receiptsCount:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 6
+        grossSales:
+          type: number
+          format: decimal
+          multipleOf: 0.01
+          example: 82.50
+        taxTotal:
+          type: number
+          format: decimal
+          multipleOf: 0.01
+          example: 0.00
+        discountTotal:
+          type: number
+          format: decimal
+          multipleOf: 0.01
+          example: 3.00
+    SalesDaily:
+      type: object
+      required: [currency, items]
+      properties:
+        currency:
+          type: string
+          example: USD
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/SalesDailyItem"
+    TopServiceItem:
+      type: object
+      required: [serviceId, serviceName, quantity, revenue]
+      properties:
+        serviceId:
+          type: string
+          format: uuid
+        serviceName:
+          type: string
+          example: Corte clásico
+        quantity:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 18
+        revenue:
+          type: number
+          format: decimal
+          multipleOf: 0.01
+          example: 225.00
+    TopServices:
+      type: object
+      required: [currency, items]
+      properties:
+        currency:
+          type: string
+          example: USD
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/TopServiceItem"
+    AppointmentsSummary:
+      type: object
+      required:
+        - from
+        - to
+        - scheduledCount
+        - checkedInCount
+        - completedCount
+        - cancelledCount
+        - noShowCount
+        - bookedMinutes
+      properties:
+        from:
+          type: string
+          format: date
+          example: 2026-03-01
+        to:
+          type: string
+          format: date
+          example: 2026-03-07
+        scheduledCount:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 9
+        checkedInCount:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 2
+        completedCount:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 31
+        cancelledCount:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 4
+        noShowCount:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 1
+        bookedMinutes:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 1980
+    BarberSummaryItem:
+      type: object
+      required:
+        - barberId
+        - barberName
+        - appointmentsCount
+        - completedCount
+        - noShowCount
+        - bookedMinutes
+      properties:
+        barberId:
+          type: string
+          format: uuid
+        barberName:
+          type: string
+          example: Diego Herrera
+        appointmentsCount:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 22
+        completedCount:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 18
+        noShowCount:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 1
+        bookedMinutes:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 1260
+    BarbersSummary:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/BarberSummaryItem"
 
 paths:
   /health:
@@ -2102,3 +2320,224 @@ paths:
           $ref: "#/components/responses/NotFoundProblem"
         "409":
           $ref: "#/components/responses/ConflictProblem"
+
+  /reports/sales/summary:
+    get:
+      operationId: getSalesSummaryReport
+      tags: [Reports]
+      summary: Get branch sales summary for a date range
+      description: |
+        Branch-scoped reports endpoint.
+        Requires `X-Branch-Id`.
+        Only `ADMIN` and `MANAGER` can access reports.
+        `from` and `to` are required and interpreted as branch-local dates using the branch IANA time zone.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/XBranchId"
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          description: Inclusive branch-local start day.
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          description: Inclusive branch-local end day.
+      responses:
+        "200":
+          description: Aggregated sales summary for the selected branch and range
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SalesSummary"
+        "400":
+          $ref: "#/components/responses/BranchScopedBadRequestProblem"
+        "401":
+          $ref: "#/components/responses/UnauthorizedProblem"
+        "403":
+          $ref: "#/components/responses/BranchForbiddenProblem"
+
+  /reports/sales/daily:
+    get:
+      operationId: getSalesDailyReport
+      tags: [Reports]
+      summary: Get daily sales buckets for a date range
+      description: |
+        Branch-scoped reports endpoint.
+        Requires `X-Branch-Id`.
+        Only `ADMIN` and `MANAGER` can access reports.
+        `from` and `to` are required and interpreted as branch-local dates using the branch IANA time zone.
+        The response should include days without sales as zero-valued buckets.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/XBranchId"
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          description: Inclusive branch-local start day.
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          description: Inclusive branch-local end day.
+      responses:
+        "200":
+          description: Daily sales buckets for the selected branch and range
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SalesDaily"
+        "400":
+          $ref: "#/components/responses/BranchScopedBadRequestProblem"
+        "401":
+          $ref: "#/components/responses/UnauthorizedProblem"
+        "403":
+          $ref: "#/components/responses/BranchForbiddenProblem"
+
+  /reports/services/top:
+    get:
+      operationId: getTopServicesReport
+      tags: [Reports]
+      summary: Get top services sold in a branch date range
+      description: |
+        Branch-scoped reports endpoint.
+        Requires `X-Branch-Id`.
+        Only `ADMIN` and `MANAGER` can access reports.
+        `from` and `to` are required and interpreted as branch-local dates using the branch IANA time zone.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/XBranchId"
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          description: Inclusive branch-local start day.
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          description: Inclusive branch-local end day.
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 50
+            default: 10
+          description: Maximum number of top services to return.
+      responses:
+        "200":
+          description: Top services sold in the selected branch and range
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TopServices"
+        "400":
+          $ref: "#/components/responses/BranchScopedBadRequestProblem"
+        "401":
+          $ref: "#/components/responses/UnauthorizedProblem"
+        "403":
+          $ref: "#/components/responses/BranchForbiddenProblem"
+
+  /reports/appointments/summary:
+    get:
+      operationId: getAppointmentsSummaryReport
+      tags: [Reports]
+      summary: Get appointment status summary for a date range
+      description: |
+        Branch-scoped reports endpoint.
+        Requires `X-Branch-Id`.
+        Only `ADMIN` and `MANAGER` can access reports.
+        `from` and `to` are required and interpreted as branch-local dates using the branch IANA time zone.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/XBranchId"
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          description: Inclusive branch-local start day.
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          description: Inclusive branch-local end day.
+      responses:
+        "200":
+          description: Appointment status totals for the selected branch and range
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppointmentsSummary"
+        "400":
+          $ref: "#/components/responses/BranchScopedBadRequestProblem"
+        "401":
+          $ref: "#/components/responses/UnauthorizedProblem"
+        "403":
+          $ref: "#/components/responses/BranchForbiddenProblem"
+
+  /reports/barbers/summary:
+    get:
+      operationId: getBarbersSummaryReport
+      tags: [Reports]
+      summary: Get barber productivity summary for a date range
+      description: |
+        Branch-scoped reports endpoint.
+        Requires `X-Branch-Id`.
+        Only `ADMIN` and `MANAGER` can access reports.
+        `from` and `to` are required and interpreted as branch-local dates using the branch IANA time zone.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/XBranchId"
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          description: Inclusive branch-local start day.
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          description: Inclusive branch-local end day.
+      responses:
+        "200":
+          description: Barber appointment totals for the selected branch and range
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BarbersSummary"
+        "400":
+          $ref: "#/components/responses/BranchScopedBadRequestProblem"
+        "401":
+          $ref: "#/components/responses/UnauthorizedProblem"
+        "403":
+          $ref: "#/components/responses/BranchForbiddenProblem"

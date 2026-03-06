@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import FullCalendar from "@fullcalendar/react";
 import type {
   DateSelectArg,
@@ -28,6 +28,7 @@ import { hasAnyRole } from "@/lib/roles";
 import { toProblemToast } from "@/lib/forms";
 import {
   fetchAppointments,
+  fetchAvailabilitySlots,
   fetchBarbers,
   fetchServices,
   patchAppointment,
@@ -61,6 +62,8 @@ type AppointmentSheetState = {
   mode: "create" | "edit" | "detail";
   appointment?: Appointment | null;
   draft?: {
+    barberId?: string;
+    serviceId?: string;
     startAtLocal?: string;
     durationMinutes?: number;
   } | null;
@@ -69,6 +72,11 @@ type AppointmentSheetState = {
 type AppointmentsCalendarProps = {
   timeZone: string;
   roles: readonly string[];
+};
+
+type VisibleRange = {
+  start: Date;
+  end: Date;
 };
 
 function formatRangeDate(value: Date, timeZone: string) {
@@ -92,6 +100,30 @@ function durationMinutesFromRange(start: Date | null, end: Date | null) {
   );
 }
 
+function localTimeFromDate(value: Date, timeZone: string) {
+  return DateTime.fromJSDate(value, { zone: timeZone }).toFormat("HH:mm");
+}
+
+function listVisibleDates(range: VisibleRange, timeZone: string) {
+  const dates: string[] = [];
+  let cursor = DateTime.fromJSDate(range.start, { zone: timeZone }).startOf("day");
+  const limit = DateTime.fromJSDate(range.end, { zone: timeZone }).startOf("day");
+
+  while (cursor < limit) {
+    const isoDate = cursor.toISODate();
+    if (isoDate) {
+      dates.push(isoDate);
+    }
+    cursor = cursor.plus({ days: 1 });
+  }
+
+  return dates;
+}
+
+function buildSlotsCacheKey(date: string, barberId: string, serviceId: string) {
+  return `${date}|${barberId}|${serviceId}`;
+}
+
 export function AppointmentsCalendar({
   timeZone,
   roles,
@@ -99,15 +131,21 @@ export function AppointmentsCalendar({
   const locale = useLocale();
   const tAppointments = useTranslations("appointments");
   const tErrors = useTranslations("errors");
+  const tToasts = useTranslations("toasts");
   const canMutate = hasAnyRole(roles, ["ADMIN", "MANAGER", "RECEPTION"]);
   const calendarRef = useRef<FullCalendar | null>(null);
+  const slotCacheRef = useRef(new Map<string, Set<string>>());
+  const slotPromisesRef = useRef(new Map<string, Promise<Set<string>>>());
+  const lastSelectToastAtRef = useRef(0);
   const [barbers, setBarbers] = useState<BarberItem[]>([]);
   const [services, setServices] = useState<ServicePayload[]>([]);
   const [isCatalogsLoading, setIsCatalogsLoading] = useState(true);
   const [problem, setProblem] = useState<ProblemBannerState | null>(null);
   const [activeView, setActiveView] = useState<CalendarView>("timeGridDay");
   const [barberFilter, setBarberFilter] = useState("all");
+  const [serviceFilter, setServiceFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [visibleRange, setVisibleRange] = useState<VisibleRange | null>(null);
   const [sheetState, setSheetState] = useState<AppointmentSheetState>({
     open: false,
     mode: "create",
@@ -173,6 +211,71 @@ export function AppointmentsCalendar({
     calendarRef.current?.getApi().refetchEvents();
   }, [barberFilter, statusFilter]);
 
+  const loadSlots = useCallback(async (date: string, barberId: string, serviceId: string) => {
+    const key = buildSlotsCacheKey(date, barberId, serviceId);
+    const cached = slotCacheRef.current.get(key);
+    if (cached) {
+      return cached;
+    }
+
+    const pending = slotPromisesRef.current.get(key);
+    if (pending) {
+      return pending;
+    }
+
+    const promise = (async () => {
+      const response = await fetchAvailabilitySlots({
+        date,
+        barberId,
+        serviceId,
+      });
+
+      slotPromisesRef.current.delete(key);
+
+      if (!response.data) {
+        return new Set<string>();
+      }
+
+      const nextSlots = new Set(response.data.items[0]?.slots ?? []);
+      slotCacheRef.current.set(key, nextSlots);
+      return nextSlots;
+    })();
+
+    slotPromisesRef.current.set(key, promise);
+    return promise;
+  }, []);
+
+  function getCachedSlots(date: string, barberId: string, serviceId: string) {
+    return slotCacheRef.current.get(buildSlotsCacheKey(date, barberId, serviceId)) ?? null;
+  }
+
+  const primeSlotsForDates = useCallback(async (
+    dates: string[],
+    slotConfigs: Array<{ barberId: string; serviceId: string }>,
+  ) => {
+    const uniqueConfigs = Array.from(
+      new Map(
+        slotConfigs.map((config) => [`${config.barberId}|${config.serviceId}`, config]),
+      ).values(),
+    );
+
+    await Promise.all(
+      uniqueConfigs.flatMap((config) =>
+        dates.map((date) => loadSlots(date, config.barberId, config.serviceId)),
+      ),
+    );
+  }, [loadSlots]);
+
+  function toastSelectRequirements() {
+    const now = Date.now();
+    if (now - lastSelectToastAtRef.current < 1500) {
+      return;
+    }
+
+    lastSelectToastAtRef.current = now;
+    toast.warning(tAppointments("selectBarberAndServiceFirst"));
+  }
+
   async function refetchEvents() {
     calendarRef.current?.getApi().refetchEvents();
   }
@@ -219,6 +322,20 @@ export function AppointmentsCalendar({
     }
 
     setProblem(null);
+    const visibleDates = listVisibleDates(
+      {
+        start: fetchInfo.start,
+        end: fetchInfo.end,
+      },
+      timeZone,
+    );
+
+    const slotConfigs = result.data.map((appointment) => ({
+      barberId: appointment.barberId,
+      serviceId: appointment.serviceId,
+    }));
+    void primeSlotsForDates(visibleDates, slotConfigs);
+
     successCallback(
       result.data.map((appointment) => ({
         id: appointment.id,
@@ -253,8 +370,12 @@ export function AppointmentsCalendar({
           forbidden: tErrors("forbidden"),
           branchRequired: tErrors("branchRequired"),
           branchForbidden: tErrors("branchForbidden"),
-          conflict: tAppointments("overlapError"),
+          conflict: tErrors("conflict"),
           validation: tErrors("validation"),
+          codes: {
+            APPOINTMENT_OUTSIDE_AVAILABILITY: tToasts("outsideAvailability"),
+            APPOINTMENT_OVERLAP: tToasts("overlap"),
+          },
         },
         tAppointments("updateFailed"),
       );
@@ -292,6 +413,8 @@ export function AppointmentsCalendar({
       mode: "create",
       appointment: null,
       draft: {
+        barberId: barberFilter !== "all" ? barberFilter : undefined,
+        serviceId: serviceFilter !== "all" ? serviceFilter : undefined,
         startAtLocal,
         durationMinutes,
       },
@@ -306,6 +429,20 @@ export function AppointmentsCalendar({
       draft: null,
     });
   }
+
+  useEffect(() => {
+    if (!visibleRange || barberFilter === "all" || serviceFilter === "all") {
+      return;
+    }
+
+    const visibleDates = listVisibleDates(visibleRange, timeZone);
+    void primeSlotsForDates(visibleDates, [
+      {
+        barberId: barberFilter,
+        serviceId: serviceFilter,
+      },
+    ]);
+  }, [barberFilter, primeSlotsForDates, serviceFilter, timeZone, visibleRange]);
 
   return (
     <div className="space-y-6" data-testid="appointments-page">
@@ -420,6 +557,20 @@ export function AppointmentsCalendar({
                       ))}
                     </SelectContent>
                   </Select>
+
+                  <Select onValueChange={setServiceFilter} value={serviceFilter}>
+                    <SelectTrigger className="h-10 w-[220px] rounded-xl">
+                      <SelectValue placeholder={tAppointments("fields.service")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{tAppointments("filters.all")}</SelectItem>
+                      {services.map((service) => (
+                        <SelectItem key={service.id} value={service.id}>
+                          {service.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
@@ -428,8 +579,37 @@ export function AppointmentsCalendar({
                   allDaySlot={false}
                   datesSet={(arg: DatesSetArg) => {
                     setActiveView(arg.view.type as CalendarView);
+                    setVisibleRange({
+                      start: arg.start,
+                      end: arg.end,
+                    });
                   }}
                   editable={canMutate}
+                  eventAllow={(dropInfo, draggedEvent) => {
+                    if (!canMutate) {
+                      return false;
+                    }
+
+                    if (!draggedEvent) {
+                      return false;
+                    }
+
+                    const appointment = draggedEvent.extendedProps.appointment as Appointment | undefined;
+                    if (!appointment) {
+                      return false;
+                    }
+
+                    const date = formatRangeDate(dropInfo.start, timeZone);
+                    const time = localTimeFromDate(dropInfo.start, timeZone);
+                    const cachedSlots = getCachedSlots(date, appointment.barberId, appointment.serviceId);
+
+                    if (!cachedSlots) {
+                      void loadSlots(date, appointment.barberId, appointment.serviceId);
+                      return true;
+                    }
+
+                    return cachedSlots.has(time);
+                  }}
                   eventClick={(info: EventClickArg) => {
                     const appointment = info.event.extendedProps.appointment as Appointment | undefined;
                     if (!appointment) {
@@ -469,6 +649,27 @@ export function AppointmentsCalendar({
                   nowIndicator
                   plugins={[timeGridPlugin, listPlugin, interactionPlugin, luxonPlugin]}
                   ref={calendarRef}
+                  selectAllow={(selectInfo) => {
+                    if (!canMutate) {
+                      return false;
+                    }
+
+                    if (barberFilter === "all" || serviceFilter === "all") {
+                      toastSelectRequirements();
+                      return false;
+                    }
+
+                    const date = formatRangeDate(selectInfo.start, timeZone);
+                    const time = localTimeFromDate(selectInfo.start, timeZone);
+                    const cachedSlots = getCachedSlots(date, barberFilter, serviceFilter);
+
+                    if (!cachedSlots) {
+                      void loadSlots(date, barberFilter, serviceFilter);
+                      return false;
+                    }
+
+                    return cachedSlots.has(time);
+                  }}
                   select={(info: DateSelectArg) => {
                     if (!canMutate) {
                       return;
@@ -482,8 +683,10 @@ export function AppointmentsCalendar({
                   }}
                   selectable={canMutate}
                   selectMirror
+                  slotDuration="00:15:00"
                   slotMaxTime="22:00:00"
                   slotMinTime="07:00:00"
+                  snapDuration="00:15:00"
                   timeZone={timeZone}
                 />
               </div>

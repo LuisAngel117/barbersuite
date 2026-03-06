@@ -7,6 +7,7 @@ import {
 } from "@/lib/backend";
 import { apiFetch } from "@/lib/api-client";
 import { readApiResponse } from "@/lib/problem";
+import type { AvailabilitySlotsResponse } from "@/lib/types/availability";
 import type {
   Appointment,
   AppointmentsResponse,
@@ -79,6 +80,27 @@ export async function fetchAppointments(params: {
     ...result,
     data: result.data?.items ?? null,
   } satisfies ApiResult<Appointment[]>;
+}
+
+export async function fetchAvailabilitySlots(params: {
+  date: string;
+  serviceId: string;
+  barberId?: string;
+}) {
+  const searchParams = new URLSearchParams({
+    date: params.date,
+    serviceId: params.serviceId,
+  });
+
+  if (params.barberId) {
+    searchParams.set("barberId", params.barberId);
+  }
+
+  const response = await fetch(`/api/availability/slots?${searchParams.toString()}`, {
+    cache: "no-store",
+  });
+
+  return parseResponse<AvailabilitySlotsResponse>(response);
 }
 
 export async function createAppointment(payload: CreateAppointmentRequest) {

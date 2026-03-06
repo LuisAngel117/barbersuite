@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { DateTime } from "luxon";
 import { useTranslations } from "next-intl";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { ZodError } from "zod";
 import type { ServicePayload } from "@/lib/backend";
@@ -23,11 +23,13 @@ import type {
 } from "@/lib/types/appointments";
 import {
   createAppointment,
+  fetchAvailabilitySlots,
   patchAppointment,
 } from "@/components/appointments/appointment-api";
 import { ClientPicker } from "@/components/appointments/client-picker";
 import { EntitySheet } from "@/components/forms/entity-sheet";
 import { ProblemBanner } from "@/components/ui/problem-banner";
+import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
@@ -37,10 +39,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { type ProblemBannerState } from "@/lib/problem";
 
 type AppointmentDraft = {
+  barberId?: string;
+  serviceId?: string;
   startAtLocal?: string;
   durationMinutes?: number;
 };
@@ -78,6 +83,8 @@ function getDefaultValues(
   if (!initialAppointment) {
     return {
       ...defaultAppointmentValues(
+        initialDraft?.barberId ?? "",
+        initialDraft?.serviceId ?? "",
         initialDraft?.startAtLocal ?? "",
         initialDraft?.durationMinutes,
       ),
@@ -96,6 +103,14 @@ function getDefaultValues(
   };
 }
 
+function getLocalDate(value: string) {
+  return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value) ? value.slice(0, 10) : "";
+}
+
+function getLocalTime(value: string) {
+  return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value) ? value.slice(11, 16) : "";
+}
+
 export function AppointmentSheet({
   open,
   onOpenChange,
@@ -111,7 +126,11 @@ export function AppointmentSheet({
   const tCommon = useTranslations("common");
   const tErrors = useTranslations("errors");
   const tAppointments = useTranslations("appointments");
+  const tToasts = useTranslations("toasts");
   const [submitProblem, setSubmitProblem] = useState<ProblemBannerState | null>(null);
+  const [slotsProblem, setSlotsProblem] = useState<ProblemBannerState | null>(null);
+  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [isSlotsLoading, setIsSlotsLoading] = useState(false);
 
   const form = useForm<AppointmentFormValues>({
     resolver: zodResolver(
@@ -129,7 +148,20 @@ export function AppointmentSheet({
   });
 
   const readOnly = mode === "detail" || !canMutate;
-  const selectedServiceId = form.watch("serviceId");
+  const selectedBarberId = useWatch({
+    control: form.control,
+    name: "barberId",
+  });
+  const selectedServiceId = useWatch({
+    control: form.control,
+    name: "serviceId",
+  });
+  const selectedStartAtLocal = useWatch({
+    control: form.control,
+    name: "startAtLocal",
+  });
+  const selectedDate = getLocalDate(selectedStartAtLocal);
+  const selectedTime = getLocalTime(selectedStartAtLocal);
 
   useEffect(() => {
     if (mode !== "create" || !selectedServiceId) {
@@ -149,6 +181,73 @@ export function AppointmentSheet({
     }
   }, [form, mode, selectedServiceId, services]);
 
+  useEffect(() => {
+    if (mode !== "create" || readOnly || !selectedBarberId || !selectedServiceId || !selectedDate) {
+      return;
+    }
+
+    let active = true;
+
+    void (async () => {
+      await Promise.resolve();
+      if (!active) {
+        return;
+      }
+
+      setIsSlotsLoading(true);
+      const response = await fetchAvailabilitySlots({
+        date: selectedDate,
+        serviceId: selectedServiceId,
+        barberId: selectedBarberId,
+      });
+
+      if (!active) {
+        return;
+      }
+
+      setIsSlotsLoading(false);
+
+      if (!response.data) {
+        const toastProblem = toProblemToast(
+          response.problem,
+          {
+            generic: tAppointments("loadFailed"),
+            unauthorized: tErrors("unauthorized"),
+            forbidden: tErrors("forbidden"),
+            branchRequired: tErrors("branchRequired"),
+            branchForbidden: tErrors("branchForbidden"),
+            conflict: tErrors("conflict"),
+            validation: tErrors("validation"),
+          },
+          tAppointments("loadFailed"),
+        );
+
+        setAvailableSlots([]);
+        setSlotsProblem({
+          title: toastProblem.title,
+          detail: toastProblem.description,
+          code: response.problem?.code,
+        });
+        return;
+      }
+
+      setAvailableSlots(response.data.items[0]?.slots ?? []);
+      setSlotsProblem(null);
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [
+    mode,
+    readOnly,
+    selectedBarberId,
+    selectedDate,
+    selectedServiceId,
+    tAppointments,
+    tErrors,
+  ]);
+
   async function handleSubmit(values: AppointmentFormValues) {
     if (readOnly) {
       return;
@@ -167,6 +266,13 @@ export function AppointmentSheet({
         });
 
         if (!response.data) {
+          if (response.problem?.code === "APPOINTMENT_OUTSIDE_AVAILABILITY") {
+            form.setError("startAtLocal", {
+              type: "server",
+              message: tToasts("outsideAvailability"),
+            });
+          }
+
           const toastProblem = toProblemToast(
             response.problem,
             {
@@ -175,8 +281,12 @@ export function AppointmentSheet({
               forbidden: tErrors("forbidden"),
               branchRequired: tErrors("branchRequired"),
               branchForbidden: tErrors("branchForbidden"),
-              conflict: tAppointments("overlapError"),
+              conflict: tErrors("conflict"),
               validation: tErrors("validation"),
+              codes: {
+                APPOINTMENT_OUTSIDE_AVAILABILITY: tToasts("outsideAvailability"),
+                APPOINTMENT_OVERLAP: tToasts("overlap"),
+              },
             },
             tAppointments("createFailed"),
           );
@@ -226,8 +336,12 @@ export function AppointmentSheet({
               forbidden: tErrors("forbidden"),
               branchRequired: tErrors("branchRequired"),
               branchForbidden: tErrors("branchForbidden"),
-              conflict: tAppointments("overlapError"),
+              conflict: tErrors("conflict"),
               validation: tErrors("validation"),
+              codes: {
+                APPOINTMENT_OUTSIDE_AVAILABILITY: tToasts("outsideAvailability"),
+                APPOINTMENT_OVERLAP: tToasts("overlap"),
+              },
             },
             tAppointments("updateFailed"),
           );
@@ -423,6 +537,60 @@ export function AppointmentSheet({
               )}
             />
           </div>
+
+          {mode === "create" ? (
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <p className="text-sm font-medium">{tAppointments("availableSlotsTitle")}</p>
+                <p className="text-xs leading-5 text-muted-foreground">
+                  {tAppointments("availableSlotsHint")}
+                </p>
+              </div>
+
+              {slotsProblem ? <ProblemBanner problem={slotsProblem} /> : null}
+
+              {!selectedBarberId || !selectedServiceId || !selectedDate ? (
+                <div className="rounded-2xl border border-dashed border-border/70 bg-muted/25 px-4 py-4 text-sm text-muted-foreground">
+                  {tAppointments("selectBarberAndServiceFirst")}
+                </div>
+              ) : isSlotsLoading ? (
+                <div className="flex flex-wrap gap-2">
+                  {Array.from({ length: 8 }).map((_, index) => (
+                    <Skeleton className="h-9 w-20 rounded-full" key={index} />
+                  ))}
+                </div>
+              ) : availableSlots.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-border/70 bg-muted/25 px-4 py-4">
+                  <p className="font-medium tracking-tight">{tAppointments("noSlotsTitle")}</p>
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                    {tAppointments("noSlotsDesc")}
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {availableSlots.map((slot) => (
+                    <Button
+                      className="rounded-full"
+                      key={slot}
+                      onClick={() => {
+                        form.setValue("startAtLocal", `${selectedDate}T${slot}`, {
+                          shouldDirty: true,
+                          shouldTouch: true,
+                          shouldValidate: true,
+                        });
+                        form.clearErrors("startAtLocal");
+                        setSubmitProblem(null);
+                      }}
+                      type="button"
+                      variant={selectedTime === slot ? "default" : "outline"}
+                    >
+                      {slot}
+                    </Button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : null}
 
           {mode !== "create" ? (
             <FormField

@@ -11,6 +11,7 @@ type ProblemToastMessages = {
   csrfRequired?: string;
   csrfFailed?: string;
   originForbidden?: string;
+  codes?: Record<string, string>;
 };
 
 export function normalizeOptionalString(value: string | null | undefined) {
@@ -40,6 +41,10 @@ export function toProblemToast(
   fallbackTitle: string,
 ) {
   const description = (() => {
+    if (problem?.code && messages.codes?.[problem.code]) {
+      return messages.codes[problem.code];
+    }
+
     switch (problem?.code) {
       case "UNAUTHORIZED":
         return messages.unauthorized;

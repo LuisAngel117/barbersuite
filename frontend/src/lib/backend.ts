@@ -52,6 +52,32 @@ export type MePayload = {
   }>;
 };
 
+export type ServicePayload = {
+  id: string;
+  name: string;
+  durationMinutes: number;
+  price: number;
+  active: boolean;
+};
+
+export type ClientPayload = {
+  id: string;
+  fullName: string;
+  phone?: string | null;
+  email?: string | null;
+  notes?: string | null;
+  active: boolean;
+  createdAt: string;
+};
+
+export type ClientPagePayload = {
+  items: ClientPayload[];
+  page: number;
+  size: number;
+  totalItems: number;
+  totalPages: number;
+};
+
 export function buildBackendUrl(path: string) {
   const baseUrl = process.env.BACKEND_BASE_URL;
   if (!baseUrl) {

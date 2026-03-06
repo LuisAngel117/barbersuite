@@ -321,9 +321,13 @@ paths:
   /auth/login:
     post:
       operationId: login
-      summary: Login (placeholder)
+      summary: Global login by email
       tags: [Auth]
       security: []
+      description: |
+        Public login endpoint resolved globally by email.
+        The backend finds the unique user by email, derives `tenantId` from the user record,
+        and emits a JWT with `tenantId`, `userId`, and `roles` claims.
       requestBody:
         required: true
         content:
@@ -347,10 +351,7 @@ paths:
                   tokenType: { type: string, enum: [Bearer] }
                   expiresIn: { type: integer, description: "Segundos" }
         "401":
-          description: Credenciales inválidas
-          content:
-            application/problem+json:
-              schema: { $ref: "#/components/schemas/ProblemDetails" }
+          $ref: "#/components/responses/UnauthorizedProblem"
 
   /tenants/signup:
     post:

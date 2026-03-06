@@ -7,6 +7,7 @@
 ## Seguridad
 - `Authorization: Bearer <JWT>`
 - Claims mínimos: `tenantId`, `userId`, `roles`
+- `POST /auth/login` es global por email: el backend resuelve el `tenantId` desde el usuario porque `users.email` es único globalmente.
 
 ## Contexto de sucursal (Branch)
 **Regla:** En endpoints branch-scoped, el branch es REQUIRED via header:

@@ -65,4 +65,4 @@ Notas:
 - El backend debe estar corriendo en `http://localhost:8080`.
 - `BACKEND_BASE_URL` por defecto apunta a `http://localhost:8080/api/v1`.
 - El JWT se guarda en cookie `httpOnly`; no se usa `localStorage`.
-- El login actual pide `tenantId` además de email/password porque ese sigue siendo el contrato real del backend hoy.
+- El login usa `email` y `password`; el backend resuelve el `tenantId` desde el usuario autenticado.

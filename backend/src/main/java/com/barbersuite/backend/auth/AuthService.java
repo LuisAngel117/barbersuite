@@ -30,7 +30,7 @@ public class AuthService {
 
   public LoginResponse login(LoginRequest loginRequest) {
     String normalizedEmail = loginRequest.email().trim().toLowerCase(Locale.ROOT);
-    AuthUser authUser = authUserRepository.findByTenantIdAndEmail(loginRequest.tenantId(), normalizedEmail)
+    AuthUser authUser = authUserRepository.findByEmail(normalizedEmail)
       .orElseThrow(InvalidCredentialsException::new);
 
     if (!passwordEncoder.matches(loginRequest.password(), authUser.passwordHash())) {

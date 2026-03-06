@@ -4,7 +4,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
@@ -20,16 +19,14 @@ public class JdbcAuthUserRepository {
     this.jdbcTemplate = jdbcTemplate;
   }
 
-  public Optional<AuthUser> findByTenantIdAndEmail(UUID tenantId, String email) {
+  public Optional<AuthUser> findByEmail(String email) {
     List<AuthUserRow> userRows = jdbcTemplate.query(
       """
       select id, tenant_id, email, password_hash
       from users
-      where tenant_id = ?
-        and lower(email) = lower(?)
+      where lower(email) = lower(?)
       """,
       USER_ROW_MAPPER,
-      tenantId,
       email
     );
 
@@ -47,7 +44,7 @@ public class JdbcAuthUserRepository {
       order by role
       """,
       (resultSet, rowNum) -> resultSet.getString("role"),
-      tenantId,
+      userRow.tenantId(),
       userRow.userId()
     );
 
@@ -62,13 +59,18 @@ public class JdbcAuthUserRepository {
 
   private static AuthUserRow mapUserRow(ResultSet resultSet, int rowNum) throws SQLException {
     return new AuthUserRow(
-      resultSet.getObject("tenant_id", UUID.class),
-      resultSet.getObject("id", UUID.class),
+      resultSet.getObject("tenant_id", java.util.UUID.class),
+      resultSet.getObject("id", java.util.UUID.class),
       resultSet.getString("email"),
       resultSet.getString("password_hash")
     );
   }
 
-  private record AuthUserRow(UUID tenantId, UUID userId, String email, String passwordHash) {
+  private record AuthUserRow(
+    java.util.UUID tenantId,
+    java.util.UUID userId,
+    String email,
+    String passwordHash
+  ) {
   }
 }

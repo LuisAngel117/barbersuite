@@ -66,8 +66,6 @@ abstract class AuthenticatedWebIntegrationTestSupport {
       MockMvcRequestBuilders.post("/api/v1/auth/login")
         .contentType(MediaType.APPLICATION_JSON)
         .content(objectMapper.writeValueAsBytes(Map.of(
-          "tenantId",
-          TENANT_ID.toString(),
           "email",
           EMAIL,
           "password",

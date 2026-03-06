@@ -131,6 +131,9 @@ abstract class AuthenticatedWebIntegrationTestSupport {
   }
 
   private void reseedAuthData() {
+    jdbcTemplate.update("delete from barber_exception_intervals");
+    jdbcTemplate.update("delete from barber_availability_exceptions");
+    jdbcTemplate.update("delete from barber_weekly_availability");
     jdbcTemplate.update("delete from email_outbox");
     jdbcTemplate.update("delete from receipt_payments");
     jdbcTemplate.update("delete from receipt_items");

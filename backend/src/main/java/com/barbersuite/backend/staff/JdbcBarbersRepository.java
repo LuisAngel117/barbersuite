@@ -3,6 +3,7 @@ package com.barbersuite.backend.staff;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -64,6 +65,33 @@ public class JdbcBarbersRepository {
       tenantId,
       userId
     ));
+  }
+
+  public Optional<BarberRow> findByTenantAndBranchAndUserId(
+    UUID tenantId,
+    UUID branchId,
+    UUID userId
+  ) {
+    return jdbcTemplate.query(
+      """
+      select u.id, u.full_name, u.active
+      from users u
+      join user_roles ur
+        on ur.tenant_id = u.tenant_id
+       and ur.user_id = u.id
+       and ur.role = 'BARBER'
+      join user_branch_access uba
+        on uba.tenant_id = u.tenant_id
+       and uba.user_id = u.id
+       and uba.branch_id = ?
+      where u.tenant_id = ?
+        and u.id = ?
+      """,
+      BARBER_ROW_MAPPER,
+      branchId,
+      tenantId,
+      userId
+    ).stream().findFirst();
   }
 
   private static BarberRow mapBarberRow(ResultSet resultSet, int rowNum) throws SQLException {

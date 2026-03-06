@@ -117,6 +117,19 @@ abstract class AuthenticatedWebIntegrationTestSupport {
     ));
   }
 
+  protected void grantBranchAccess(UUID userId, UUID branchId) {
+    jdbcTemplate.update(
+      """
+      insert into user_branch_access (id, tenant_id, user_id, branch_id)
+      values (?, ?, ?, ?)
+      """,
+      UUID.randomUUID(),
+      TENANT_ID,
+      userId,
+      branchId
+    );
+  }
+
   private void reseedAuthData() {
     jdbcTemplate.update("delete from user_branch_access");
     jdbcTemplate.update("delete from user_roles");

@@ -48,6 +48,22 @@ public class ApiExceptionHandler {
     );
   }
 
+  @ExceptionHandler(ApiForbiddenException.class)
+  ResponseEntity<ProblemDetail> handleForbidden(
+    ApiForbiddenException exception,
+    HttpServletRequest request
+  ) {
+    return problemResponse(
+      HttpStatus.FORBIDDEN,
+      "Branch forbidden",
+      exception.getMessage(),
+      exception.getCode(),
+      request,
+      problemDetail -> {
+      }
+    );
+  }
+
   @ExceptionHandler(ApiNotFoundException.class)
   ResponseEntity<ProblemDetail> handleNotFound(
     ApiNotFoundException exception,

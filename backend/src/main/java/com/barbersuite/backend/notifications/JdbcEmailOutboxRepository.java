@@ -72,6 +72,59 @@ public class JdbcEmailOutboxRepository {
     );
   }
 
+  public boolean insertOutboxIgnoringDedup(
+    UUID tenantId,
+    UUID branchId,
+    UUID outboxId,
+    EmailKind kind,
+    EmailOutboxStatus status,
+    String toEmail,
+    String subject,
+    String bodyText,
+    String bodyHtml,
+    String dedupKey,
+    UUID appointmentId,
+    Instant scheduledAt
+  ) {
+    return jdbcTemplate.update(
+      """
+      insert into email_outbox (
+        id,
+        tenant_id,
+        branch_id,
+        kind,
+        status,
+        to_email,
+        subject,
+        body_text,
+        body_html,
+        dedup_key,
+        appointment_id,
+        attempts,
+        last_error,
+        scheduled_at,
+        sent_at,
+        created_at,
+        updated_at
+      )
+      values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, null, ?, null, now(), now())
+      on conflict (tenant_id, dedup_key) do nothing
+      """,
+      outboxId,
+      tenantId,
+      branchId,
+      kind.name(),
+      status.name(),
+      toEmail,
+      subject,
+      bodyText,
+      bodyHtml,
+      dedupKey,
+      appointmentId,
+      Timestamp.from(scheduledAt)
+    ) > 0;
+  }
+
   public List<EmailOutboxRow> listOutbox(UUID tenantId, EmailOutboxFilter filter, int page, int size) {
     QueryParts queryParts = queryParts(
       """

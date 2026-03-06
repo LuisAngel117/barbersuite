@@ -3,6 +3,7 @@ package com.barbersuite.backend.appointments;
 import com.barbersuite.backend.branches.JdbcBranchInfoRepository;
 import com.barbersuite.backend.clients.JdbcClientsRepository;
 import com.barbersuite.backend.context.BranchContext;
+import com.barbersuite.backend.notifications.NotificationsService;
 import com.barbersuite.backend.services.JdbcServiceRepository;
 import com.barbersuite.backend.staff.JdbcBarbersRepository;
 import com.barbersuite.backend.web.appointments.AppointmentListResponse;
@@ -46,19 +47,22 @@ public class AppointmentsService {
   private final JdbcClientsRepository clientsRepository;
   private final JdbcBarbersRepository barbersRepository;
   private final JdbcServiceRepository serviceRepository;
+  private final NotificationsService notificationsService;
 
   public AppointmentsService(
     JdbcAppointmentsRepository appointmentsRepository,
     JdbcBranchInfoRepository branchInfoRepository,
     JdbcClientsRepository clientsRepository,
     JdbcBarbersRepository barbersRepository,
-    JdbcServiceRepository serviceRepository
+    JdbcServiceRepository serviceRepository,
+    NotificationsService notificationsService
   ) {
     this.appointmentsRepository = appointmentsRepository;
     this.branchInfoRepository = branchInfoRepository;
     this.clientsRepository = clientsRepository;
     this.barbersRepository = barbersRepository;
     this.serviceRepository = serviceRepository;
+    this.notificationsService = notificationsService;
   }
 
   @Transactional(readOnly = true)
@@ -130,6 +134,8 @@ public class AppointmentsService {
       }
       throw exception;
     }
+
+    notificationsService.enqueueAppointmentConfirmation(tenantId, branchId, appointmentId);
 
     return appointmentsRepository.findByTenantBranchAndId(tenantId, branchId, appointmentId)
       .map(this::toResponse)

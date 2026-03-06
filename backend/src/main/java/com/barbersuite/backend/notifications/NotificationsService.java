@@ -12,7 +12,10 @@ import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HexFormat;
@@ -30,11 +33,18 @@ public class NotificationsService {
 
   private static final String UNIQUE_VIOLATION_SQL_STATE = "23505";
   private static final String EMAIL_OUTBOX_DEDUP_CONSTRAINT = "uq_email_outbox_tenant_dedup_key";
+  private static final DateTimeFormatter APPOINTMENT_TIME_FORMATTER =
+    DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
   private final JdbcEmailOutboxRepository emailOutboxRepository;
+  private final JdbcAppointmentEmailContextRepository appointmentEmailContextRepository;
 
-  public NotificationsService(JdbcEmailOutboxRepository emailOutboxRepository) {
+  public NotificationsService(
+    JdbcEmailOutboxRepository emailOutboxRepository,
+    JdbcAppointmentEmailContextRepository appointmentEmailContextRepository
+  ) {
     this.emailOutboxRepository = emailOutboxRepository;
+    this.appointmentEmailContextRepository = appointmentEmailContextRepository;
   }
 
   @Transactional
@@ -73,6 +83,38 @@ public class NotificationsService {
     }
 
     return new SendTestEmailResponse(outboxId, EmailOutboxStatus.pending);
+  }
+
+  @Transactional
+  public void enqueueAppointmentConfirmation(UUID tenantId, UUID branchId, UUID appointmentId) {
+    appointmentEmailContextRepository.findByTenantBranchAndAppointmentId(tenantId, branchId, appointmentId)
+      .ifPresent(context -> {
+        String toEmail = normalizeEmailNullable(context.clientEmail());
+        if (toEmail == null) {
+          return;
+        }
+
+        ZoneId branchZoneId = ZoneId.of(context.branchTimeZone());
+        ZonedDateTime startAtLocal = context.startAt().atZone(branchZoneId);
+        ZonedDateTime endAtLocal = context.endAt().atZone(branchZoneId);
+        String subject = "Confirmacion de cita - " + context.branchCode();
+        String bodyText = buildAppointmentConfirmationBody(context, startAtLocal, endAtLocal);
+
+        emailOutboxRepository.insertOutboxIgnoringDedup(
+          tenantId,
+          context.branchId(),
+          UUID.randomUUID(),
+          EmailKind.appointment_confirmation,
+          EmailOutboxStatus.pending,
+          toEmail,
+          subject,
+          bodyText,
+          null,
+          "appt-confirm:" + appointmentId,
+          appointmentId,
+          Instant.now()
+        );
+      });
   }
 
   @Transactional(readOnly = true)
@@ -137,6 +179,11 @@ public class NotificationsService {
   private String normalizeEmail(String rawEmail) {
     String normalizedEmail = normalizeRequiredText(rawEmail, "toEmail");
     return normalizedEmail.toLowerCase(Locale.ROOT);
+  }
+
+  private String normalizeEmailNullable(String rawEmail) {
+    String normalizedEmail = normalizeNullable(rawEmail);
+    return normalizedEmail == null ? null : normalizedEmail.toLowerCase(Locale.ROOT);
   }
 
   private String normalizeRequiredText(String rawValue, String fieldName) {
@@ -227,6 +274,43 @@ public class NotificationsService {
     } catch (NoSuchAlgorithmException exception) {
       throw new IllegalStateException("SHA-256 is not available.", exception);
     }
+  }
+
+  private String buildAppointmentConfirmationBody(
+    JdbcAppointmentEmailContextRepository.AppointmentEmailContext context,
+    ZonedDateTime startAtLocal,
+    ZonedDateTime endAtLocal
+  ) {
+    String clientFullName = normalizeNullable(context.clientFullName());
+    StringBuilder body = new StringBuilder();
+
+    if (clientFullName != null) {
+      body.append("Hola ").append(clientFullName).append(",\n\n");
+    }
+
+    body.append("Tu cita fue registrada en BarberSuite.\n")
+      .append("Sucursal: ")
+      .append(context.branchName())
+      .append(" (")
+      .append(context.branchCode())
+      .append(")\n")
+      .append("Servicio: ")
+      .append(context.serviceName())
+      .append("\n")
+      .append("Barbero: ")
+      .append(context.barberFullName())
+      .append("\n")
+      .append("Inicio: ")
+      .append(APPOINTMENT_TIME_FORMATTER.format(startAtLocal))
+      .append("\n")
+      .append("Fin: ")
+      .append(APPOINTMENT_TIME_FORMATTER.format(endAtLocal))
+      .append("\n")
+      .append("Zona horaria: ")
+      .append(context.branchTimeZone())
+      .append("\n");
+
+    return body.toString();
   }
 
   private boolean isDedupConflict(DataIntegrityViolationException exception) {

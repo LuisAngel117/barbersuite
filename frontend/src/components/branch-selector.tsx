@@ -18,11 +18,13 @@ type BranchOption = {
 type BranchSelectorProps = {
   branches: BranchOption[];
   selectedBranchId: string | null;
+  variant?: "compact" | "panel";
 };
 
 export function BranchSelector({
   branches,
   selectedBranchId,
+  variant = "compact",
 }: BranchSelectorProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -30,6 +32,7 @@ export function BranchSelector({
   const [error, setError] = useState<string | null>(null);
   const value = pendingValue ?? selectedBranchId ?? "";
   const selectedBranch = branches.find((branch) => branch.id === value) ?? null;
+  const isPanel = variant === "panel";
 
   async function handleChange(nextBranchId: string) {
     setPendingValue(nextBranchId);
@@ -57,27 +60,47 @@ export function BranchSelector({
   }
 
   return (
-    <div className="space-y-5">
-      <div className="space-y-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge className="rounded-full bg-brand-muted text-brand-foreground hover:bg-brand-muted">
-            Branch scoped
-          </Badge>
-          <Badge className="rounded-full" variant="outline">
-            {branches.filter((branch) => branch.active).length} activas
-          </Badge>
+    <div className={isPanel ? "space-y-5" : "space-y-3"}>
+      {isPanel ? (
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge className="rounded-full bg-brand-muted text-brand-foreground hover:bg-brand-muted">
+              Branch scoped
+            </Badge>
+            <Badge className="rounded-full" variant="outline">
+              {branches.filter((branch) => branch.active).length} activas
+            </Badge>
+            {selectedBranch ? (
+              <Badge className="rounded-full" variant="secondary">
+                {selectedBranch.code}
+              </Badge>
+            ) : null}
+          </div>
+          <h2 className="text-xl font-semibold tracking-tight">Contexto de sucursal</h2>
+          <p className="text-sm leading-6 text-muted-foreground">
+            La selección vive en la cookie <code>bs_branch_id</code> y los Route Handlers la usan
+            para enviar <code>X-Branch-Id</code> al backend.
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="space-y-1">
+            <Label htmlFor="branch-selector">Sucursal activa</Label>
+            <p className="text-xs text-muted-foreground">
+              Branch scoped via cookie y BFF interno.
+            </p>
+          </div>
           {selectedBranch ? (
             <Badge className="rounded-full" variant="secondary">
               {selectedBranch.code}
             </Badge>
-          ) : null}
+          ) : (
+            <Badge className="rounded-full bg-brand-muted text-brand-foreground hover:bg-brand-muted">
+              Sin branch
+            </Badge>
+          )}
         </div>
-        <h2 className="text-xl font-semibold tracking-tight">Contexto de sucursal</h2>
-        <p className="text-sm leading-6 text-muted-foreground">
-          La selección vive en la cookie <code>bs_branch_id</code> y los Route Handlers la usan
-          para enviar <code>X-Branch-Id</code> al backend.
-        </p>
-      </div>
+      )}
 
       <div className="space-y-2">
         <Label htmlFor="branch-selector">Sucursal activa</Label>
@@ -101,7 +124,7 @@ export function BranchSelector({
         </select>
       </div>
 
-      {selectedBranch ? (
+      {selectedBranch && isPanel ? (
         <div className="rounded-2xl border border-border/70 bg-muted/50 p-4 text-sm">
           <p className="font-medium">{selectedBranch.name}</p>
           <p className="mt-1 text-muted-foreground">

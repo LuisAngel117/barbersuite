@@ -1,6 +1,7 @@
-import { AppNavigation } from "@/components/app-navigation";
-import { BranchSelector } from "@/components/branch-selector";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { AppSidebar } from "@/components/app-sidebar";
+import { AppTopbar } from "@/components/app-topbar";
+import { MobileBottomNav } from "@/components/mobile-bottom-nav";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { getDashboardContext } from "@/lib/dashboard-context";
 
 export default async function AppLayout({
@@ -9,42 +10,32 @@ export default async function AppLayout({
   children: React.ReactNode;
 }>) {
   const { payload, selectedBranchId } = await getDashboardContext();
+  const roles = payload?.user.roles ?? [];
+  const user = payload?.user ?? {
+    fullName: "BarberSuite",
+    email: "demo@barbersuite.local",
+    roles: [],
+  };
+  const branches = payload?.branches ?? [];
 
   return (
-    <main className="min-h-screen px-4 py-4 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl space-y-6">
-        <section className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_360px]">
-          <Card className="rounded-[1.75rem] border-border/70 bg-card/80 shadow-xl shadow-black/5 backdrop-blur">
-            <CardHeader className="space-y-5">
-              <div className="inline-flex w-fit rounded-full border border-border/70 bg-muted/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-                Workspace
-              </div>
-              <div className="space-y-2">
-                <CardTitle className="text-3xl tracking-tight">Operate BarberSuite</CardTitle>
-                <CardDescription className="max-w-3xl text-sm leading-6">
-                  Todo el frontend operativo consume rutas internas <code>/api/*</code>. El token
-                  vive en cookie <code>httpOnly</code> y la sucursal seleccionada en{" "}
-                  <code>bs_branch_id</code>.
-                </CardDescription>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <AppNavigation />
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-[1.75rem] border-border/70 bg-card/80 shadow-xl shadow-black/5 backdrop-blur">
-            <CardContent className="pt-6">
-              <BranchSelector
-                branches={payload?.branches ?? []}
-                selectedBranchId={selectedBranchId}
-              />
-            </CardContent>
-          </Card>
-        </section>
-
-        {children}
-      </div>
-    </main>
+    <SidebarProvider defaultOpen>
+      <AppSidebar roles={roles} user={{ fullName: user.fullName, email: user.email }} />
+      <SidebarInset className="min-h-screen bg-transparent">
+        <AppTopbar
+          branches={branches}
+          roles={roles}
+          selectedBranchId={selectedBranchId}
+          user={{ fullName: user.fullName, email: user.email }}
+        />
+        <div className="flex-1 px-4 py-6 pb-28 sm:px-6 lg:px-8">{children}</div>
+        <MobileBottomNav
+          branches={branches}
+          roles={roles}
+          selectedBranchId={selectedBranchId}
+          user={{ fullName: user.fullName, email: user.email }}
+        />
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

@@ -58,6 +58,7 @@ test("signup, operate services, and logout", async ({ page }) => {
   await page.getByTestId(`services-toggle-${toTestIdSegment(serviceName)}`).click();
   await expect(serviceRow).toContainText("Inactiva");
 
+  await page.getByTestId("nav-user-menu").click();
   await page.getByTestId("nav-logout").click();
   await expect(page).toHaveURL(/\/login$/);
 

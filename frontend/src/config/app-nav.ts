@@ -9,6 +9,7 @@ import {
   Scissors,
   Settings2,
   SwatchBook,
+  UserRound,
   Users,
 } from "lucide-react";
 
@@ -128,6 +129,18 @@ export const APP_NAV_ITEMS: AppNavItem[] = [
     group: "operations",
     allowedRoles: ["ADMIN", "MANAGER", "RECEPTION"],
     mobilePrimary: true,
+  },
+  {
+    key: "staff",
+    href: "/app/staff",
+    icon: UserRound,
+    label: {
+      es: "Staff",
+      en: "Staff",
+    },
+    group: "administration",
+    allowedRoles: ["ADMIN", "MANAGER"],
+    testId: "nav-staff",
   },
   {
     key: "branches",

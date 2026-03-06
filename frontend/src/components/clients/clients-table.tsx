@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 import {
   type ClientPagePayload,
   type ClientPayload,
@@ -14,6 +15,19 @@ import {
 import { apiFetch } from "@/lib/api-client";
 import { ClientForm, type ClientFormSubmission } from "@/components/clients/client-form";
 import { ProblemBanner } from "@/components/ui/problem-banner";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const DEFAULT_PAGE_SIZE = 20;
 
@@ -32,6 +46,21 @@ function formatDate(value: string) {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));
+}
+
+function ClientsLoadingState() {
+  return (
+    <div className="space-y-4 px-6 py-6">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <div className="grid gap-3 sm:grid-cols-[1.6fr_1.4fr_1fr_1fr]" key={index}>
+          <Skeleton className="h-14 rounded-xl" />
+          <Skeleton className="h-14 rounded-xl" />
+          <Skeleton className="h-14 rounded-xl" />
+          <Skeleton className="h-14 rounded-xl" />
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export function ClientsTable({ branchId }: { branchId: string }) {
@@ -134,6 +163,9 @@ export function ClientsTable({ branchId }: { branchId: string }) {
       return;
     }
 
+    toast.success(
+      isEditing ? "Cliente actualizado correctamente." : "Cliente creado correctamente.",
+    );
     setFormMode(null);
     setEditingClient(null);
     await reloadClients();
@@ -164,6 +196,7 @@ export function ClientsTable({ branchId }: { branchId: string }) {
       return;
     }
 
+    toast.success(client.active ? "Cliente desactivado." : "Cliente activado.");
     await reloadClients();
     router.refresh();
   }
@@ -189,20 +222,24 @@ export function ClientsTable({ branchId }: { branchId: string }) {
     : false;
 
   return (
-    <div className="workspace-stack">
-      <div className="table-toolbar">
-        <div className="toolbar-copy">
-          <div className="badge-row">
-            <span className="soft-pill">Branch-scoped data</span>
-            <span className="soft-pill">{branchId}</span>
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge className="rounded-full bg-brand-muted text-brand-foreground hover:bg-brand-muted">
+              Branch scoped
+            </Badge>
+            <Badge className="rounded-full" variant="outline">
+              {branchId}
+            </Badge>
           </div>
-          <p className="muted">
+          <p className="text-sm leading-6 text-muted-foreground">
             El listado usa la branch seleccionada arriba y soporta búsqueda y paginación.
           </p>
         </div>
 
-        <button
-          className="button button-primary"
+        <Button
+          className="rounded-full"
           data-testid="clients-add"
           onClick={() => {
             setEditingClient(null);
@@ -212,13 +249,17 @@ export function ClientsTable({ branchId }: { branchId: string }) {
           type="button"
         >
           Nuevo cliente
-        </button>
+        </Button>
       </div>
 
-      <form className="search-form" onSubmit={handleSearchSubmit}>
-        <div className="field search-field">
-          <label htmlFor="client-search">Buscar</label>
-          <input
+      <form
+        className="grid gap-4 rounded-[1.5rem] border border-border/70 bg-card/70 p-5 shadow-sm sm:grid-cols-[minmax(0,1fr)_auto]"
+        onSubmit={handleSearchSubmit}
+      >
+        <div className="space-y-2">
+          <Label htmlFor="client-search">Buscar</Label>
+          <Input
+            className="h-11 rounded-xl"
             data-testid="clients-search"
             id="client-search"
             onChange={(event) => setQueryInput(event.target.value)}
@@ -227,162 +268,188 @@ export function ClientsTable({ branchId }: { branchId: string }) {
           />
         </div>
 
-        <button
-          className="button button-secondary"
+        <Button
+          className="h-11 self-end rounded-xl"
           data-testid="clients-search-submit"
           disabled={isLoading}
           type="submit"
+          variant="outline"
         >
           Buscar
-        </button>
+        </Button>
       </form>
 
       {problem ? <ProblemBanner problem={problem} /> : null}
 
-      <div className="workspace-grid">
-        <div className="workspace-surface">
-          {isLoading ? (
-            <div className="empty-state">Loading clients...</div>
-          ) : !clientPage || clientPage.items.length === 0 ? (
-            <div className="empty-state stack">
-              <strong>
-                {query ? "No encontramos clientes para esa búsqueda." : "No hay clientes todavía."}
-              </strong>
-              <p>
-                {query
-                  ? "Prueba otro término o crea el primer cliente de esta sucursal."
-                  : "Registra el primer cliente de la sucursal seleccionada."}
-              </p>
-            </div>
-          ) : (
-            <>
-              <div className="table-shell">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>Contact</th>
-                      <th>Notes</th>
-                      <th>Active</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {clientPage.items.map((client) => (
-                      <tr
-                        data-testid={`clients-row-${toTestIdSegment(client.fullName)}`}
-                        key={client.id}
-                      >
-                        <td>
-                          <div className="cell-stack">
-                            <strong>{client.fullName}</strong>
-                            <span className="muted">{formatDate(client.createdAt)}</span>
-                          </div>
-                        </td>
-                        <td>
-                          <div className="cell-stack">
-                            <span>{client.phone || "Sin teléfono"}</span>
-                            <span className="muted">{client.email || "Sin email"}</span>
-                          </div>
-                        </td>
-                        <td>{client.notes || "Sin notas"}</td>
-                        <td>
-                          <span
-                            className={`status-chip ${
-                              client.active ? "status-chip-active" : "status-chip-inactive"
-                            }`}
-                          >
-                            {client.active ? "Activo" : "Inactivo"}
-                          </span>
-                        </td>
-                        <td>
-                          <div className="row-actions">
-                            <button
-                              className="button button-secondary button-small"
-                              data-testid={`clients-edit-${toTestIdSegment(client.fullName)}`}
-                              disabled={pendingClientId === client.id || isSubmitting}
-                              onClick={() => void openClientEditor(client.id)}
-                              type="button"
-                            >
-                              {pendingClientId === client.id ? "Loading..." : "Edit"}
-                            </button>
-                            <button
-                              className="button button-secondary button-small"
-                              data-testid={`clients-toggle-${toTestIdSegment(client.fullName)}`}
-                              disabled={pendingClientId === client.id || isSubmitting}
-                              onClick={() => void handleToggleActive(client)}
-                              type="button"
-                            >
-                              {pendingClientId === client.id
-                                ? "Saving..."
-                                : client.active
-                                  ? "Deactivate"
-                                  : "Activate"}
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="page-actions">
-                <span className="soft-pill">
-                  {clientPage.totalItems} clientes · página {clientPage.page + 1} de{" "}
-                  {Math.max(clientPage.totalPages, 1)}
-                </span>
-                <div className="actions-row">
-                  <button
-                    className="button button-secondary button-small"
-                    disabled={!canGoPrevious}
-                    onClick={() => {
-                      setIsLoading(true);
-                      setPage((currentPage) => Math.max(currentPage - 1, 0));
-                    }}
-                    type="button"
-                  >
-                    Prev
-                  </button>
-                  <button
-                    className="button button-secondary button-small"
-                    disabled={!canGoNext}
-                    onClick={() => {
-                      setIsLoading(true);
-                      setPage((currentPage) => currentPage + 1);
-                    }}
-                    type="button"
-                  >
-                    Next
-                  </button>
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.9fr)]">
+        <Card className="overflow-hidden rounded-[1.5rem] border-border/70 bg-card/80 shadow-lg shadow-black/5">
+          <CardHeader className="space-y-3">
+            <CardTitle className="text-xl tracking-tight">Listado</CardTitle>
+            <CardDescription>
+              Búsqueda por nombre, teléfono o email con paginación branch-scoped.
+            </CardDescription>
+          </CardHeader>
+          <Separator />
+          <CardContent className="p-0">
+            {isLoading ? (
+              <ClientsLoadingState />
+            ) : !clientPage || clientPage.items.length === 0 ? (
+              <div className="px-6 py-8">
+                <div className="rounded-2xl border border-dashed border-border/70 bg-muted/40 p-6">
+                  <strong className="block text-base font-semibold tracking-tight">
+                    {query ? "No encontramos clientes para esa búsqueda." : "No hay clientes todavía."}
+                  </strong>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                    {query
+                      ? "Prueba otro término o crea el primer cliente de esta sucursal."
+                      : "Registra el primer cliente de la sucursal seleccionada."}
+                  </p>
                 </div>
               </div>
-            </>
-          )}
-        </div>
+            ) : (
+              <>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-sm">
+                    <thead className="bg-muted/40 text-left text-xs uppercase tracking-[0.22em] text-muted-foreground">
+                      <tr>
+                        <th className="px-6 py-4 font-semibold">Name</th>
+                        <th className="px-6 py-4 font-semibold">Contact</th>
+                        <th className="px-6 py-4 font-semibold">Notes</th>
+                        <th className="px-6 py-4 font-semibold">Active</th>
+                        <th className="px-6 py-4 font-semibold">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {clientPage.items.map((client) => (
+                        <tr
+                          className="border-t border-border/70 align-top"
+                          data-testid={`clients-row-${toTestIdSegment(client.fullName)}`}
+                          key={client.id}
+                        >
+                          <td className="px-6 py-4">
+                            <div className="space-y-1">
+                              <p className="font-medium">{client.fullName}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {formatDate(client.createdAt)}
+                              </p>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="space-y-1">
+                              <p>{client.phone || "Sin teléfono"}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {client.email || "Sin email"}
+                              </p>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">{client.notes || "Sin notas"}</td>
+                          <td className="px-6 py-4">
+                            <Badge
+                              className="rounded-full"
+                              variant={client.active ? "secondary" : "outline"}
+                            >
+                              {client.active ? "Activo" : "Inactivo"}
+                            </Badge>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex flex-wrap gap-2">
+                              <Button
+                                className="rounded-full"
+                                data-testid={`clients-edit-${toTestIdSegment(client.fullName)}`}
+                                disabled={pendingClientId === client.id || isSubmitting}
+                                onClick={() => void openClientEditor(client.id)}
+                                size="sm"
+                                type="button"
+                                variant="outline"
+                              >
+                                {pendingClientId === client.id ? "Loading..." : "Edit"}
+                              </Button>
+                              <Button
+                                className="rounded-full"
+                                data-testid={`clients-toggle-${toTestIdSegment(client.fullName)}`}
+                                disabled={pendingClientId === client.id || isSubmitting}
+                                onClick={() => void handleToggleActive(client)}
+                                size="sm"
+                                type="button"
+                                variant="ghost"
+                              >
+                                {pendingClientId === client.id
+                                  ? "Saving..."
+                                  : client.active
+                                    ? "Deactivate"
+                                    : "Activate"}
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
 
-        <div className="workspace-surface">
-          {formMode ? (
-            <ClientForm
-              initialClient={editingClient}
-              isSubmitting={isSubmitting}
-              key={editingClient?.id ?? "create-client"}
-              onCancel={() => {
-                setFormMode(null);
-                setEditingClient(null);
-              }}
-              onSubmit={handleSubmit}
-            />
-          ) : (
-            <div className="empty-state stack">
-              <strong>Selecciona una acción.</strong>
-              <p>
-                Puedes crear un cliente nuevo, editar uno existente o cambiar su estado desde la
-                tabla.
-              </p>
-            </div>
-          )}
-        </div>
+                <div className="flex flex-col gap-4 border-t border-border/70 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+                  <Badge className="w-fit rounded-full" variant="outline">
+                    {clientPage.totalItems} clientes · página {clientPage.page + 1} de{" "}
+                    {Math.max(clientPage.totalPages, 1)}
+                  </Badge>
+                  <div className="flex gap-2">
+                    <Button
+                      className="rounded-full"
+                      disabled={!canGoPrevious}
+                      onClick={() => {
+                        setIsLoading(true);
+                        setPage((currentPage) => Math.max(currentPage - 1, 0));
+                      }}
+                      type="button"
+                      variant="outline"
+                    >
+                      Prev
+                    </Button>
+                    <Button
+                      className="rounded-full"
+                      disabled={!canGoNext}
+                      onClick={() => {
+                        setIsLoading(true);
+                        setPage((currentPage) => currentPage + 1);
+                      }}
+                      type="button"
+                      variant="outline"
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-[1.5rem] border-border/70 bg-card/80 shadow-lg shadow-black/5">
+          <CardContent className="pt-6">
+            {formMode ? (
+              <ClientForm
+                initialClient={editingClient}
+                isSubmitting={isSubmitting}
+                key={editingClient?.id ?? "create-client"}
+                onCancel={() => {
+                  setFormMode(null);
+                  setEditingClient(null);
+                }}
+                onSubmit={handleSubmit}
+              />
+            ) : (
+              <div className="rounded-2xl border border-dashed border-border/70 bg-muted/40 p-6">
+                <strong className="block text-base font-semibold tracking-tight">
+                  Selecciona una acción.
+                </strong>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  Puedes crear un cliente nuevo, editar uno existente o cambiar su estado desde la
+                  tabla.
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

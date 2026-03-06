@@ -1,20 +1,18 @@
 import type { Metadata } from "next";
-import { Fraunces, Space_Grotesk } from "next/font/google";
+import { Inter } from "next/font/google";
+import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
-const displayFont = Fraunces({
-  variable: "--font-display",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
-});
-
-const bodyFont = Space_Grotesk({
-  variable: "--font-body",
-  subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
   title: "BarberSuite",
-  description: "Onboarding, login y dashboard inicial para BarberSuite.",
+  description: "BarberSuite opera onboarding, servicios y clientes desde un frontend BFF seguro.",
 };
 
 export default function RootLayout({
@@ -23,9 +21,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es">
-      <body className={`${displayFont.variable} ${bodyFont.variable}`}>
-        {children}
+    <html lang="es" suppressHydrationWarning>
+      <body className={`${inter.variable} font-sans`}>
+        <ThemeProvider attribute="class" defaultTheme="system" disableTransitionOnChange enableSystem>
+          {children}
+          <Toaster closeButton richColors />
+        </ThemeProvider>
       </body>
     </html>
   );

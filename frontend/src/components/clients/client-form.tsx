@@ -2,6 +2,13 @@
 
 import { FormEvent, useState } from "react";
 import { type ClientPayload } from "@/lib/backend";
+import { ProblemBanner } from "@/components/ui/problem-banner";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 
 export type ClientFormSubmission = {
   fullName: string;
@@ -65,20 +72,35 @@ export function ClientForm({
   }
 
   return (
-    <form className="form-grid" onSubmit={handleSubmit}>
-      <div className="dashboard-heading">
-        <span className="eyebrow">{initialClient ? "Edit client" : "New client"}</span>
-        <h1>{initialClient ? "Actualizar cliente" : "Crear cliente"}</h1>
-        <p className="muted">
-          Esta operación usa el BFF interno y adjunta la sucursal desde la cookie seleccionada.
-        </p>
+    <form className="space-y-6" onSubmit={handleSubmit}>
+      <div className="space-y-2">
+        <div className="inline-flex w-fit rounded-full border border-border/70 bg-muted/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+          {initialClient ? "Edit client" : "New client"}
+        </div>
+        <div className="space-y-1">
+          <h2 className="text-2xl font-semibold tracking-tight">
+            {initialClient ? "Actualizar cliente" : "Crear cliente"}
+          </h2>
+          <p className="text-sm leading-6 text-muted-foreground">
+            Esta operación usa el BFF interno y adjunta la sucursal desde la cookie seleccionada.
+          </p>
+        </div>
       </div>
 
-      {error ? <div className="alert">{error}</div> : null}
+      {error ? (
+        <ProblemBanner
+          problem={{
+            title: "Validación local",
+            detail: error,
+            code: "VALIDATION_ERROR",
+          }}
+        />
+      ) : null}
 
-      <div className="field">
-        <label htmlFor="client-full-name">Full name</label>
-        <input
+      <div className="space-y-2">
+        <Label htmlFor="client-full-name">Full name</Label>
+        <Input
+          className="h-11 rounded-xl"
           data-testid="client-fullName"
           id="client-full-name"
           minLength={2}
@@ -89,10 +111,11 @@ export function ClientForm({
         />
       </div>
 
-      <div className="field-group">
-        <div className="field">
-          <label htmlFor="client-phone">Phone</label>
-          <input
+      <div className="grid gap-5 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="client-phone">Phone</Label>
+          <Input
+            className="h-11 rounded-xl"
             data-testid="client-phone"
             id="client-phone"
             onChange={(event) => setPhone(event.target.value)}
@@ -101,9 +124,10 @@ export function ClientForm({
           />
         </div>
 
-        <div className="field">
-          <label htmlFor="client-email">Email</label>
-          <input
+        <div className="space-y-2">
+          <Label htmlFor="client-email">Email</Label>
+          <Input
+            className="h-11 rounded-xl"
             data-testid="client-email"
             id="client-email"
             onChange={(event) => setEmail(event.target.value)}
@@ -114,9 +138,10 @@ export function ClientForm({
         </div>
       </div>
 
-      <div className="field">
-        <label htmlFor="client-notes">Notes</label>
-        <textarea
+      <div className="space-y-2">
+        <Label htmlFor="client-notes">Notes</Label>
+        <Textarea
+          className="min-h-32 rounded-xl"
           data-testid="client-notes"
           id="client-notes"
           onChange={(event) => setNotes(event.target.value)}
@@ -126,22 +151,25 @@ export function ClientForm({
         />
       </div>
 
+      <Separator />
+
       {initialClient ? (
-        <label className="checkbox-row">
-          <input
+        <label className="flex items-center gap-3 rounded-2xl border border-border/70 bg-muted/40 px-4 py-3 text-sm font-medium">
+          <Checkbox
             checked={active}
-            onChange={(event) => setActive(event.target.checked)}
-            type="checkbox"
+            onCheckedChange={(checked) => setActive(Boolean(checked))}
           />
           <span>Cliente activo</span>
         </label>
       ) : (
-        <p className="support">Los clientes nuevos se crean activos por defecto.</p>
+        <p className="text-sm leading-6 text-muted-foreground">
+          Los clientes nuevos se crean activos por defecto.
+        </p>
       )}
 
-      <div className="actions-row">
-        <button
-          className="button button-primary"
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <Button
+          className="h-11 rounded-xl"
           data-testid="client-submit"
           disabled={isSubmitting}
           type="submit"
@@ -153,15 +181,16 @@ export function ClientForm({
             : initialClient
               ? "Guardar cambios"
               : "Crear cliente"}
-        </button>
-        <button
-          className="button button-secondary"
+        </Button>
+        <Button
+          className="h-11 rounded-xl"
           disabled={isSubmitting}
           onClick={onCancel}
           type="button"
+          variant="outline"
         >
           Cancelar
-        </button>
+        </Button>
       </div>
     </form>
   );

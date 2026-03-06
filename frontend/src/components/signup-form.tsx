@@ -2,6 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { FormEvent, useState, useTransition } from "react";
+import { ProblemBanner } from "@/components/ui/problem-banner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type SignupResult = {
   ok?: boolean;
@@ -52,12 +56,20 @@ export function SignupForm() {
   }
 
   return (
-    <form className="form-grid" onSubmit={handleSubmit}>
-      {error ? <div className="alert">{error}</div> : null}
+    <form className="space-y-5" onSubmit={handleSubmit}>
+      {error ? (
+        <ProblemBanner
+          problem={{
+            title: "No pudimos completar el onboarding",
+            detail: error,
+          }}
+        />
+      ) : null}
 
-      <div className="field">
-        <label htmlFor="tenantName">Tenant</label>
-        <input
+      <div className="space-y-2">
+        <Label htmlFor="tenantName">Tenant</Label>
+        <Input
+          className="h-11 rounded-xl"
           data-testid="signup-tenantName"
           id="tenantName"
           minLength={2}
@@ -67,10 +79,11 @@ export function SignupForm() {
         />
       </div>
 
-      <div className="field-group">
-        <div className="field">
-          <label htmlFor="branchName">Sucursal inicial</label>
-          <input
+      <div className="grid gap-5 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="branchName">Sucursal inicial</Label>
+          <Input
+            className="h-11 rounded-xl"
             data-testid="signup-branchName"
             id="branchName"
             minLength={2}
@@ -80,9 +93,10 @@ export function SignupForm() {
           />
         </div>
 
-        <div className="field field-code">
-          <label htmlFor="branchCode">Código</label>
-          <input
+        <div className="space-y-2">
+          <Label htmlFor="branchCode">Código</Label>
+          <Input
+            className="h-11 rounded-xl uppercase"
             data-testid="signup-branchCode"
             id="branchCode"
             name="branchCode"
@@ -93,9 +107,10 @@ export function SignupForm() {
         </div>
       </div>
 
-      <div className="field">
-        <label htmlFor="timeZone">Time zone</label>
-        <input
+      <div className="space-y-2">
+        <Label htmlFor="timeZone">Time zone</Label>
+        <Input
+          className="h-11 rounded-xl"
           data-testid="signup-timeZone"
           defaultValue="America/Guayaquil"
           id="timeZone"
@@ -105,9 +120,10 @@ export function SignupForm() {
         />
       </div>
 
-      <div className="field">
-        <label htmlFor="adminFullName">Admin full name</label>
-        <input
+      <div className="space-y-2">
+        <Label htmlFor="adminFullName">Admin full name</Label>
+        <Input
+          className="h-11 rounded-xl"
           data-testid="signup-adminFullName"
           id="adminFullName"
           minLength={2}
@@ -117,10 +133,11 @@ export function SignupForm() {
         />
       </div>
 
-      <div className="field">
-        <label htmlFor="adminEmail">Admin email</label>
-        <input
+      <div className="space-y-2">
+        <Label htmlFor="adminEmail">Admin email</Label>
+        <Input
           autoComplete="email"
+          className="h-11 rounded-xl"
           data-testid="signup-adminEmail"
           id="adminEmail"
           name="adminEmail"
@@ -130,10 +147,11 @@ export function SignupForm() {
         />
       </div>
 
-      <div className="field">
-        <label htmlFor="adminPassword">Admin password</label>
-        <input
+      <div className="space-y-2">
+        <Label htmlFor="adminPassword">Admin password</Label>
+        <Input
           autoComplete="new-password"
+          className="h-11 rounded-xl"
           data-testid="signup-adminPassword"
           id="adminPassword"
           minLength={8}
@@ -144,18 +162,18 @@ export function SignupForm() {
         />
       </div>
 
-      <p className="support">
+      <p className="text-sm leading-6 text-muted-foreground">
         El signup llama al backend real y te deja autenticado sin exponer el token en el browser.
       </p>
 
-      <button
-        className="button button-primary"
+      <Button
+        className="h-11 w-full rounded-xl bg-primary text-primary-foreground shadow-lg shadow-black/10"
         data-testid="signup-submit"
         disabled={isPending}
         type="submit"
       >
         {isPending ? "Creando tenant..." : "Crear cuenta y entrar"}
-      </button>
+      </Button>
     </form>
   );
 }

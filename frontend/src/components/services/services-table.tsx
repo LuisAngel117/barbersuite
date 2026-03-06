@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 import { type ServicePayload } from "@/lib/backend";
 import {
   readApiResponse,
@@ -11,6 +12,17 @@ import {
 import { apiFetch } from "@/lib/api-client";
 import { ServiceForm, type ServiceFormSubmission } from "@/components/services/service-form";
 import { ProblemBanner } from "@/components/ui/problem-banner";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const currencyFormatter = new Intl.NumberFormat("es-EC", {
   style: "currency",
@@ -35,6 +47,21 @@ function toTestIdSegment(value: string) {
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "") || "item"
+  );
+}
+
+function ServicesLoadingState() {
+  return (
+    <div className="space-y-4 px-6 py-6">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <div className="grid gap-3 sm:grid-cols-[2fr_1fr_1fr_1fr]" key={index}>
+          <Skeleton className="h-12 rounded-xl" />
+          <Skeleton className="h-12 rounded-xl" />
+          <Skeleton className="h-12 rounded-xl" />
+          <Skeleton className="h-12 rounded-xl" />
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -132,6 +159,9 @@ export function ServicesTable() {
       return;
     }
 
+    toast.success(
+      isEditing ? "Servicio actualizado correctamente." : "Servicio creado correctamente.",
+    );
     setFormMode(null);
     setEditingService(null);
     await reloadServices();
@@ -162,22 +192,30 @@ export function ServicesTable() {
       return;
     }
 
+    toast.success(service.active ? "Servicio desactivado." : "Servicio activado.");
     await reloadServices();
     router.refresh();
   }
 
   return (
-    <div className="workspace-stack">
-      <div className="table-toolbar">
-        <div className="toolbar-copy">
-          <span className="soft-pill">{services.length} servicios cargados</span>
-          <p className="muted">
-            Gestión tenant-scoped con listado activo primero y edición inline.
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge className="rounded-full bg-brand-muted text-brand-foreground hover:bg-brand-muted">
+              {services.length} servicios
+            </Badge>
+            <Badge className="rounded-full" variant="outline">
+              Tenant scoped
+            </Badge>
+          </div>
+          <p className="text-sm leading-6 text-muted-foreground">
+            Gestión tenant-scoped con orden activo primero y edición rápida desde la misma vista.
           </p>
         </div>
 
-        <button
-          className="button button-primary"
+        <Button
+          className="rounded-full"
           data-testid="services-add"
           onClick={() => {
             setEditingService(null);
@@ -187,111 +225,134 @@ export function ServicesTable() {
           type="button"
         >
           Nuevo servicio
-        </button>
+        </Button>
       </div>
 
       {problem ? <ProblemBanner problem={problem} /> : null}
 
-      <div className="workspace-grid">
-        <div className="workspace-surface">
-          {isLoading ? (
-            <div className="empty-state">Loading services...</div>
-          ) : services.length === 0 ? (
-            <div className="empty-state stack">
-              <strong>No hay servicios todavía.</strong>
-              <p>Crea el primero para empezar a operar el tenant.</p>
-            </div>
-          ) : (
-            <div className="table-shell">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Duration</th>
-                    <th>Price</th>
-                    <th>Active</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {services.map((service) => (
-                    <tr
-                      data-testid={`services-row-${toTestIdSegment(service.name)}`}
-                      key={service.id}
-                    >
-                      <td>
-                        <div className="cell-stack">
-                          <strong>{service.name}</strong>
-                          <span className="muted">{service.id}</span>
-                        </div>
-                      </td>
-                      <td>{service.durationMinutes} min</td>
-                      <td>{currencyFormatter.format(service.price)}</td>
-                      <td>
-                        <span
-                          className={`status-chip ${
-                            service.active ? "status-chip-active" : "status-chip-inactive"
-                          }`}
-                        >
-                          {service.active ? "Activa" : "Inactiva"}
-                        </span>
-                      </td>
-                      <td>
-                        <div className="row-actions">
-                          <button
-                            className="button button-secondary button-small"
-                            data-testid={`services-edit-${toTestIdSegment(service.name)}`}
-                            disabled={pendingServiceId === service.id || isSubmitting}
-                            onClick={() => void openServiceEditor(service.id)}
-                            type="button"
-                          >
-                            {pendingServiceId === service.id ? "Loading..." : "Edit"}
-                          </button>
-                          <button
-                            className="button button-secondary button-small"
-                            data-testid={`services-toggle-${toTestIdSegment(service.name)}`}
-                            disabled={pendingServiceId === service.id || isSubmitting}
-                            onClick={() => void handleToggleActive(service)}
-                            type="button"
-                          >
-                            {pendingServiceId === service.id
-                              ? "Saving..."
-                              : service.active
-                                ? "Deactivate"
-                                : "Activate"}
-                          </button>
-                        </div>
-                      </td>
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.9fr)]">
+        <Card className="overflow-hidden rounded-[1.5rem] border-border/70 bg-card/80 shadow-lg shadow-black/5">
+          <CardHeader className="space-y-3">
+            <CardTitle className="text-xl tracking-tight">Listado</CardTitle>
+            <CardDescription>
+              Los servicios se muestran con preferencia por activos y nombre ascendente.
+            </CardDescription>
+          </CardHeader>
+          <Separator />
+          <CardContent className="p-0">
+            {isLoading ? (
+              <ServicesLoadingState />
+            ) : services.length === 0 ? (
+              <div className="px-6 py-8">
+                <div className="rounded-2xl border border-dashed border-border/70 bg-muted/40 p-6">
+                  <strong className="block text-base font-semibold tracking-tight">
+                    No hay servicios todavía.
+                  </strong>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                    Crea el primero para empezar a operar el tenant.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead className="bg-muted/40 text-left text-xs uppercase tracking-[0.22em] text-muted-foreground">
+                    <tr>
+                      <th className="px-6 py-4 font-semibold">Name</th>
+                      <th className="px-6 py-4 font-semibold">Duration</th>
+                      <th className="px-6 py-4 font-semibold">Price</th>
+                      <th className="px-6 py-4 font-semibold">Active</th>
+                      <th className="px-6 py-4 font-semibold">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
+                  </thead>
+                  <tbody>
+                    {services.map((service) => (
+                      <tr
+                        className="border-t border-border/70 align-top"
+                        data-testid={`services-row-${toTestIdSegment(service.name)}`}
+                        key={service.id}
+                      >
+                        <td className="px-6 py-4">
+                          <div className="space-y-1">
+                            <p className="font-medium">{service.name}</p>
+                            <p className="text-xs text-muted-foreground">{service.id}</p>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">{service.durationMinutes} min</td>
+                        <td className="px-6 py-4">{currencyFormatter.format(service.price)}</td>
+                        <td className="px-6 py-4">
+                          <Badge
+                            className="rounded-full"
+                            variant={service.active ? "secondary" : "outline"}
+                          >
+                            {service.active ? "Activa" : "Inactiva"}
+                          </Badge>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex flex-wrap gap-2">
+                            <Button
+                              className="rounded-full"
+                              data-testid={`services-edit-${toTestIdSegment(service.name)}`}
+                              disabled={pendingServiceId === service.id || isSubmitting}
+                              onClick={() => void openServiceEditor(service.id)}
+                              size="sm"
+                              type="button"
+                              variant="outline"
+                            >
+                              {pendingServiceId === service.id ? "Loading..." : "Edit"}
+                            </Button>
+                            <Button
+                              className="rounded-full"
+                              data-testid={`services-toggle-${toTestIdSegment(service.name)}`}
+                              disabled={pendingServiceId === service.id || isSubmitting}
+                              onClick={() => void handleToggleActive(service)}
+                              size="sm"
+                              type="button"
+                              variant="ghost"
+                            >
+                              {pendingServiceId === service.id
+                                ? "Saving..."
+                                : service.active
+                                  ? "Deactivate"
+                                  : "Activate"}
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-        <div className="workspace-surface">
-          {formMode ? (
-            <ServiceForm
-              initialService={editingService}
-              isSubmitting={isSubmitting}
-              key={editingService?.id ?? "create-service"}
-              onCancel={() => {
-                setFormMode(null);
-                setEditingService(null);
-              }}
-              onSubmit={handleSubmit}
-            />
-          ) : (
-            <div className="empty-state stack">
-              <strong>Selecciona una acción.</strong>
-              <p>
-                Puedes crear un servicio nuevo o abrir uno existente para editarlo y cambiar su
-                estado.
-              </p>
-            </div>
-          )}
-        </div>
+        <Card className="rounded-[1.5rem] border-border/70 bg-card/80 shadow-lg shadow-black/5">
+          <CardContent className="pt-6">
+            {formMode ? (
+              <ServiceForm
+                initialService={editingService}
+                isSubmitting={isSubmitting}
+                key={editingService?.id ?? "create-service"}
+                onCancel={() => {
+                  setFormMode(null);
+                  setEditingService(null);
+                }}
+                onSubmit={handleSubmit}
+              />
+            ) : (
+              <div className="rounded-2xl border border-dashed border-border/70 bg-muted/40 p-6">
+                <strong className="block text-base font-semibold tracking-tight">
+                  Selecciona una acción.
+                </strong>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  Puedes crear un servicio nuevo o abrir uno existente para editarlo y cambiar su
+                  estado.
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

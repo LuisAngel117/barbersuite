@@ -1,8 +1,12 @@
 "use client";
 
+import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api-client";
+import { cn } from "@/lib/utils";
 
 type LogoutButtonProps = {
   className?: string;
@@ -10,12 +14,12 @@ type LogoutButtonProps = {
 };
 
 export function LogoutButton({
-  className = "button button-secondary",
+  className,
   label = "Cerrar sesión",
 }: LogoutButtonProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const [, setError] = useState<string | null>(null);
 
   async function handleClick() {
     setError(null);
@@ -27,6 +31,7 @@ export function LogoutButton({
 
     if (!response.ok) {
       setError("No pudimos cerrar la sesión.");
+      toast.error("No pudimos cerrar la sesión.");
       return;
     }
 
@@ -37,17 +42,16 @@ export function LogoutButton({
   }
 
   return (
-    <div className="stack">
-      <button
-        className={className}
-        data-testid="nav-logout"
-        disabled={isPending}
-        onClick={() => void handleClick()}
-        type="button"
-      >
-        {isPending ? "Cerrando..." : label}
-      </button>
-      {error ? <p className="alert">{error}</p> : null}
-    </div>
+    <Button
+      className={cn("gap-2 rounded-full", className)}
+      data-testid="nav-logout"
+      disabled={isPending}
+      onClick={() => void handleClick()}
+      type="button"
+      variant="outline"
+    >
+      <LogOut className="size-4" />
+      {isPending ? "Cerrando..." : label}
+    </Button>
   );
 }

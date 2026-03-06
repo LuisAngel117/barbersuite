@@ -2,6 +2,12 @@
 
 import { FormEvent, useState } from "react";
 import { type ServicePayload } from "@/lib/backend";
+import { ProblemBanner } from "@/components/ui/problem-banner";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 
 export type ServiceFormSubmission = {
   name: string;
@@ -27,9 +33,7 @@ export function ServiceForm({
   const [durationMinutes, setDurationMinutes] = useState(
     initialService ? String(initialService.durationMinutes) : "30",
   );
-  const [price, setPrice] = useState(
-    initialService ? initialService.price.toFixed(2) : "10.00",
-  );
+  const [price, setPrice] = useState(initialService ? initialService.price.toFixed(2) : "10.00");
   const [active, setActive] = useState(initialService?.active ?? true);
   const [error, setError] = useState("");
 
@@ -65,20 +69,35 @@ export function ServiceForm({
   }
 
   return (
-    <form className="form-grid" onSubmit={handleSubmit}>
-      <div className="dashboard-heading">
-        <span className="eyebrow">{initialService ? "Edit service" : "New service"}</span>
-        <h1>{initialService ? "Actualizar servicio" : "Crear servicio"}</h1>
-        <p className="muted">
-          Los cambios viajan por el BFF interno y mantienen el token fuera del browser.
-        </p>
+    <form className="space-y-6" onSubmit={handleSubmit}>
+      <div className="space-y-2">
+        <div className="inline-flex w-fit rounded-full border border-border/70 bg-muted/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+          {initialService ? "Edit service" : "New service"}
+        </div>
+        <div className="space-y-1">
+          <h2 className="text-2xl font-semibold tracking-tight">
+            {initialService ? "Actualizar servicio" : "Crear servicio"}
+          </h2>
+          <p className="text-sm leading-6 text-muted-foreground">
+            Los cambios viajan por el BFF interno y mantienen el token fuera del browser.
+          </p>
+        </div>
       </div>
 
-      {error ? <div className="alert">{error}</div> : null}
+      {error ? (
+        <ProblemBanner
+          problem={{
+            title: "Validación local",
+            detail: error,
+            code: "VALIDATION_ERROR",
+          }}
+        />
+      ) : null}
 
-      <div className="field">
-        <label htmlFor="service-name">Name</label>
-        <input
+      <div className="space-y-2">
+        <Label htmlFor="service-name">Name</Label>
+        <Input
+          className="h-11 rounded-xl"
           data-testid="services-name"
           id="service-name"
           minLength={2}
@@ -89,10 +108,11 @@ export function ServiceForm({
         />
       </div>
 
-      <div className="field-group">
-        <div className="field">
-          <label htmlFor="service-duration">Duration (minutes)</label>
-          <input
+      <div className="grid gap-5 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="service-duration">Duration (minutes)</Label>
+          <Input
+            className="h-11 rounded-xl"
             data-testid="services-duration"
             id="service-duration"
             max={480}
@@ -105,9 +125,10 @@ export function ServiceForm({
           />
         </div>
 
-        <div className="field">
-          <label htmlFor="service-price">Price</label>
-          <input
+        <div className="space-y-2">
+          <Label htmlFor="service-price">Price</Label>
+          <Input
+            className="h-11 rounded-xl"
             data-testid="services-price"
             id="service-price"
             min={0}
@@ -120,22 +141,25 @@ export function ServiceForm({
         </div>
       </div>
 
+      <Separator />
+
       {initialService ? (
-        <label className="checkbox-row">
-          <input
+        <label className="flex items-center gap-3 rounded-2xl border border-border/70 bg-muted/40 px-4 py-3 text-sm font-medium">
+          <Checkbox
             checked={active}
-            onChange={(event) => setActive(event.target.checked)}
-            type="checkbox"
+            onCheckedChange={(checked) => setActive(Boolean(checked))}
           />
           <span>Servicio activo</span>
         </label>
       ) : (
-        <p className="support">Los servicios nuevos se crean activos por defecto.</p>
+        <p className="text-sm leading-6 text-muted-foreground">
+          Los servicios nuevos se crean activos por defecto.
+        </p>
       )}
 
-      <div className="actions-row">
-        <button
-          className="button button-primary"
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <Button
+          className="h-11 rounded-xl"
           data-testid="services-submit"
           disabled={isSubmitting}
           type="submit"
@@ -147,15 +171,16 @@ export function ServiceForm({
             : initialService
               ? "Guardar cambios"
               : "Crear servicio"}
-        </button>
-        <button
-          className="button button-secondary"
+        </Button>
+        <Button
+          className="h-11 rounded-xl"
           disabled={isSubmitting}
           onClick={onCancel}
           type="button"
+          variant="outline"
         >
           Cancelar
-        </button>
+        </Button>
       </div>
     </form>
   );

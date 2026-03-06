@@ -2,6 +2,10 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState, useTransition } from "react";
+import { ProblemBanner } from "@/components/ui/problem-banner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type LoginResult = {
   ok?: boolean;
@@ -52,13 +56,22 @@ export function LoginForm() {
   }
 
   return (
-    <form className="form-grid" onSubmit={handleSubmit}>
-      {error ? <div className="alert">{error}</div> : null}
+    <form className="space-y-5" onSubmit={handleSubmit}>
+      {error ? (
+        <ProblemBanner
+          problem={{
+            title: "No pudimos iniciar sesión",
+            detail: error,
+            code: "UNAUTHORIZED",
+          }}
+        />
+      ) : null}
 
-      <div className="field">
-        <label htmlFor="email">Email</label>
-        <input
+      <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
+        <Input
           autoComplete="email"
+          className="h-11 rounded-xl"
           data-testid="login-email"
           id="email"
           name="email"
@@ -68,10 +81,11 @@ export function LoginForm() {
         />
       </div>
 
-      <div className="field">
-        <label htmlFor="password">Password</label>
-        <input
+      <div className="space-y-2">
+        <Label htmlFor="password">Password</Label>
+        <Input
           autoComplete="current-password"
+          className="h-11 rounded-xl"
           data-testid="login-password"
           id="password"
           minLength={8}
@@ -82,14 +96,14 @@ export function LoginForm() {
         />
       </div>
 
-      <button
-        className="button button-primary"
+      <Button
+        className="h-11 w-full rounded-xl bg-primary text-primary-foreground shadow-lg shadow-black/10"
         data-testid="login-submit"
         disabled={isPending}
         type="submit"
       >
         {isPending ? "Validando..." : "Entrar al dashboard"}
-      </button>
+      </Button>
     </form>
   );
 }

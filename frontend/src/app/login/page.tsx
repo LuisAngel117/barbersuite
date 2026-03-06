@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AuthShell } from "@/components/auth-shell";
 import { LoginForm } from "@/components/login-form";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ACCESS_TOKEN_COOKIE } from "@/lib/auth-cookie";
 
 export default async function LoginPage() {
@@ -22,24 +23,31 @@ export default async function LoginPage() {
         { value: "PG17", label: "Backend local listo" },
       ]}
     >
-      <div className="card stack">
-        <div className="stack">
-          <span className="eyebrow">Acceso</span>
-          <h1>Entrar a BarberSuite</h1>
-          <p>
-            Inicia sesión con <strong>email + password</strong>. El backend resuelve el tenant desde el usuario.
-          </p>
-        </div>
+      <Card className="w-full rounded-[1.5rem] border-border/70 bg-background/95 shadow-xl shadow-black/5">
+        <CardHeader className="space-y-4">
+          <div className="inline-flex w-fit rounded-full border border-border/70 bg-muted/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+            Acceso
+          </div>
+          <div className="space-y-2">
+            <CardTitle className="text-3xl tracking-tight">Entrar a BarberSuite</CardTitle>
+            <CardDescription className="text-sm leading-6">
+              Inicia sesión con <strong>email + password</strong>. El backend resuelve el tenant
+              desde el usuario.
+            </CardDescription>
+          </div>
+        </CardHeader>
 
-        <LoginForm />
+        <CardContent className="space-y-6">
+          <LoginForm />
 
-        <div className="link-row">
-          <span className="muted">¿Todavía no tienes tenant?</span>
-          <Link className="link-accent" href="/signup">
-            Crear cuenta y sucursal inicial
-          </Link>
-        </div>
-      </div>
+          <div className="flex flex-col gap-2 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+            <span>¿Todavía no tienes tenant?</span>
+            <Link className="font-medium text-brand transition-colors hover:text-brand/80" href="/signup">
+              Crear cuenta y sucursal inicial
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
     </AuthShell>
   );
 }

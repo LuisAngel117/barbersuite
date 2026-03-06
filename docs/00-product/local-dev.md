@@ -45,3 +45,24 @@ La bandeja debe cargar aunque todavía no existan correos enviados por la aplica
 - La base de datos usa un volumen persistente Docker para conservar datos entre reinicios.
 - La base creada por defecto es `barbersuite`.
 - Las credenciales de PostgreSQL se resuelven por variables de entorno para evitar secretos hardcodeados en el compose.
+
+## Frontend
+Ejecutar desde `/frontend`:
+
+```bash
+cp .env.local.example .env.local
+npm install
+npm run dev
+```
+
+Abrir:
+
+```text
+http://localhost:3000
+```
+
+Notas:
+- El backend debe estar corriendo en `http://localhost:8080`.
+- `BACKEND_BASE_URL` por defecto apunta a `http://localhost:8080/api/v1`.
+- El JWT se guarda en cookie `httpOnly`; no se usa `localStorage`.
+- El login actual pide `tenantId` además de email/password porque ese sigue siendo el contrato real del backend hoy.

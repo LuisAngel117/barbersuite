@@ -136,6 +136,22 @@ Reportes:
 - HTML report: `frontend/playwright-report/index.html`
 - traces y artifacts de fallo: `frontend/test-results/`
 
+## 3.d Notifications (Email)
+Con el stack demo arriba no hace falta exportar variables extra para SMTP: el backend Docker ya usa `barbersuite-mailhog:1025`.
+
+Abrir:
+- App: `http://localhost:3000/app/notifications`
+- MailHog UI: `http://localhost:8025`
+
+Flujo:
+1. Entra a `Notifications`.
+2. Completa `Enviar email de prueba`.
+3. Confirma que el item aparece en `Outbox` con estado `pending` o `sent`.
+4. Abre MailHog y verifica que el email llegó al inbox.
+
+Nota:
+- El worker de email corre por polling, así que el registro puede verse `pending` unos segundos antes de pasar a `sent`.
+
 ## 4. Apagar el stack
 
 ```powershell
@@ -196,6 +212,21 @@ docker compose -f docker-compose.yml -f docker-compose.app.yml -f docker-compose
 - Asegurate de que el backend ya este arriba
 - Vuelve a correr `./scripts/demo-seed.ps1`
 - Si el puerto `8080` esta ocupado por otro proceso, libera el puerto o usa el stack Docker sin procesos locales paralelos
+
+### El test email no llega a MailHog
+- Verifica que `http://localhost:8025` cargue.
+- Revisa el estado del backend:
+
+```powershell
+docker compose -f docker-compose.yml -f docker-compose.app.yml -f docker-compose.frontend.yml ps
+```
+
+- Mira logs del backend y MailHog:
+
+```powershell
+docker compose -f docker-compose.yml -f docker-compose.app.yml -f docker-compose.frontend.yml logs backend
+docker compose -f docker-compose.yml -f docker-compose.app.yml -f docker-compose.frontend.yml logs mailhog
+```
 
 ### Login entra pero navegar a Services o Clients devuelve al login
 - Verifica que el frontend tenga `COOKIE_SECURE=false` en local/demo

@@ -15,4 +15,9 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-barbersuite}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-change-me-local}
       SPRING_FLYWAY_ENABLED: "true"
+      MAIL_HOST: barbersuite-mailhog
+      MAIL_PORT: "1025"
+      MAIL_SMTP_AUTH: "false"
+      MAIL_SMTP_STARTTLS_ENABLE: "false"
+      MAIL_FROM: noreply@barbersuite.local
       JWT_SECRET: ${JWT_SECRET:-change-me-local-barbersuite-jwt-secret-please-override}

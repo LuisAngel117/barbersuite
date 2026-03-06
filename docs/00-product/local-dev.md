@@ -76,6 +76,8 @@ Notas:
 - `COOKIE_SECURE=false` en local/demo porque el frontend corre sobre `http://localhost`.
 - El JWT se guarda en cookie `httpOnly`; no se usa `localStorage`.
 - El login usa `email` y `password`; el backend resuelve el `tenantId` desde el usuario autenticado.
+- Para notificaciones por email en modo local, los defaults ya apuntan a MailHog (`MAIL_HOST=localhost`, `MAIL_PORT=1025`).
+- Si sobreescribes variables a mano, usa esas mismas para que `http://localhost:3000/app/notifications` entregue correos en `http://localhost:8025`.
 
 ## Modo full docker (demo)
 
@@ -111,5 +113,5 @@ La respuesta debe ser `200 OK`.
 
 ## Notas
 - `docker-compose.yml` se mantiene como stack de dependencias (`postgres` + `mailhog`).
-- `docker-compose.app.yml` agrega el backend y reutiliza el Postgres del compose base.
+- `docker-compose.app.yml` agrega el backend, reutiliza el Postgres del compose base y en demo apunta SMTP a `barbersuite-mailhog:1025`.
 - La base usa un volumen persistente Docker para conservar datos entre reinicios.

@@ -23,6 +23,9 @@ abstract class AuthenticatedWebIntegrationTestSupport {
   protected static final UUID TENANT_ID = UUID.fromString("11111111-1111-7111-8111-111111111111");
   protected static final UUID BRANCH_ID = UUID.fromString("22222222-2222-7222-8222-222222222222");
   protected static final UUID USER_ID = UUID.fromString("33333333-3333-7333-8333-333333333333");
+  protected static final UUID USER_BRANCH_ACCESS_ID = UUID.fromString(
+    "44444444-4444-7444-8444-444444444444"
+  );
   protected static final String EMAIL = "admin@barbersuite.test";
   protected static final String PASSWORD = "Admin123!";
 
@@ -68,6 +71,7 @@ abstract class AuthenticatedWebIntegrationTestSupport {
   }
 
   private void reseedAuthData() {
+    jdbcTemplate.update("delete from user_branch_access");
     jdbcTemplate.update("delete from user_roles");
     jdbcTemplate.update("delete from receipt_sequences");
     jdbcTemplate.update("delete from users");
@@ -114,6 +118,17 @@ abstract class AuthenticatedWebIntegrationTestSupport {
       TENANT_ID,
       USER_ID,
       "ADMIN"
+    );
+
+    jdbcTemplate.update(
+      """
+      insert into user_branch_access (id, tenant_id, user_id, branch_id)
+      values (?, ?, ?, ?)
+      """,
+      USER_BRANCH_ACCESS_ID,
+      TENANT_ID,
+      USER_ID,
+      BRANCH_ID
     );
   }
 }

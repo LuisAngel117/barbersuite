@@ -57,6 +57,7 @@ public class SecurityConfiguration {
         .requestMatchers(POST, "/api/v1/auth/login").permitAll()
         .requestMatchers(POST, "/api/v1/tenants/signup").permitAll()
         .requestMatchers(GET, "/api/v1/health", "/api/v1/health/**").permitAll()
+        .requestMatchers("/api/v1/notifications/email/**").hasAnyRole("ADMIN", "MANAGER")
         .requestMatchers(GET, "/api/v1/reports/**").hasAnyRole("ADMIN", "MANAGER")
         .requestMatchers("/api/v1/staff/**").hasAnyRole("ADMIN", "MANAGER")
         .requestMatchers(GET, "/api/v1/receipts", "/api/v1/receipts/**")

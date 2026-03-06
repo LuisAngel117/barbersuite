@@ -20,6 +20,8 @@ Endpoints tenant-scoped (catálogo global, usuarios/roles del tenant) **no** req
 - Tenant-scoped: el tenant se resuelve desde el JWT y `X-Branch-Id` NO debe exigirse.
 - Branch-scoped: además del tenant autenticado, requieren `X-Branch-Id`.
 - Ejemplos tenant-scoped del Slice 1: `/me`, `/branches`, `/branches/{branchId}`.
+- Ejemplos tenant-scoped del Slice 2: `/services`, `/services/{serviceId}`.
+- Ejemplos branch-scoped del Slice 2: `/clients`, `/clients/{clientId}`.
 - Ejemplos branch-scoped: agendas, caja, operaciones que ejecutan trabajo dentro de una sucursal específica.
 
 ### Error estándar

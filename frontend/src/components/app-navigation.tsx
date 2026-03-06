@@ -37,6 +37,7 @@ export function AppNavigation() {
             className={`app-nav-link ${isActive(pathname, item.href) ? "app-nav-link-active" : ""}`}
             href={item.href}
             key={item.href}
+            prefetch={false}
           >
             {item.label}
           </Link>

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { LogoutButton } from "@/components/logout-button";
 import { getDashboardContext } from "@/lib/dashboard-context";
 import {
   resolveErrorMessage,
@@ -20,9 +20,7 @@ export default async function DashboardPage() {
           )}
         </p>
         <div className="actions-row">
-          <Link className="button button-secondary" href="/api/auth/logout?next=/login">
-            Volver al login
-          </Link>
+          <LogoutButton label="Volver al login" />
         </div>
       </div>
     );
@@ -69,9 +67,7 @@ export default async function DashboardPage() {
             </dl>
           </div>
           <div className="actions-row">
-            <Link className="button button-secondary" href="/api/auth/logout?next=/login">
-              Cerrar sesión
-            </Link>
+            <LogoutButton />
           </div>
         </div>
       </div>

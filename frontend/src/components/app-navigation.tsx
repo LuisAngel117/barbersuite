@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { LogoutButton } from "@/components/logout-button";
 
 const navigationItems = [
   {
@@ -44,9 +45,7 @@ export function AppNavigation() {
         ))}
       </nav>
 
-      <Link className="button button-secondary" href="/api/auth/logout?next=/login">
-        Cerrar sesión
-      </Link>
+      <LogoutButton />
     </div>
   );
 }

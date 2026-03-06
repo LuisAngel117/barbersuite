@@ -1,18 +1,21 @@
+import { getTranslations } from "next-intl/server";
 import { ModulePlaceholder } from "@/components/module-placeholder";
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  const t = await getTranslations("placeholders.settings");
+
   return (
     <ModulePlaceholder
       bullets={[
-        "Aquí entrarán preferencias de tenant, branding y hardening operativo.",
-        "El shell ya considera este destino en desktop y mobile.",
-        "También sirve como lugar natural para accesos internos como UI Kit.",
+        t("bullets.one"),
+        t("bullets.two"),
+        t("bullets.three"),
       ]}
       ctaHref="/app/ui-kit"
-      ctaLabel="Abrir UI Kit"
-      description="Zona placeholder para configuración y sistema, reservada a ADMIN y MANAGER."
-      eyebrow="Sistema"
-      title="Settings"
+      ctaLabel={t("cta")}
+      description={t("description")}
+      eyebrow={t("eyebrow")}
+      title={t("title")}
     />
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState, useTransition } from "react";
 import { ProblemBanner } from "@/components/ui/problem-banner";
@@ -15,10 +16,11 @@ type LoginResult = {
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const tAuth = useTranslations("auth");
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState(
     searchParams.get("expired")
-      ? "Tu sesión expiró. Vuelve a autenticarte."
+      ? tAuth("sessionExpired")
       : "",
   );
 
@@ -45,7 +47,7 @@ export function LoginForm() {
 
         const result = (await response.json().catch(() => ({}))) as LoginResult;
         if (!response.ok) {
-          setError(result.error || "No pudimos iniciar sesión.");
+          setError(result.error || tAuth("loginFailure"));
           return;
         }
 
@@ -60,7 +62,7 @@ export function LoginForm() {
       {error ? (
         <ProblemBanner
           problem={{
-            title: "No pudimos iniciar sesión",
+            title: tAuth("loginFailure"),
             detail: error,
             code: "UNAUTHORIZED",
           }}
@@ -68,7 +70,7 @@ export function LoginForm() {
       ) : null}
 
       <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email">{tAuth("email")}</Label>
         <Input
           autoComplete="email"
           className="h-11 rounded-xl"
@@ -82,7 +84,7 @@ export function LoginForm() {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
+        <Label htmlFor="password">{tAuth("password")}</Label>
         <Input
           autoComplete="current-password"
           className="h-11 rounded-xl"
@@ -90,7 +92,7 @@ export function LoginForm() {
           id="password"
           minLength={8}
           name="password"
-          placeholder="Tu password"
+          placeholder={tAuth("password")}
           required
           type="password"
         />
@@ -102,7 +104,7 @@ export function LoginForm() {
         disabled={isPending}
         type="submit"
       >
-        {isPending ? "Validando..." : "Entrar al dashboard"}
+        {isPending ? tAuth("validating") : tAuth("loginCta")}
       </Button>
     </form>
   );

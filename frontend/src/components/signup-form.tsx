@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState, useTransition } from "react";
 import { ProblemBanner } from "@/components/ui/problem-banner";
@@ -14,6 +15,7 @@ type SignupResult = {
 
 export function SignupForm() {
   const router = useRouter();
+  const tAuth = useTranslations("auth");
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState("");
 
@@ -45,7 +47,7 @@ export function SignupForm() {
 
         const result = (await response.json().catch(() => ({}))) as SignupResult;
         if (!response.ok) {
-          setError(result.error || "No pudimos completar el onboarding.");
+          setError(result.error || tAuth("signupFailure"));
           return;
         }
 
@@ -60,14 +62,14 @@ export function SignupForm() {
       {error ? (
         <ProblemBanner
           problem={{
-            title: "No pudimos completar el onboarding",
+            title: tAuth("signupFailure"),
             detail: error,
           }}
         />
       ) : null}
 
       <div className="space-y-2">
-        <Label htmlFor="tenantName">Tenant</Label>
+        <Label htmlFor="tenantName">{tAuth("tenantName")}</Label>
         <Input
           className="h-11 rounded-xl"
           data-testid="signup-tenantName"
@@ -81,7 +83,7 @@ export function SignupForm() {
 
       <div className="grid gap-5 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="branchName">Sucursal inicial</Label>
+          <Label htmlFor="branchName">{tAuth("branchName")}</Label>
           <Input
             className="h-11 rounded-xl"
             data-testid="signup-branchName"
@@ -94,7 +96,7 @@ export function SignupForm() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="branchCode">Código</Label>
+          <Label htmlFor="branchCode">{tAuth("branchCode")}</Label>
           <Input
             className="h-11 rounded-xl uppercase"
             data-testid="signup-branchCode"
@@ -108,7 +110,7 @@ export function SignupForm() {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="timeZone">Time zone</Label>
+        <Label htmlFor="timeZone">{tAuth("timeZone")}</Label>
         <Input
           className="h-11 rounded-xl"
           data-testid="signup-timeZone"
@@ -121,7 +123,7 @@ export function SignupForm() {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="adminFullName">Admin full name</Label>
+        <Label htmlFor="adminFullName">{tAuth("fullName")}</Label>
         <Input
           className="h-11 rounded-xl"
           data-testid="signup-adminFullName"
@@ -134,7 +136,7 @@ export function SignupForm() {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="adminEmail">Admin email</Label>
+        <Label htmlFor="adminEmail">{tAuth("email")}</Label>
         <Input
           autoComplete="email"
           className="h-11 rounded-xl"
@@ -148,7 +150,7 @@ export function SignupForm() {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="adminPassword">Admin password</Label>
+        <Label htmlFor="adminPassword">{tAuth("password")}</Label>
         <Input
           autoComplete="new-password"
           className="h-11 rounded-xl"
@@ -163,7 +165,7 @@ export function SignupForm() {
       </div>
 
       <p className="text-sm leading-6 text-muted-foreground">
-        El signup llama al backend real y te deja autenticado sin exponer el token en el browser.
+        {tAuth("signupFootnote")}
       </p>
 
       <Button
@@ -172,7 +174,7 @@ export function SignupForm() {
         disabled={isPending}
         type="submit"
       >
-        {isPending ? "Creando tenant..." : "Crear cuenta y entrar"}
+        {isPending ? tAuth("creatingTenant") : tAuth("signupCta")}
       </Button>
     </form>
   );

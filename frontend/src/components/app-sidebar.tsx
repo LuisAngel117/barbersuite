@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import {
   Sidebar,
@@ -15,7 +16,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import { getNavLabel, getVisibleNavGroups, isNavItemActive } from "@/config/app-nav";
+import { getVisibleNavGroups, isNavItemActive } from "@/config/app-nav";
 import { AppUserMenu } from "@/components/app-user-menu";
 import { usePathname } from "next/navigation";
 
@@ -29,6 +30,8 @@ type AppSidebarProps = {
 
 export function AppSidebar({ roles, user }: AppSidebarProps) {
   const pathname = usePathname();
+  const tNav = useTranslations("nav");
+  const tUi = useTranslations("ui");
   const groups = getVisibleNavGroups(roles);
 
   return (
@@ -43,13 +46,13 @@ export function AppSidebar({ roles, user }: AppSidebarProps) {
           </div>
           <div className="grid min-w-0 flex-1 gap-0.5 group-data-[collapsible=icon]:hidden">
             <span className="truncate text-sm font-semibold tracking-tight">BarberSuite</span>
-            <span className="truncate text-xs text-sidebar-foreground/60">Ops Console</span>
+            <span className="truncate text-xs text-sidebar-foreground/60">{tUi("opsConsole")}</span>
           </div>
         </Link>
 
         {process.env.NODE_ENV !== "production" ? (
           <Badge className="rounded-full bg-brand-muted text-brand-foreground hover:bg-brand-muted group-data-[collapsible=icon]:hidden">
-            Demo shell
+            {tUi("demoShell")}
           </Badge>
         ) : null}
       </SidebarHeader>
@@ -57,12 +60,13 @@ export function AppSidebar({ roles, user }: AppSidebarProps) {
       <SidebarContent>
         {groups.map((group) => (
           <SidebarGroup key={group.key}>
-            <SidebarGroupLabel>{getNavLabel(group)}</SidebarGroupLabel>
+            <SidebarGroupLabel>{tNav(`groups.${group.key}`)}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {group.items.map((item) => {
                   const Icon = item.icon;
                   const isActive = isNavItemActive(pathname, item.href);
+                  const label = tNav(item.key);
 
                   return (
                     <SidebarMenuItem key={item.key}>
@@ -71,11 +75,11 @@ export function AppSidebar({ roles, user }: AppSidebarProps) {
                         className="h-10 rounded-xl"
                         data-testid={item.testId}
                         isActive={isActive}
-                        tooltip={getNavLabel(item)}
+                        tooltip={label}
                       >
                         <Link href={item.href} prefetch={false}>
                           <Icon />
-                          <span>{getNavLabel(item)}</span>
+                          <span>{label}</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,6 +28,8 @@ export function ModulePlaceholder({
   ctaHref,
   ctaLabel,
 }: ModulePlaceholderProps) {
+  const tCommon = useTranslations("common");
+
   return (
     <Card className="rounded-[1.75rem] border-border/70 bg-card/80 shadow-xl shadow-black/5">
       <CardHeader className="space-y-3">
@@ -50,7 +53,7 @@ export function ModulePlaceholder({
           <Button asChild className="rounded-full">
             <Link href={ctaHref}>
               {ctaLabel}
-              <ArrowRight className="size-4" />
+              <ArrowRight className="size-4" aria-label={tCommon("actions")} />
             </Link>
           </Button>
         ) : null}

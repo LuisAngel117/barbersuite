@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { FormEvent, useState } from "react";
 import { type ClientPayload } from "@/lib/backend";
 import { ProblemBanner } from "@/components/ui/problem-banner";
@@ -38,6 +39,7 @@ export function ClientForm({
   onCancel,
   onSubmit,
 }: ClientFormProps) {
+  const tClients = useTranslations("clients.form");
   const [fullName, setFullName] = useState(initialClient?.fullName ?? "");
   const [phone, setPhone] = useState(initialClient?.phone ?? "");
   const [email, setEmail] = useState(initialClient?.email ?? "");
@@ -52,12 +54,12 @@ export function ClientForm({
     const normalizedEmail = normalizeOptional(email);
 
     if (normalizedFullName.length < 2) {
-      setError("El nombre completo debe tener al menos 2 caracteres.");
+      setError(tClients("fullNameValidation"));
       return;
     }
 
     if (normalizedEmail && !EMAIL_PATTERN.test(normalizedEmail)) {
-      setError("Ingresa un email válido o deja el campo vacío.");
+      setError(tClients("emailValidation"));
       return;
     }
 
@@ -75,22 +77,20 @@ export function ClientForm({
     <form className="space-y-6" onSubmit={handleSubmit}>
       <div className="space-y-2">
         <div className="inline-flex w-fit rounded-full border border-border/70 bg-muted/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-          {initialClient ? "Edit client" : "New client"}
+          {initialClient ? tClients("editEyebrow") : tClients("newEyebrow")}
         </div>
         <div className="space-y-1">
           <h2 className="text-2xl font-semibold tracking-tight">
-            {initialClient ? "Actualizar cliente" : "Crear cliente"}
+            {initialClient ? tClients("editTitle") : tClients("newTitle")}
           </h2>
-          <p className="text-sm leading-6 text-muted-foreground">
-            Esta operación usa el BFF interno y adjunta la sucursal desde la cookie seleccionada.
-          </p>
+          <p className="text-sm leading-6 text-muted-foreground">{tClients("description")}</p>
         </div>
       </div>
 
       {error ? (
         <ProblemBanner
           problem={{
-            title: "Validación local",
+            title: tClients("validationTitle"),
             detail: error,
             code: "VALIDATION_ERROR",
           }}
@@ -98,14 +98,14 @@ export function ClientForm({
       ) : null}
 
       <div className="space-y-2">
-        <Label htmlFor="client-full-name">Full name</Label>
+        <Label htmlFor="client-full-name">{tClients("fullName")}</Label>
         <Input
           className="h-11 rounded-xl"
           data-testid="client-fullName"
           id="client-full-name"
           minLength={2}
           onChange={(event) => setFullName(event.target.value)}
-          placeholder="María Torres"
+          placeholder={tClients("fullNamePlaceholder")}
           required
           value={fullName}
         />
@@ -113,25 +113,25 @@ export function ClientForm({
 
       <div className="grid gap-5 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="client-phone">Phone</Label>
+          <Label htmlFor="client-phone">{tClients("phone")}</Label>
           <Input
             className="h-11 rounded-xl"
             data-testid="client-phone"
             id="client-phone"
             onChange={(event) => setPhone(event.target.value)}
-            placeholder="+593999123456"
+            placeholder={tClients("phonePlaceholder")}
             value={phone}
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="client-email">Email</Label>
+          <Label htmlFor="client-email">{tClients("email")}</Label>
           <Input
             className="h-11 rounded-xl"
             data-testid="client-email"
             id="client-email"
             onChange={(event) => setEmail(event.target.value)}
-            placeholder="cliente@example.com"
+            placeholder={tClients("emailPlaceholder")}
             type="email"
             value={email}
           />
@@ -139,13 +139,13 @@ export function ClientForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="client-notes">Notes</Label>
+        <Label htmlFor="client-notes">{tClients("notes")}</Label>
         <Textarea
           className="min-h-32 rounded-xl"
           data-testid="client-notes"
           id="client-notes"
           onChange={(event) => setNotes(event.target.value)}
-          placeholder="Preferencias, recordatorios o contexto operativo."
+          placeholder={tClients("notesPlaceholder")}
           rows={5}
           value={notes}
         />
@@ -155,16 +155,11 @@ export function ClientForm({
 
       {initialClient ? (
         <label className="flex items-center gap-3 rounded-2xl border border-border/70 bg-muted/40 px-4 py-3 text-sm font-medium">
-          <Checkbox
-            checked={active}
-            onCheckedChange={(checked) => setActive(Boolean(checked))}
-          />
-          <span>Cliente activo</span>
+          <Checkbox checked={active} onCheckedChange={(checked) => setActive(Boolean(checked))} />
+          <span>{tClients("clientActive")}</span>
         </label>
       ) : (
-        <p className="text-sm leading-6 text-muted-foreground">
-          Los clientes nuevos se crean activos por defecto.
-        </p>
+        <p className="text-sm leading-6 text-muted-foreground">{tClients("newDefaultActive")}</p>
       )}
 
       <div className="flex flex-col gap-3 sm:flex-row">
@@ -176,11 +171,11 @@ export function ClientForm({
         >
           {isSubmitting
             ? initialClient
-              ? "Guardando..."
-              : "Creando..."
+              ? tClients("saving")
+              : tClients("creating")
             : initialClient
-              ? "Guardar cambios"
-              : "Crear cliente"}
+              ? tClients("update")
+              : tClients("create")}
         </Button>
         <Button
           className="h-11 rounded-xl"
@@ -189,7 +184,7 @@ export function ClientForm({
           type="button"
           variant="outline"
         >
-          Cancelar
+          {tClients("cancel")}
         </Button>
       </div>
     </form>

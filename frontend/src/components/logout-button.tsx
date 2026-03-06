@@ -1,6 +1,7 @@
 "use client";
 
 import { LogOut } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -15,9 +16,11 @@ type LogoutButtonProps = {
 
 export function LogoutButton({
   className,
-  label = "Cerrar sesión",
+  label,
 }: LogoutButtonProps) {
   const router = useRouter();
+  const tNav = useTranslations("nav");
+  const tUi = useTranslations("ui");
   const [isPending, startTransition] = useTransition();
   const [, setError] = useState<string | null>(null);
 
@@ -30,8 +33,8 @@ export function LogoutButton({
     });
 
     if (!response.ok) {
-      setError("No pudimos cerrar la sesión.");
-      toast.error("No pudimos cerrar la sesión.");
+      setError(tNav("logout"));
+      toast.error(tUi("logoutFailed"));
       return;
     }
 
@@ -51,7 +54,7 @@ export function LogoutButton({
       variant="outline"
     >
       <LogOut className="size-4" />
-      {isPending ? "Cerrando..." : label}
+      {isPending ? `${tNav("logout")}...` : (label ?? tNav("logout"))}
     </Button>
   );
 }

@@ -1,3 +1,4 @@
+import { LanguageToggle } from "@/components/language-toggle";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 type AuthStat = {
@@ -33,7 +34,10 @@ export function AuthShell({
                 BarberSuite
               </div>
 
-              <ThemeToggle buttonClassName="border-white/15 bg-white/10 text-white hover:bg-white/20 hover:text-white" />
+              <div className="flex items-center gap-2">
+                <LanguageToggle buttonClassName="border-white/15 bg-white/10 text-white hover:bg-white/20 hover:text-white" compact />
+                <ThemeToggle buttonClassName="border-white/15 bg-white/10 text-white hover:bg-white/20 hover:text-white" />
+              </div>
             </div>
 
             <div className="space-y-5">

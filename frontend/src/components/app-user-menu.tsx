@@ -1,6 +1,7 @@
 "use client";
 
 import { LogOut, Monitor, MoonStar, SunMedium } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useTransition } from "react";
@@ -65,6 +66,8 @@ export function AppUserMenu({
 }: AppUserMenuProps) {
   const router = useRouter();
   const { setTheme, theme, resolvedTheme } = useTheme();
+  const tUi = useTranslations("ui");
+  const tNav = useTranslations("nav");
   const [isPending, startTransition] = useTransition();
   const activeTheme = theme ?? resolvedTheme ?? "system";
 
@@ -75,7 +78,7 @@ export function AppUserMenu({
     });
 
     if (!response.ok) {
-      toast.error("No pudimos cerrar la sesión.");
+      toast.error(tUi("logoutFailed"));
       return;
     }
 
@@ -125,6 +128,11 @@ export function AppUserMenu({
         {themeOptions.map((option) => {
           const Icon = option.icon;
           const isActive = activeTheme === option.value;
+          const labels = {
+            light: tUi("light"),
+            dark: tUi("dark"),
+            system: tUi("system"),
+          } as const;
 
           return (
             <DropdownMenuItem
@@ -133,8 +141,8 @@ export function AppUserMenu({
               onClick={() => setTheme(option.value)}
             >
               <Icon className="size-4" />
-              <span className="flex-1">{option.label}</span>
-              <span className="text-xs text-muted-foreground">{isActive ? "Active" : ""}</span>
+              <span className="flex-1">{labels[option.value]}</span>
+              <span className="text-xs text-muted-foreground">{isActive ? tUi("active") : ""}</span>
             </DropdownMenuItem>
           );
         })}
@@ -146,7 +154,7 @@ export function AppUserMenu({
           onClick={() => void handleLogout()}
         >
           <LogOut className="size-4" />
-          <span>{isPending ? "Cerrando..." : "Cerrar sesión"}</span>
+          <span>{isPending ? `${tNav("logout")}...` : tNav("logout")}</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

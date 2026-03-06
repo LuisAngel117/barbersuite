@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { LogoutButton } from "@/components/logout-button";
 import { getDashboardContext } from "@/lib/dashboard-context";
@@ -15,26 +16,28 @@ import {
 } from "@/lib/backend";
 
 export default async function DashboardPage() {
+  const tDashboard = await getTranslations("dashboard");
+  const tCommon = await getTranslations("common");
   const { payload, problem } = await getDashboardContext();
   if (!payload) {
     return (
       <Card className="rounded-[1.75rem] border-border/70 bg-card/80 shadow-xl shadow-black/5">
         <CardHeader className="space-y-3">
           <div className="inline-flex w-fit rounded-full border border-border/70 bg-muted/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-            Dashboard
+            {tDashboard("title")}
           </div>
           <CardTitle className="text-3xl tracking-tight">
-            No pudimos cargar tu contexto actual
+            {tDashboard("errorTitle")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-5">
           <p className="text-sm leading-6 text-muted-foreground">
           {resolveErrorMessage(
             problem,
-            "El backend respondió con un error inesperado al consultar /me.",
+            tDashboard("errorFallback"),
           )}
           </p>
-          <LogoutButton label="Volver al login" />
+          <LogoutButton label={tCommon("backToLogin")} />
         </CardContent>
       </Card>
     );
@@ -47,7 +50,7 @@ export default async function DashboardPage() {
           <CardHeader className="space-y-4">
             <div className="flex flex-wrap items-center gap-2">
               <Badge className="rounded-full bg-brand-muted text-brand-foreground hover:bg-brand-muted">
-                Tenant dashboard
+                {tDashboard("tenantDashboard")}
               </Badge>
               <Badge className="rounded-full" variant="outline">
                 {payload.tenant.name}
@@ -56,20 +59,19 @@ export default async function DashboardPage() {
             <div className="space-y-2">
               <CardTitle className="text-3xl tracking-tight">{payload.user.fullName}</CardTitle>
               <CardDescription className="max-w-3xl text-sm leading-6">
-              Sesión autenticada para <strong>{payload.user.email}</strong>. Este tablero consume
-              <code> /api/v1/me</code> server-side y nunca expone el token al navegador.
+                {tDashboard("sessionDescription", { email: payload.user.email })}
               </CardDescription>
             </div>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-3">
             <Button asChild className="rounded-full" variant="secondary">
-              <Link href="/app/services">Ir a Services</Link>
+              <Link href="/app/services">{tDashboard("goServices")}</Link>
             </Button>
             <Button asChild className="rounded-full" variant="outline">
-              <Link href="/app/clients">Ir a Clients</Link>
+              <Link href="/app/clients">{tDashboard("goClients")}</Link>
             </Button>
             <Button asChild className="rounded-full" variant="ghost">
-              <Link href="/app/ui-kit">Ver UI Kit</Link>
+              <Link href="/app/ui-kit">{tDashboard("goUiKit")}</Link>
             </Button>
           </CardContent>
         </Card>
@@ -83,25 +85,25 @@ export default async function DashboardPage() {
                 </Badge>
               ))}
             </div>
-            <CardTitle className="text-xl tracking-tight">Resumen rápido</CardTitle>
+            <CardTitle className="text-xl tracking-tight">{tDashboard("quickSummary")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-3">
               <div className="rounded-2xl border border-border/70 bg-muted/50 p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                  Tenant ID
+                  {tDashboard("tenantId")}
                 </p>
                 <p className="mt-2 break-all text-sm font-medium">{payload.tenant.id}</p>
               </div>
               <div className="rounded-2xl border border-border/70 bg-muted/50 p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                  User ID
+                  {tDashboard("userId")}
                 </p>
                 <p className="mt-2 break-all text-sm font-medium">{payload.user.id}</p>
               </div>
               <div className="rounded-2xl border border-border/70 bg-muted/50 p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                  Sucursales accesibles
+                  {tDashboard("branches")}
                 </p>
                 <p className="mt-2 text-2xl font-semibold tracking-tight">{payload.branches.length}</p>
               </div>
@@ -115,29 +117,29 @@ export default async function DashboardPage() {
         <Card className="rounded-[1.75rem] border-border/70 bg-card/80 shadow-xl shadow-black/5">
           <CardHeader className="space-y-3">
             <div className="inline-flex w-fit rounded-full border border-border/70 bg-muted/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-              Contexto
+              {tDashboard("context")}
             </div>
             <CardTitle className="text-3xl tracking-tight">{payload.tenant.name}</CardTitle>
             <CardDescription className="text-sm leading-6">
-              BarberSuite ya quedó conectado al backend real y está listo para recruiter demos.
+              {tDashboard("contextDescription")}
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
             <div className="rounded-2xl border border-border/70 bg-muted/50 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                Usuario
+                {tDashboard("user")}
               </p>
               <p className="mt-2 text-lg font-semibold tracking-tight">{payload.user.fullName}</p>
             </div>
             <div className="rounded-2xl border border-border/70 bg-muted/50 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                Email
+                {tDashboard("email")}
               </p>
               <p className="mt-2 text-sm font-medium">{payload.user.email}</p>
             </div>
             <div className="rounded-2xl border border-border/70 bg-muted/50 p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                Roles
+                {tDashboard("roles")}
               </p>
               <p className="mt-2 text-sm font-medium">{payload.user.roles.join(", ")}</p>
             </div>
@@ -147,18 +149,18 @@ export default async function DashboardPage() {
         <Card className="rounded-[1.75rem] border-border/70 bg-card/80 shadow-xl shadow-black/5">
           <CardHeader className="space-y-3">
             <div className="inline-flex w-fit rounded-full border border-border/70 bg-muted/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-              Sucursales
+              {tDashboard("branches")}
             </div>
-            <CardTitle className="text-3xl tracking-tight">Accesos vigentes</CardTitle>
+            <CardTitle className="text-3xl tracking-tight">{tDashboard("branchesTitle")}</CardTitle>
             <CardDescription className="text-sm leading-6">
-              La lista viene de <code>user_branch_access</code> y respeta el tenant del JWT.
+              {tDashboard("branchesDescription")}
             </CardDescription>
           </CardHeader>
           <CardContent>
 
           {payload.branches.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-border/70 bg-muted/40 p-6 text-sm text-muted-foreground">
-              Este usuario todavía no tiene sucursales asignadas.
+              {tDashboard("branchesEmpty")}
             </div>
           ) : (
             <div className="grid gap-4">
@@ -178,7 +180,7 @@ export default async function DashboardPage() {
                       className="rounded-full"
                       variant={branch.active ? "secondary" : "outline"}
                     >
-                      {branch.active ? "Activa" : "Inactiva"}
+                      {branch.active ? tDashboard("active") : tDashboard("inactive")}
                     </Badge>
                   </div>
                   <p className="mt-3 text-sm text-muted-foreground">{branch.timeZone}</p>

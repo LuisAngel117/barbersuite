@@ -1,18 +1,21 @@
+import { getTranslations } from "next-intl/server";
 import { ModulePlaceholder } from "@/components/module-placeholder";
 
-export default function BranchesPage() {
+export default async function BranchesPage() {
+  const t = await getTranslations("placeholders.branches");
+
   return (
     <ModulePlaceholder
       bullets={[
-        "El backend ya soporta branches admin tenant-scoped.",
-        "La UI dedicada se conectará aquí sin tocar el shell.",
-        "Este placeholder evita links muertos y deja breadcrumbs reales desde hoy.",
+        t("bullets.one"),
+        t("bullets.two"),
+        t("bullets.three"),
       ]}
       ctaHref="/app"
-      ctaLabel="Volver al dashboard"
-      description="Espacio reservado para la futura consola de sucursales, visible solo para ADMIN y MANAGER."
-      eyebrow="Administración"
-      title="Branches"
+      ctaLabel={t("cta")}
+      description={t("description")}
+      eyebrow={t("eyebrow")}
+      title={t("title")}
     />
   );
 }

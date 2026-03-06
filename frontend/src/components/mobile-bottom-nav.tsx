@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Menu } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
 import { BranchSelector } from "@/components/branch-selector";
 import { AppUserMenu } from "@/components/app-user-menu";
@@ -18,7 +19,6 @@ import { Separator } from "@/components/ui/separator";
 import {
   getMobilePrimaryNavItems,
   getMobileSecondaryNavGroups,
-  getNavLabel,
   isNavItemActive,
 } from "@/config/app-nav";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -48,6 +48,8 @@ export function MobileBottomNav({
 }: MobileBottomNavProps) {
   const isMobile = useIsMobile();
   const pathname = usePathname();
+  const tNav = useTranslations("nav");
+  const tUi = useTranslations("ui");
   const primaryItems = getMobilePrimaryNavItems(roles).slice(0, 4);
   const secondaryGroups = getMobileSecondaryNavGroups(roles);
 
@@ -77,7 +79,7 @@ export function MobileBottomNav({
               >
                 <Link className="flex flex-col items-center justify-center gap-1" href={item.href}>
                   <Icon className="size-4" />
-                  <span className="text-[11px] font-medium">{getNavLabel(item)}</span>
+                  <span className="text-[11px] font-medium">{tNav(item.key)}</span>
                 </Link>
               </Button>
             );
@@ -88,16 +90,14 @@ export function MobileBottomNav({
               <Button className="h-14 flex-1 rounded-2xl px-2" size="sm" variant="ghost">
                 <span className="flex flex-col items-center justify-center gap-1">
                   <Menu className="size-4" />
-                  <span className="text-[11px] font-medium">More</span>
+                  <span className="text-[11px] font-medium">{tNav("more")}</span>
                 </span>
               </Button>
             </SheetTrigger>
             <SheetContent className="w-full max-w-md overflow-y-auto border-border/70 bg-background/95">
               <SheetHeader>
-                <SheetTitle>Workspace</SheetTitle>
-                <SheetDescription>
-                  Acciones adicionales, módulos administrativos y cambio de sucursal.
-                </SheetDescription>
+                <SheetTitle>{tUi("workspace")}</SheetTitle>
+                <SheetDescription>{tUi("workspaceDescription")}</SheetDescription>
               </SheetHeader>
 
               <div className="space-y-6 px-4 pb-6">
@@ -114,7 +114,7 @@ export function MobileBottomNav({
                 {secondaryGroups.map((group) => (
                   <div className="space-y-3" key={group.key}>
                     <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-                      {getNavLabel(group)}
+                      {tNav(`groups.${group.key}`)}
                     </p>
                     <div className="grid gap-2">
                       {group.items.map((item) => {
@@ -135,7 +135,7 @@ export function MobileBottomNav({
                           >
                             <Link href={item.href}>
                               <Icon className="size-4" />
-                              <span>{getNavLabel(item)}</span>
+                              <span>{tNav(item.key)}</span>
                             </Link>
                           </Button>
                         );

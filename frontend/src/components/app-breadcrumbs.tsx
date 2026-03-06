@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useSelectedLayoutSegments } from "next/navigation";
 import {
   Breadcrumb,
@@ -10,7 +11,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { APP_NAV_ITEMS, findNavItemByHref, getNavLabel } from "@/config/app-nav";
+import { APP_NAV_ITEMS, findNavItemByHref } from "@/config/app-nav";
 
 function fallbackLabel(segment: string) {
   return segment
@@ -21,11 +22,12 @@ function fallbackLabel(segment: string) {
 
 export function AppBreadcrumbs() {
   const segments = useSelectedLayoutSegments();
+  const tNav = useTranslations("nav");
 
   const breadcrumbs = [
     {
       href: "/app",
-      label: getNavLabel(APP_NAV_ITEMS[0]),
+      label: tNav(APP_NAV_ITEMS[0].key),
       current: segments.length === 0,
     },
     ...segments.map((segment, index) => {
@@ -34,7 +36,7 @@ export function AppBreadcrumbs() {
 
       return {
         href,
-        label: item ? getNavLabel(item) : fallbackLabel(segment),
+        label: item ? tNav(item.key) : fallbackLabel(segment),
         current: index === segments.length - 1,
       };
     }),

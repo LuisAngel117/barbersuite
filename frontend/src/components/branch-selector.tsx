@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -27,6 +28,7 @@ export function BranchSelector({
   variant = "compact",
 }: BranchSelectorProps) {
   const router = useRouter();
+  const tUi = useTranslations("ui");
   const [isPending, startTransition] = useTransition();
   const [pendingValue, setPendingValue] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -48,12 +50,12 @@ export function BranchSelector({
 
     if (!response.ok) {
       setPendingValue(null);
-      setError("No pudimos guardar la sucursal seleccionada.");
-      toast.error("No pudimos guardar la sucursal seleccionada.");
+      setError(tUi("branchUpdateFailed"));
+      toast.error(tUi("branchUpdateFailed"));
       return;
     }
 
-    toast.success("Sucursal activa actualizada.");
+    toast.success(tUi("branchUpdated"));
     startTransition(() => {
       router.refresh();
     });
@@ -65,10 +67,10 @@ export function BranchSelector({
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
             <Badge className="rounded-full bg-brand-muted text-brand-foreground hover:bg-brand-muted">
-              Branch scoped
+              {tUi("branchScoped")}
             </Badge>
             <Badge className="rounded-full" variant="outline">
-              {branches.filter((branch) => branch.active).length} activas
+              {tUi("availableBranches", { count: branches.filter((branch) => branch.active).length })}
             </Badge>
             {selectedBranch ? (
               <Badge className="rounded-full" variant="secondary">
@@ -76,7 +78,7 @@ export function BranchSelector({
               </Badge>
             ) : null}
           </div>
-          <h2 className="text-xl font-semibold tracking-tight">Contexto de sucursal</h2>
+          <h2 className="text-xl font-semibold tracking-tight">{tUi("branchActive")}</h2>
           <p className="text-sm leading-6 text-muted-foreground">
             La selección vive en la cookie <code>bs_branch_id</code> y los Route Handlers la usan
             para enviar <code>X-Branch-Id</code> al backend.
@@ -85,9 +87,9 @@ export function BranchSelector({
       ) : (
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="space-y-1">
-            <Label htmlFor="branch-selector">Sucursal activa</Label>
+            <Label htmlFor="branch-selector">{tUi("branchActive")}</Label>
             <p className="text-xs text-muted-foreground">
-              Branch scoped via cookie y BFF interno.
+              {tUi("branchHint")}
             </p>
           </div>
           {selectedBranch ? (
@@ -96,14 +98,14 @@ export function BranchSelector({
             </Badge>
           ) : (
             <Badge className="rounded-full bg-brand-muted text-brand-foreground hover:bg-brand-muted">
-              Sin branch
+              {tUi("withoutBranch")}
             </Badge>
           )}
         </div>
       )}
 
       <div className="space-y-2">
-        <Label htmlFor="branch-selector">Sucursal activa</Label>
+        <Label htmlFor="branch-selector">{tUi("branchActive")}</Label>
         <select
           className="flex h-11 w-full rounded-xl border border-input bg-background px-3 text-sm shadow-xs transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60"
           data-testid="branch-selector"
@@ -113,7 +115,7 @@ export function BranchSelector({
           value={value}
         >
           <option value="" disabled>
-            {branches.length === 0 ? "No hay sucursales disponibles" : "Selecciona una sucursal"}
+            {branches.length === 0 ? tUi("noBranchesAvailable") : tUi("selectBranchOption")}
           </option>
           {branches.map((branch) => (
             <option disabled={!branch.active} key={branch.id} value={branch.id}>
@@ -128,7 +130,7 @@ export function BranchSelector({
         <div className="rounded-2xl border border-border/70 bg-muted/50 p-4 text-sm">
           <p className="font-medium">{selectedBranch.name}</p>
           <p className="mt-1 text-muted-foreground">
-            {selectedBranch.timeZone} · {selectedBranch.active ? "Activa" : "Inactiva"}
+            {selectedBranch.timeZone} · {selectedBranch.active ? tUi("statusActive") : tUi("statusInactive")}
           </p>
         </div>
       ) : null}

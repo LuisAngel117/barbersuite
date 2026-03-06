@@ -1,8 +1,10 @@
 "use client";
 
 import { Search, Sparkles } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { AppBreadcrumbs } from "@/components/app-breadcrumbs";
 import { BranchSelector } from "@/components/branch-selector";
+import { LanguageToggle } from "@/components/language-toggle";
 import { AppUserMenu } from "@/components/app-user-menu";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -32,6 +34,7 @@ export function AppTopbar({
   selectedBranchId,
 }: AppTopbarProps) {
   const isMobile = useIsMobile();
+  const t = useTranslations("ui");
   const selectedBranch = branches.find((branch) => branch.id === selectedBranchId) ?? null;
 
   return (
@@ -43,7 +46,10 @@ export function AppTopbar({
             <AppBreadcrumbs />
           </div>
           {isMobile ? (
-            <AppUserMenu compact roles={roles} user={user} />
+            <div className="flex items-center gap-2">
+              <LanguageToggle compact />
+              <AppUserMenu compact roles={roles} user={user} />
+            </div>
           ) : null}
         </div>
 
@@ -53,7 +59,7 @@ export function AppTopbar({
             <Input
               className="h-11 rounded-2xl border-border/70 bg-card/70 pl-10"
               disabled
-              placeholder="Search llegará con appointments, caja y agenda"
+              placeholder={t("searchPlaceholder")}
             />
           </div>
 
@@ -65,10 +71,13 @@ export function AppTopbar({
             ) : (
               <Badge className="rounded-full bg-brand-muted text-brand-foreground hover:bg-brand-muted">
                 <Sparkles className="size-3.5" />
-                Selecciona branch
+                {t("selectBranch")}
               </Badge>
             )}
 
+            <div className="hidden md:block">
+              <LanguageToggle />
+            </div>
             <div className="hidden min-w-[280px] md:block xl:min-w-[320px]">
               <BranchSelector
                 branches={branches}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -24,19 +25,13 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const currencyFormatter = new Intl.NumberFormat("es-EC", {
-  style: "currency",
-  currency: "USD",
-  minimumFractionDigits: 2,
-});
-
-function sortServices(services: ServicePayload[]) {
+function sortServices(services: ServicePayload[], locale: string) {
   return [...services].sort((left, right) => {
     if (left.active !== right.active) {
       return left.active ? -1 : 1;
     }
 
-    return left.name.localeCompare(right.name, "es", { sensitivity: "base" });
+    return left.name.localeCompare(right.name, locale, { sensitivity: "base" });
   });
 }
 
@@ -67,6 +62,9 @@ function ServicesLoadingState() {
 
 export function ServicesTable() {
   const router = useRouter();
+  const locale = useLocale();
+  const tServices = useTranslations("services");
+  const tUi = useTranslations("ui");
   const [services, setServices] = useState<ServicePayload[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -74,6 +72,12 @@ export function ServicesTable() {
   const [problem, setProblem] = useState<ProblemBannerState | null>(null);
   const [formMode, setFormMode] = useState<"create" | "edit" | null>(null);
   const [editingService, setEditingService] = useState<ServicePayload | null>(null);
+
+  const currencyFormatter = new Intl.NumberFormat(locale === "en" ? "en-US" : "es-EC", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+  });
 
   const fetchServices = useCallback(async () => {
     const response = await fetch("/api/services", {
@@ -83,15 +87,15 @@ export function ServicesTable() {
 
     if (!response.ok || !result.data) {
       setServices([]);
-      setProblem(toProblemBanner(result.problem, "No pudimos cargar los servicios."));
+      setProblem(toProblemBanner(result.problem, tServices("loadFailed")));
       setIsLoading(false);
       return;
     }
 
-    setServices(sortServices(result.data));
+    setServices(sortServices(result.data, locale));
     setProblem(null);
     setIsLoading(false);
-  }, []);
+  }, [locale, tServices]);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -117,7 +121,7 @@ export function ServicesTable() {
 
     setPendingServiceId(null);
     if (!response.ok || !result.data) {
-      setProblem(toProblemBanner(result.problem, "No pudimos cargar el servicio solicitado."));
+      setProblem(toProblemBanner(result.problem, tServices("loadOneFailed")));
       return;
     }
 
@@ -148,20 +152,18 @@ export function ServicesTable() {
         result.problem?.code === "CONFLICT"
           ? {
               title: result.problem.title || "Conflict",
-              detail: "Ya existe un servicio con ese nombre dentro del tenant.",
+              detail: tServices("conflict"),
               code: result.problem.code,
             }
           : toProblemBanner(
               result.problem,
-              isEditing ? "No pudimos actualizar el servicio." : "No pudimos crear el servicio.",
+              isEditing ? tServices("updateFailed") : tServices("createFailed"),
             ),
       );
       return;
     }
 
-    toast.success(
-      isEditing ? "Servicio actualizado correctamente." : "Servicio creado correctamente.",
-    );
+    toast.success(isEditing ? tServices("updateSuccess") : tServices("createSuccess"));
     setFormMode(null);
     setEditingService(null);
     await reloadServices();
@@ -183,16 +185,11 @@ export function ServicesTable() {
 
     setPendingServiceId(null);
     if (!response.ok) {
-      setProblem(
-        toProblemBanner(
-          result.problem,
-          `No pudimos ${service.active ? "desactivar" : "activar"} el servicio.`,
-        ),
-      );
+      setProblem(toProblemBanner(result.problem, tServices("toggleFailed")));
       return;
     }
 
-    toast.success(service.active ? "Servicio desactivado." : "Servicio activado.");
+    toast.success(service.active ? tServices("deactivateSuccess") : tServices("activateSuccess"));
     await reloadServices();
     router.refresh();
   }
@@ -203,15 +200,13 @@ export function ServicesTable() {
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
             <Badge className="rounded-full bg-brand-muted text-brand-foreground hover:bg-brand-muted">
-              {services.length} servicios
+              {tServices("count", { count: services.length })}
             </Badge>
             <Badge className="rounded-full" variant="outline">
-              Tenant scoped
+              {tUi("tenantScoped")}
             </Badge>
           </div>
-          <p className="text-sm leading-6 text-muted-foreground">
-            Gestión tenant-scoped con orden activo primero y edición rápida desde la misma vista.
-          </p>
+          <p className="text-sm leading-6 text-muted-foreground">{tServices("description")}</p>
         </div>
 
         <Button
@@ -224,7 +219,7 @@ export function ServicesTable() {
           }}
           type="button"
         >
-          Nuevo servicio
+          {tServices("add")}
         </Button>
       </div>
 
@@ -233,10 +228,8 @@ export function ServicesTable() {
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.9fr)]">
         <Card className="overflow-hidden rounded-[1.5rem] border-border/70 bg-card/80 shadow-lg shadow-black/5">
           <CardHeader className="space-y-3">
-            <CardTitle className="text-xl tracking-tight">Listado</CardTitle>
-            <CardDescription>
-              Los servicios se muestran con preferencia por activos y nombre ascendente.
-            </CardDescription>
+            <CardTitle className="text-xl tracking-tight">{tServices("listTitle")}</CardTitle>
+            <CardDescription>{tServices("listDescription")}</CardDescription>
           </CardHeader>
           <Separator />
           <CardContent className="p-0">
@@ -246,10 +239,10 @@ export function ServicesTable() {
               <div className="px-6 py-8">
                 <div className="rounded-2xl border border-dashed border-border/70 bg-muted/40 p-6">
                   <strong className="block text-base font-semibold tracking-tight">
-                    No hay servicios todavía.
+                    {tServices("emptyTitle")}
                   </strong>
                   <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                    Crea el primero para empezar a operar el tenant.
+                    {tServices("emptyDescription")}
                   </p>
                 </div>
               </div>
@@ -258,11 +251,11 @@ export function ServicesTable() {
                 <table className="min-w-full text-sm">
                   <thead className="bg-muted/40 text-left text-xs uppercase tracking-[0.22em] text-muted-foreground">
                     <tr>
-                      <th className="px-6 py-4 font-semibold">Name</th>
-                      <th className="px-6 py-4 font-semibold">Duration</th>
-                      <th className="px-6 py-4 font-semibold">Price</th>
-                      <th className="px-6 py-4 font-semibold">Active</th>
-                      <th className="px-6 py-4 font-semibold">Actions</th>
+                      <th className="px-6 py-4 font-semibold">{tServices("name")}</th>
+                      <th className="px-6 py-4 font-semibold">{tServices("duration")}</th>
+                      <th className="px-6 py-4 font-semibold">{tServices("price")}</th>
+                      <th className="px-6 py-4 font-semibold">{tServices("active")}</th>
+                      <th className="px-6 py-4 font-semibold">{tServices("actions")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -285,7 +278,7 @@ export function ServicesTable() {
                             className="rounded-full"
                             variant={service.active ? "secondary" : "outline"}
                           >
-                            {service.active ? "Activa" : "Inactiva"}
+                            {service.active ? tServices("rowActive") : tServices("rowInactive")}
                           </Badge>
                         </td>
                         <td className="px-6 py-4">
@@ -299,7 +292,9 @@ export function ServicesTable() {
                               type="button"
                               variant="outline"
                             >
-                              {pendingServiceId === service.id ? "Loading..." : "Edit"}
+                              {pendingServiceId === service.id
+                                ? tServices("loading")
+                                : tServices("edit")}
                             </Button>
                             <Button
                               className="rounded-full"
@@ -311,10 +306,10 @@ export function ServicesTable() {
                               variant="ghost"
                             >
                               {pendingServiceId === service.id
-                                ? "Saving..."
+                                ? tServices("saving")
                                 : service.active
-                                  ? "Deactivate"
-                                  : "Activate"}
+                                  ? tServices("deactivate")
+                                  : tServices("activate")}
                             </Button>
                           </div>
                         </td>
@@ -343,11 +338,10 @@ export function ServicesTable() {
             ) : (
               <div className="rounded-2xl border border-dashed border-border/70 bg-muted/40 p-6">
                 <strong className="block text-base font-semibold tracking-tight">
-                  Selecciona una acción.
+                  {tServices("selectActionTitle")}
                 </strong>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  Puedes crear un servicio nuevo o abrir uno existente para editarlo y cambiar su
-                  estado.
+                  {tServices("selectActionDescription")}
                 </p>
               </div>
             )}

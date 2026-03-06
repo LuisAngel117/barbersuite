@@ -1,12 +1,10 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import {
-  type ClientPagePayload,
-  type ClientPayload,
-} from "@/lib/backend";
+import { type ClientPagePayload, type ClientPayload } from "@/lib/backend";
 import {
   readApiResponse,
   toProblemBanner,
@@ -41,8 +39,8 @@ function toTestIdSegment(value: string) {
   );
 }
 
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("es-EC", {
+function formatDate(value: string, locale: string) {
+  return new Intl.DateTimeFormat(locale === "en" ? "en-US" : "es-EC", {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));
@@ -65,6 +63,10 @@ function ClientsLoadingState() {
 
 export function ClientsTable({ branchId }: { branchId: string }) {
   const router = useRouter();
+  const locale = useLocale();
+  const tClients = useTranslations("clients");
+  const tUi = useTranslations("ui");
+  const tCommon = useTranslations("common");
   const [queryInput, setQueryInput] = useState("");
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(0);
@@ -93,7 +95,7 @@ export function ClientsTable({ branchId }: { branchId: string }) {
 
     if (!response.ok || !result.data) {
       setClientPage(null);
-      setProblem(toProblemBanner(result.problem, "No pudimos cargar los clientes."));
+      setProblem(toProblemBanner(result.problem, tClients("loadFailed")));
       setIsLoading(false);
       return;
     }
@@ -101,7 +103,7 @@ export function ClientsTable({ branchId }: { branchId: string }) {
     setClientPage(result.data);
     setProblem(null);
     setIsLoading(false);
-  }, [page, query]);
+  }, [page, query, tClients]);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -127,7 +129,7 @@ export function ClientsTable({ branchId }: { branchId: string }) {
 
     setPendingClientId(null);
     if (!response.ok || !result.data) {
-      setProblem(toProblemBanner(result.problem, "No pudimos cargar el cliente solicitado."));
+      setProblem(toProblemBanner(result.problem, tClients("loadOneFailed")));
       return;
     }
 
@@ -157,15 +159,13 @@ export function ClientsTable({ branchId }: { branchId: string }) {
       setProblem(
         toProblemBanner(
           result.problem,
-          isEditing ? "No pudimos actualizar el cliente." : "No pudimos crear el cliente.",
+          isEditing ? tClients("updateFailed") : tClients("createFailed"),
         ),
       );
       return;
     }
 
-    toast.success(
-      isEditing ? "Cliente actualizado correctamente." : "Cliente creado correctamente.",
-    );
+    toast.success(isEditing ? tClients("updateSuccess") : tClients("createSuccess"));
     setFormMode(null);
     setEditingClient(null);
     await reloadClients();
@@ -187,16 +187,11 @@ export function ClientsTable({ branchId }: { branchId: string }) {
 
     setPendingClientId(null);
     if (!response.ok) {
-      setProblem(
-        toProblemBanner(
-          result.problem,
-          `No pudimos ${client.active ? "desactivar" : "activar"} el cliente.`,
-        ),
-      );
+      setProblem(toProblemBanner(result.problem, tClients("toggleFailed")));
       return;
     }
 
-    toast.success(client.active ? "Cliente desactivado." : "Cliente activado.");
+    toast.success(client.active ? tClients("deactivateSuccess") : tClients("activateSuccess"));
     await reloadClients();
     router.refresh();
   }
@@ -227,15 +222,13 @@ export function ClientsTable({ branchId }: { branchId: string }) {
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
             <Badge className="rounded-full bg-brand-muted text-brand-foreground hover:bg-brand-muted">
-              Branch scoped
+              {tUi("branchScoped")}
             </Badge>
             <Badge className="rounded-full" variant="outline">
               {branchId}
             </Badge>
           </div>
-          <p className="text-sm leading-6 text-muted-foreground">
-            El listado usa la branch seleccionada arriba y soporta búsqueda y paginación.
-          </p>
+          <p className="text-sm leading-6 text-muted-foreground">{tClients("description")}</p>
         </div>
 
         <Button
@@ -248,7 +241,7 @@ export function ClientsTable({ branchId }: { branchId: string }) {
           }}
           type="button"
         >
-          Nuevo cliente
+          {tClients("add")}
         </Button>
       </div>
 
@@ -257,13 +250,13 @@ export function ClientsTable({ branchId }: { branchId: string }) {
         onSubmit={handleSearchSubmit}
       >
         <div className="space-y-2">
-          <Label htmlFor="client-search">Buscar</Label>
+          <Label htmlFor="client-search">{tClients("searchLabel")}</Label>
           <Input
             className="h-11 rounded-xl"
             data-testid="clients-search"
             id="client-search"
             onChange={(event) => setQueryInput(event.target.value)}
-            placeholder="Nombre, teléfono o email"
+            placeholder={tClients("searchPlaceholder")}
             value={queryInput}
           />
         </div>
@@ -275,7 +268,7 @@ export function ClientsTable({ branchId }: { branchId: string }) {
           type="submit"
           variant="outline"
         >
-          Buscar
+          {tClients("searchSubmit")}
         </Button>
       </form>
 
@@ -284,10 +277,8 @@ export function ClientsTable({ branchId }: { branchId: string }) {
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.9fr)]">
         <Card className="overflow-hidden rounded-[1.5rem] border-border/70 bg-card/80 shadow-lg shadow-black/5">
           <CardHeader className="space-y-3">
-            <CardTitle className="text-xl tracking-tight">Listado</CardTitle>
-            <CardDescription>
-              Búsqueda por nombre, teléfono o email con paginación branch-scoped.
-            </CardDescription>
+            <CardTitle className="text-xl tracking-tight">{tClients("listTitle")}</CardTitle>
+            <CardDescription>{tClients("listDescription")}</CardDescription>
           </CardHeader>
           <Separator />
           <CardContent className="p-0">
@@ -297,12 +288,10 @@ export function ClientsTable({ branchId }: { branchId: string }) {
               <div className="px-6 py-8">
                 <div className="rounded-2xl border border-dashed border-border/70 bg-muted/40 p-6">
                   <strong className="block text-base font-semibold tracking-tight">
-                    {query ? "No encontramos clientes para esa búsqueda." : "No hay clientes todavía."}
+                    {query ? tClients("searchEmptyTitle") : tClients("emptyTitle")}
                   </strong>
                   <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                    {query
-                      ? "Prueba otro término o crea el primer cliente de esta sucursal."
-                      : "Registra el primer cliente de la sucursal seleccionada."}
+                    {query ? tClients("searchEmptyDescription") : tClients("emptyDescription")}
                   </p>
                 </div>
               </div>
@@ -312,11 +301,11 @@ export function ClientsTable({ branchId }: { branchId: string }) {
                   <table className="min-w-full text-sm">
                     <thead className="bg-muted/40 text-left text-xs uppercase tracking-[0.22em] text-muted-foreground">
                       <tr>
-                        <th className="px-6 py-4 font-semibold">Name</th>
-                        <th className="px-6 py-4 font-semibold">Contact</th>
-                        <th className="px-6 py-4 font-semibold">Notes</th>
-                        <th className="px-6 py-4 font-semibold">Active</th>
-                        <th className="px-6 py-4 font-semibold">Actions</th>
+                        <th className="px-6 py-4 font-semibold">{tClients("name")}</th>
+                        <th className="px-6 py-4 font-semibold">{tClients("contact")}</th>
+                        <th className="px-6 py-4 font-semibold">{tClients("notes")}</th>
+                        <th className="px-6 py-4 font-semibold">{tClients("active")}</th>
+                        <th className="px-6 py-4 font-semibold">{tClients("actions")}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -330,25 +319,25 @@ export function ClientsTable({ branchId }: { branchId: string }) {
                             <div className="space-y-1">
                               <p className="font-medium">{client.fullName}</p>
                               <p className="text-xs text-muted-foreground">
-                                {formatDate(client.createdAt)}
+                                {formatDate(client.createdAt, locale)}
                               </p>
                             </div>
                           </td>
                           <td className="px-6 py-4">
                             <div className="space-y-1">
-                              <p>{client.phone || "Sin teléfono"}</p>
+                              <p>{client.phone || tClients("withoutPhone")}</p>
                               <p className="text-xs text-muted-foreground">
-                                {client.email || "Sin email"}
+                                {client.email || tClients("withoutEmail")}
                               </p>
                             </div>
                           </td>
-                          <td className="px-6 py-4">{client.notes || "Sin notas"}</td>
+                          <td className="px-6 py-4">{client.notes || tClients("withoutNotes")}</td>
                           <td className="px-6 py-4">
                             <Badge
                               className="rounded-full"
                               variant={client.active ? "secondary" : "outline"}
                             >
-                              {client.active ? "Activo" : "Inactivo"}
+                              {client.active ? tClients("rowActive") : tClients("rowInactive")}
                             </Badge>
                           </td>
                           <td className="px-6 py-4">
@@ -362,7 +351,9 @@ export function ClientsTable({ branchId }: { branchId: string }) {
                                 type="button"
                                 variant="outline"
                               >
-                                {pendingClientId === client.id ? "Loading..." : "Edit"}
+                                {pendingClientId === client.id
+                                  ? tClients("loading")
+                                  : tClients("edit")}
                               </Button>
                               <Button
                                 className="rounded-full"
@@ -374,10 +365,10 @@ export function ClientsTable({ branchId }: { branchId: string }) {
                                 variant="ghost"
                               >
                                 {pendingClientId === client.id
-                                  ? "Saving..."
+                                  ? tClients("saving")
                                   : client.active
-                                    ? "Deactivate"
-                                    : "Activate"}
+                                    ? tClients("deactivate")
+                                    : tClients("activate")}
                               </Button>
                             </div>
                           </td>
@@ -389,8 +380,11 @@ export function ClientsTable({ branchId }: { branchId: string }) {
 
                 <div className="flex flex-col gap-4 border-t border-border/70 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
                   <Badge className="w-fit rounded-full" variant="outline">
-                    {clientPage.totalItems} clientes · página {clientPage.page + 1} de{" "}
-                    {Math.max(clientPage.totalPages, 1)}
+                    {tClients("pagination", {
+                      count: clientPage.totalItems,
+                      page: clientPage.page + 1,
+                      totalPages: Math.max(clientPage.totalPages, 1),
+                    })}
                   </Badge>
                   <div className="flex gap-2">
                     <Button
@@ -403,7 +397,7 @@ export function ClientsTable({ branchId }: { branchId: string }) {
                       type="button"
                       variant="outline"
                     >
-                      Prev
+                      {tCommon("previous")}
                     </Button>
                     <Button
                       className="rounded-full"
@@ -415,7 +409,7 @@ export function ClientsTable({ branchId }: { branchId: string }) {
                       type="button"
                       variant="outline"
                     >
-                      Next
+                      {tCommon("next")}
                     </Button>
                   </div>
                 </div>
@@ -440,11 +434,10 @@ export function ClientsTable({ branchId }: { branchId: string }) {
             ) : (
               <div className="rounded-2xl border border-dashed border-border/70 bg-muted/40 p-6">
                 <strong className="block text-base font-semibold tracking-tight">
-                  Selecciona una acción.
+                  {tClients("selectActionTitle")}
                 </strong>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  Puedes crear un cliente nuevo, editar uno existente o cambiar su estado desde la
-                  tabla.
+                  {tClients("selectActionDescription")}
                 </p>
               </div>
             )}

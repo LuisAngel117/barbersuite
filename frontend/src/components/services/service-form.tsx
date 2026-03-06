@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { FormEvent, useState } from "react";
 import { type ServicePayload } from "@/lib/backend";
 import { ProblemBanner } from "@/components/ui/problem-banner";
@@ -29,6 +30,8 @@ export function ServiceForm({
   onCancel,
   onSubmit,
 }: ServiceFormProps) {
+  const tServices = useTranslations("services");
+  const tForm = useTranslations("services.form");
   const [name, setName] = useState(initialService?.name ?? "");
   const [durationMinutes, setDurationMinutes] = useState(
     initialService ? String(initialService.durationMinutes) : "30",
@@ -45,17 +48,17 @@ export function ServiceForm({
     const normalizedPrice = Number.parseFloat(price);
 
     if (normalizedName.length < 2) {
-      setError("El nombre debe tener al menos 2 caracteres.");
+      setError(tForm("nameValidation"));
       return;
     }
 
     if (Number.isNaN(normalizedDuration) || normalizedDuration < 5 || normalizedDuration > 480) {
-      setError("La duración debe estar entre 5 y 480 minutos.");
+      setError(tForm("durationValidation"));
       return;
     }
 
     if (Number.isNaN(normalizedPrice) || normalizedPrice < 0) {
-      setError("El precio debe ser mayor o igual a 0.");
+      setError(tForm("priceValidation"));
       return;
     }
 
@@ -72,22 +75,20 @@ export function ServiceForm({
     <form className="space-y-6" onSubmit={handleSubmit}>
       <div className="space-y-2">
         <div className="inline-flex w-fit rounded-full border border-border/70 bg-muted/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-          {initialService ? "Edit service" : "New service"}
+          {initialService ? tForm("editEyebrow") : tForm("newEyebrow")}
         </div>
         <div className="space-y-1">
           <h2 className="text-2xl font-semibold tracking-tight">
-            {initialService ? "Actualizar servicio" : "Crear servicio"}
+            {initialService ? tForm("editTitle") : tForm("newTitle")}
           </h2>
-          <p className="text-sm leading-6 text-muted-foreground">
-            Los cambios viajan por el BFF interno y mantienen el token fuera del browser.
-          </p>
+          <p className="text-sm leading-6 text-muted-foreground">{tForm("description")}</p>
         </div>
       </div>
 
       {error ? (
         <ProblemBanner
           problem={{
-            title: "Validación local",
+            title: tForm("validationTitle"),
             detail: error,
             code: "VALIDATION_ERROR",
           }}
@@ -95,14 +96,14 @@ export function ServiceForm({
       ) : null}
 
       <div className="space-y-2">
-        <Label htmlFor="service-name">Name</Label>
+        <Label htmlFor="service-name">{tServices("name")}</Label>
         <Input
           className="h-11 rounded-xl"
           data-testid="services-name"
           id="service-name"
           minLength={2}
           onChange={(event) => setName(event.target.value)}
-          placeholder="Corte clásico"
+          placeholder={tForm("namePlaceholder")}
           required
           value={name}
         />
@@ -110,7 +111,7 @@ export function ServiceForm({
 
       <div className="grid gap-5 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="service-duration">Duration (minutes)</Label>
+          <Label htmlFor="service-duration">{tServices("durationMinutes")}</Label>
           <Input
             className="h-11 rounded-xl"
             data-testid="services-duration"
@@ -126,7 +127,7 @@ export function ServiceForm({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="service-price">Price</Label>
+          <Label htmlFor="service-price">{tServices("price")}</Label>
           <Input
             className="h-11 rounded-xl"
             data-testid="services-price"
@@ -145,16 +146,11 @@ export function ServiceForm({
 
       {initialService ? (
         <label className="flex items-center gap-3 rounded-2xl border border-border/70 bg-muted/40 px-4 py-3 text-sm font-medium">
-          <Checkbox
-            checked={active}
-            onCheckedChange={(checked) => setActive(Boolean(checked))}
-          />
-          <span>Servicio activo</span>
+          <Checkbox checked={active} onCheckedChange={(checked) => setActive(Boolean(checked))} />
+          <span>{tForm("serviceActive")}</span>
         </label>
       ) : (
-        <p className="text-sm leading-6 text-muted-foreground">
-          Los servicios nuevos se crean activos por defecto.
-        </p>
+        <p className="text-sm leading-6 text-muted-foreground">{tForm("newDefaultActive")}</p>
       )}
 
       <div className="flex flex-col gap-3 sm:flex-row">
@@ -166,11 +162,11 @@ export function ServiceForm({
         >
           {isSubmitting
             ? initialService
-              ? "Guardando..."
-              : "Creando..."
+              ? tForm("saving")
+              : tForm("creating")
             : initialService
-              ? "Guardar cambios"
-              : "Crear servicio"}
+              ? tForm("update")
+              : tForm("create")}
         </Button>
         <Button
           className="h-11 rounded-xl"
@@ -179,7 +175,7 @@ export function ServiceForm({
           type="button"
           variant="outline"
         >
-          Cancelar
+          {tForm("cancel")}
         </Button>
       </div>
     </form>

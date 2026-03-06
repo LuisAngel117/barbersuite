@@ -6,34 +6,21 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.barbersuite.backend.web.RequestHeaderNames;
-import java.util.UUID;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
 
 @Import(TestcontainersConfiguration.class)
 @SpringBootTest
-class BranchRequiredInterceptorIntegrationTest {
-
-  @Autowired
-  private WebApplicationContext webApplicationContext;
-
-  private MockMvc mockMvc;
-
-  @BeforeEach
-  void setUp() {
-    mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
-  }
+class BranchRequiredInterceptorIntegrationTest extends AuthenticatedWebIntegrationTestSupport {
 
   @Test
   void returnsProblemDetailsWhenBranchHeaderIsMissing() throws Exception {
-    mockMvc.perform(get("/api/v1/_debug/branch-required"))
+    mockMvc.perform(
+      get("/api/v1/_debug/branch-required")
+        .header("Authorization", "Bearer " + loginAndGetToken())
+    )
       .andExpect(status().isBadRequest())
       .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
       .andExpect(jsonPath("$.status").value(400))
@@ -45,13 +32,12 @@ class BranchRequiredInterceptorIntegrationTest {
 
   @Test
   void returnsOkWhenBranchHeaderIsPresent() throws Exception {
-    UUID branchId = UUID.randomUUID();
-
     mockMvc.perform(
       get("/api/v1/_debug/branch-required")
-        .header(RequestHeaderNames.BRANCH_ID, branchId.toString())
+        .header("Authorization", "Bearer " + loginAndGetToken())
+        .header(RequestHeaderNames.BRANCH_ID, BRANCH_ID.toString())
     )
       .andExpect(status().isOk())
-      .andExpect(jsonPath("$.branchId").value(branchId.toString()));
+      .andExpect(jsonPath("$.branchId").value(BRANCH_ID.toString()));
   }
 }

@@ -17,16 +17,43 @@ public class ApiExceptionHandler {
     ApiBadRequestException exception,
     HttpServletRequest request
   ) {
-    ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+    return problemResponse(
       HttpStatus.BAD_REQUEST,
-      exception.getMessage()
+      "Bad Request",
+      exception.getMessage(),
+      exception.getCode(),
+      request
     );
-    problemDetail.setTitle("Bad Request");
+  }
+
+  @ExceptionHandler(InvalidCredentialsException.class)
+  ResponseEntity<ProblemDetail> handleInvalidCredentials(
+    InvalidCredentialsException exception,
+    HttpServletRequest request
+  ) {
+    return problemResponse(
+      HttpStatus.UNAUTHORIZED,
+      "Unauthorized",
+      exception.getMessage(),
+      exception.getCode(),
+      request
+    );
+  }
+
+  private ResponseEntity<ProblemDetail> problemResponse(
+    HttpStatus status,
+    String title,
+    String detail,
+    String code,
+    HttpServletRequest request
+  ) {
+    ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(status, detail);
+    problemDetail.setTitle(title);
     problemDetail.setType(URI.create("about:blank"));
     problemDetail.setInstance(URI.create(request.getRequestURI()));
-    problemDetail.setProperty("code", exception.getCode());
+    problemDetail.setProperty("code", code);
 
-    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+    return ResponseEntity.status(status)
       .contentType(MediaType.APPLICATION_PROBLEM_JSON)
       .body(problemDetail);
   }

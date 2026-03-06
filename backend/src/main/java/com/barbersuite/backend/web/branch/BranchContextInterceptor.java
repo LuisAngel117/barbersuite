@@ -1,7 +1,6 @@
 package com.barbersuite.backend.web.branch;
 
 import com.barbersuite.backend.context.BranchContext;
-import com.barbersuite.backend.context.TenantContext;
 import com.barbersuite.backend.web.RequestHeaderNames;
 import com.barbersuite.backend.web.error.BranchRequiredException;
 import com.barbersuite.backend.web.error.InvalidBranchHeaderException;
@@ -20,7 +19,6 @@ public class BranchContextInterceptor implements HandlerInterceptor {
   @Override
   public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
     BranchContext.clear();
-    TenantContext.clear();
 
     if (!(handler instanceof HandlerMethod handlerMethod)) {
       return true;
@@ -43,7 +41,6 @@ public class BranchContextInterceptor implements HandlerInterceptor {
     Exception exception
   ) {
     BranchContext.clear();
-    TenantContext.clear();
   }
 
   private Optional<UUID> resolveBranchId(HttpServletRequest request) {

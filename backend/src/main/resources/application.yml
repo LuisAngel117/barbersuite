@@ -16,6 +16,11 @@ spring:
           time_zone: UTC
   flyway:
     enabled: ${FLYWAY_ENABLED:true}
+security:
+  jwt:
+    secret: ${JWT_SECRET:change-me-local-barbersuite-jwt-secret-please-override}
+    issuer: ${JWT_ISSUER:barbersuite-backend}
+    access-token-ttl: ${JWT_ACCESS_TOKEN_TTL:PT8H}
 server:
   port: ${SERVER_PORT:8080}
 management:

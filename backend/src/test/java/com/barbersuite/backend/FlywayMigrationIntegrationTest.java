@@ -25,25 +25,33 @@ class FlywayMigrationIntegrationTest {
   private PostgreSQLContainer<?> postgresContainer;
 
   @Test
-  void appliesV1MigrationOnRealPostgres() {
+  void appliesLatestMigrationOnRealPostgres() {
     assertThat(postgresContainer.isRunning()).isTrue();
     assertThat(jdbcTemplate.queryForObject("select version()", String.class))
       .contains("PostgreSQL");
     assertThat(flyway.info().current()).isNotNull();
-    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("1");
+    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("2");
 
-    assertThat(List.of("tenants", "branches", "users", "receipt_sequences"))
+    assertThat(List.of("tenants", "branches", "users", "receipt_sequences", "user_roles"))
       .allMatch(this::tableExists);
     assertThat(columnType("tenants", "id")).isEqualTo("uuid");
     assertThat(columnType("branches", "id")).isEqualTo("uuid");
     assertThat(columnType("users", "id")).isEqualTo("uuid");
     assertThat(columnType("receipt_sequences", "id")).isEqualTo("uuid");
+    assertThat(columnType("user_roles", "tenant_id")).isEqualTo("uuid");
+    assertThat(columnType("user_roles", "user_id")).isEqualTo("uuid");
 
     assertThat(constraintExists("branches", "uq_branches_tenant_code", "UNIQUE")).isTrue();
     assertThat(constraintExists("users", "uq_users_tenant_email", "UNIQUE")).isTrue();
+    assertThat(constraintExists("users", "uq_users_tenant_user", "UNIQUE")).isTrue();
     assertThat(constraintExists(
       "receipt_sequences",
       "uq_receipt_sequences_tenant_branch_year",
+      "UNIQUE"
+    )).isTrue();
+    assertThat(constraintExists(
+      "user_roles",
+      "uq_user_roles_tenant_user_role",
       "UNIQUE"
     )).isTrue();
     assertThat(constraintExists("branches", "fk_branches_tenant", "FOREIGN KEY")).isTrue();
@@ -53,6 +61,8 @@ class FlywayMigrationIntegrationTest {
       "fk_receipt_sequences_branch",
       "FOREIGN KEY"
     )).isTrue();
+    assertThat(constraintExists("user_roles", "fk_user_roles_tenant", "FOREIGN KEY")).isTrue();
+    assertThat(constraintExists("user_roles", "fk_user_roles_user", "FOREIGN KEY")).isTrue();
   }
 
   private boolean tableExists(String tableName) {

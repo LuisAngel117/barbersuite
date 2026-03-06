@@ -1,19 +1,19 @@
-import { BanknoteArrowDown } from "lucide-react";
+import { ChartColumnBig } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
-import { ModulePlaceholder } from "@/components/module-placeholder";
 import { EmptyState } from "@/components/empty-state";
+import { ModulePlaceholder } from "@/components/module-placeholder";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { getDashboardContext } from "@/lib/dashboard-context";
 import { hasAnyRole } from "@/lib/roles";
 
-export default async function ReceiptsPage() {
-  const t = await getTranslations("placeholders.receipts");
+export default async function ReportsPage() {
+  const t = await getTranslations("placeholders.reports");
   const tCommon = await getTranslations("placeholders.common");
   const { payload } = await getDashboardContext();
   const roles = payload?.user.roles ?? [];
-  const canAccess = hasAnyRole(roles, ["ADMIN", "MANAGER", "RECEPTION"]);
+  const canAccess = hasAnyRole(roles, ["ADMIN", "MANAGER"]);
 
   if (!canAccess) {
     return (
@@ -41,11 +41,11 @@ export default async function ReceiptsPage() {
         t("bullets.three"),
       ]}
       comingSoonLabel={tCommon("comingSoon")}
-      ctaHref="/app/clients"
+      ctaHref="/app/receipts"
       ctaLabel={t("ctaPrimary")}
       description={t("description")}
-      icon={<BanknoteArrowDown className="size-5" />}
-      secondaryCtaHref="/app/services"
+      icon={<ChartColumnBig className="size-5" />}
+      secondaryCtaHref="/app"
       secondaryCtaLabel={t("ctaSecondary")}
       subtitle={t("subtitle")}
       title={t("title")}

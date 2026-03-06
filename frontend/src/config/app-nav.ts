@@ -1,8 +1,10 @@
 import type { LucideIcon } from "lucide-react";
 import {
   BanknoteArrowDown,
+  Bell,
   Building2,
   CalendarClock,
+  ChartColumnBig,
   LayoutDashboard,
   Scissors,
   Settings2,
@@ -137,6 +139,28 @@ export const APP_NAV_ITEMS: AppNavItem[] = [
     },
     group: "administration",
     allowedRoles: ["ADMIN", "MANAGER"],
+  },
+  {
+    key: "reports",
+    href: "/app/reports",
+    icon: ChartColumnBig,
+    label: {
+      es: "Reportes",
+      en: "Reports",
+    },
+    group: "administration",
+    allowedRoles: ["ADMIN", "MANAGER"],
+  },
+  {
+    key: "notifications",
+    href: "/app/notifications",
+    icon: Bell,
+    label: {
+      es: "Notificaciones",
+      en: "Notifications",
+    },
+    group: "system",
+    allowedRoles: ALL_APP_ROLES,
   },
   {
     key: "settings",

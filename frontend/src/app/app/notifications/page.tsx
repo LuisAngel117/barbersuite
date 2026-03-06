@@ -1,9 +1,9 @@
-import { CalendarClock } from "lucide-react";
+import { Bell } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { ModulePlaceholder } from "@/components/module-placeholder";
 
-export default async function AppointmentsPage() {
-  const t = await getTranslations("placeholders.appointments");
+export default async function NotificationsPage() {
+  const t = await getTranslations("placeholders.notifications");
   const tCommon = await getTranslations("placeholders.common");
 
   return (
@@ -17,8 +17,8 @@ export default async function AppointmentsPage() {
       ctaHref="/app/clients"
       ctaLabel={t("ctaPrimary")}
       description={t("description")}
-      icon={<CalendarClock className="size-5" />}
-      secondaryCtaHref="/app/services"
+      icon={<Bell className="size-5" />}
+      secondaryCtaHref="/app"
       secondaryCtaLabel={t("ctaSecondary")}
       subtitle={t("subtitle")}
       title={t("title")}

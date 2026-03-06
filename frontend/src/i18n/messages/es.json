@@ -60,6 +60,8 @@
     "services": "Servicios",
     "receipts": "Caja",
     "branches": "Sucursales",
+    "reports": "Reportes",
+    "notifications": "Notificaciones",
     "settings": "Configuración",
     "ui-kit": "UI Kit",
     "more": "Más",
@@ -152,26 +154,43 @@
     "logoutFailed": "No pudimos cerrar la sesión."
   },
   "dashboard": {
-    "title": "Contexto listo para operar",
+    "title": "Dashboard",
+    "subtitle": "Una vista clara del tenant, la sucursal activa y el pulso operativo de {name}.",
     "errorTitle": "No pudimos cargar tu contexto actual",
     "errorFallback": "El backend respondió con un error inesperado al consultar /me.",
-    "tenantDashboard": "Tenant dashboard",
-    "sessionDescription": "Sesión autenticada para {email}. Este tablero consume /api/v1/me server-side y nunca expone el token al navegador.",
-    "goServices": "Ir a Services",
-    "goClients": "Ir a Clients",
-    "goUiKit": "Ver UI Kit",
-    "quickSummary": "Resumen rápido",
-    "tenantId": "Tenant ID",
-    "userId": "User ID",
-    "branches": "Sucursales accesibles",
-    "context": "Contexto",
-    "contextDescription": "BarberSuite ya quedó conectado al backend real y está listo para recruiter demos.",
-    "user": "Usuario",
-    "email": "Email",
-    "roles": "Roles",
-    "branchesTitle": "Accesos vigentes",
-    "branchesDescription": "La lista viene de user_branch_access y respeta el tenant del JWT.",
-    "branchesEmpty": "Este usuario todavía no tiene sucursales asignadas.",
+    "activeBranch": "Sucursal activa",
+    "branchNone": "Sin sucursal seleccionada",
+    "branchNoneDescription": "Elige una sucursal arriba para activar clientes, actividad y acciones branch-scoped.",
+    "branchStatusActive": "Activa",
+    "branchStatusInactive": "Inactiva",
+    "selectBranchCta": "Seleccionar sucursal",
+    "openBranchClients": "Abrir clientes",
+    "services": "Servicios",
+    "servicesMetricDetail": "{active} activos listos para operación.",
+    "openServices": "Abrir servicios",
+    "clients": "Clientes",
+    "clientsMetricDetail": "Vista resumida de la sucursal seleccionada.",
+    "clientsMetricWithoutBranch": "Selecciona una sucursal para ver este indicador.",
+    "openClients": "Abrir clientes",
+    "role": "Rol y tenant",
+    "tenantDescription": "El shell adapta navegación y acciones según tus permisos.",
+    "quickActions": "Quick actions",
+    "quickActionsTitle": "Moverte sin fricción",
+    "quickActionsDescription": "Atajos para arrancar demos, cargar datos o seguir explorando el producto.",
+    "newService": "Nuevo servicio",
+    "newClient": "Nuevo cliente",
+    "openUiKit": "Ver UI Kit",
+    "revenueHint": "Snapshot comercial",
+    "revenueHintDescription": "Si activaras hoy todo el catálogo visible, el ticket base parte desde {amount}.",
+    "revenueHintEmpty": "Crea servicios para mostrar una base de ticket y empezar a contar historia comercial.",
+    "recentClients": "Actividad",
+    "recentClientsTitle": "Últimos clientes",
+    "recentClientsDescription": "Lectura rápida del branch seleccionado sin abrir el módulo completo.",
+    "recentClientsNoBranchTitle": "Selecciona una sucursal para ver actividad",
+    "recentClientsNoBranchDescription": "Los clientes viven por sucursal. En cuanto elijas una arriba, aquí verás los últimos registros.",
+    "recentClientsEmptyTitle": "Todavía no hay clientes en esta sucursal",
+    "recentClientsEmptyDescription": "Carga el primer cliente y este bloque empezará a verse como operación real.",
+    "recentClientsNoContact": "Sin contacto registrado",
     "active": "Activa",
     "inactive": "Inactiva"
   },
@@ -240,6 +259,7 @@
     "pageDescription": "Esta vista usa /api/clients y depende de la sucursal seleccionada en bs_branch_id.",
     "missingBranchTitle": "Selecciona una sucursal arriba para continuar.",
     "missingBranchDescription": "Los clientes son branch-scoped. Mientras no exista una sucursal activa en la cookie, esta pantalla no hace requests.",
+    "missingBranchCta": "Ir al selector",
     "description": "El listado usa la branch seleccionada arriba y soporta búsqueda y paginación.",
     "add": "Nuevo cliente",
     "searchLabel": "Buscar",
@@ -307,49 +327,83 @@
     }
   },
   "placeholders": {
+    "common": {
+      "comingSoon": "Coming soon",
+      "restrictedTitle": "No tienes acceso a este módulo",
+      "restrictedDescription": "Tu rol actual no ve este espacio todavía. Vuelve al dashboard o entra con un rol administrativo para explorarlo.",
+      "backToDashboard": "Volver al dashboard"
+    },
     "appointments": {
-      "eyebrow": "Appointments",
-      "title": "Agenda lista para el próximo slice",
-      "description": "Este módulo se reserva para la agenda operativa y todavía no ejecuta flujos reales.",
+      "title": "Agenda premium en camino",
+      "subtitle": "El espacio ya existe en el shell y está listo para convertirse en el centro operativo del día.",
+      "description": "Aquí aterrizarán reservas, disponibilidad y reasignaciones rápidas sin rehacer el chrome.",
       "bullets": {
-        "one": "Aquí vivirán slots, disponibilidad y asignación por barbero.",
-        "two": "El shell ya contempla navegación móvil y breadcrumbs para este flujo.",
-        "three": "Cuando entre el slice de agenda, esta pantalla dejará de ser placeholder."
+        "one": "Timeline por barbero con cambios rápidos y lectura clara del día.",
+        "two": "Bloques de disponibilidad, overbooking controlado y confirmaciones visuales.",
+        "three": "Accesos móviles pensados para recepción y operación en mostrador."
       },
-      "cta": "Ir a Services"
+      "ctaPrimary": "Explorar clientes",
+      "ctaSecondary": "Explorar servicios"
     },
     "receipts": {
-      "eyebrow": "Receipts",
-      "title": "Caja preparada para el slice fiscal",
-      "description": "La operación de recibos y secuencias sigue pendiente, pero el shell ya está listo para alojarla.",
+      "title": "Caja y recibos con foco operativo",
+      "subtitle": "Este módulo completará el circuito entre atención, cobro y cierre diario por sucursal.",
+      "description": "La base visual ya está lista para sumarle secuencias, cierres y estados de caja sin parecer una demo improvisada.",
       "bullets": {
-        "one": "Se integrará con receipt_sequences y cierre diario por sucursal.",
-        "two": "El acceso móvil prioriza este módulo para roles operativos.",
-        "three": "Los estados vacíos mantienen el look & feel final del producto."
+        "one": "Secuencias por sucursal con lectura clara del siguiente comprobante.",
+        "two": "Resumen diario para recepción y managers sin duplicar navegación.",
+        "three": "Estados vacíos y de error ya siguen el mismo lenguaje del resto del producto."
       },
-      "cta": "Ir a Clients"
+      "ctaPrimary": "Ver clientes",
+      "ctaSecondary": "Ver servicios"
     },
     "branches": {
-      "eyebrow": "Branches",
-      "title": "Administración de sucursales en evolución",
-      "description": "El módulo administrativo ya tiene lugar en el shell y crecerá sobre el slice de branches existente.",
+      "title": "Sucursales y operación multi-branch",
+      "subtitle": "La administración de branches será el puente entre configuración, permisos y operación local.",
+      "description": "Este placeholder ya muestra la dirección de producto: menos backoffice frío, más contexto accionable para crecer en varias sucursales.",
       "bullets": {
-        "one": "Aquí vivirán políticas, horarios y configuraciones por sucursal.",
-        "two": "El selector superior sigue siendo la fuente de verdad branch-scoped.",
-        "three": "El diseño ya contempla desktop + mobile sin rehacer el chrome."
+        "one": "Horarios, políticas y configuración operativa por sucursal.",
+        "two": "Visibilidad clara de branches activas, inactivas y su contexto horario.",
+        "three": "Integración directa con el selector superior y permisos por usuario."
       },
-      "cta": "Ir a Dashboard"
+      "ctaPrimary": "Ver dashboard",
+      "ctaSecondary": "Abrir clientes"
+    },
+    "reports": {
+      "title": "Reportes ejecutivos con lectura inmediata",
+      "subtitle": "Pensado para managers que necesitan entender negocio sin exportar planillas.",
+      "description": "Este módulo consolidará KPIs, tendencias y comparativas por sucursal con una visual más cercana a producto SaaS que a backoffice heredado.",
+      "bullets": {
+        "one": "Indicadores por sucursal, desempeño del catálogo y lectura semanal.",
+        "two": "Vistas listas para stakeholders sin rehacer filtros cada vez.",
+        "three": "Observabilidad y negocio conectados en una sola superficie."
+      },
+      "ctaPrimary": "Ver caja",
+      "ctaSecondary": "Volver al dashboard"
+    },
+    "notifications": {
+      "title": "Centro de notificaciones y recordatorios",
+      "subtitle": "La experiencia futura combinará avisos útiles, sin ruido, con seguimiento operativo.",
+      "description": "Aquí vivirán recordatorios de agenda, alertas de caja y avisos internos para que el equipo opere con menos fricción.",
+      "bullets": {
+        "one": "Recordatorios accionables en vez de una bandeja ruidosa.",
+        "two": "Señales claras para cambios de agenda, caja y seguimiento diario.",
+        "three": "Compatibilidad con móvil y ritmo de trabajo del front desk."
+      },
+      "ctaPrimary": "Ver clientes",
+      "ctaSecondary": "Volver al dashboard"
     },
     "settings": {
-      "eyebrow": "Settings",
-      "title": "Sistema listo para ajustes internos",
-      "description": "Esta sección concentrará preferencias operativas, branding y controles de tenant.",
+      "title": "Configuración con intención de producto",
+      "subtitle": "Cuando entre este módulo, no será un cajón de sastre: será un panel claro para tenant, branding y preferencias.",
+      "description": "La base visual ya deja espacio para settings que sí aporten valor al negocio y no solo acumulen toggles.",
       "bullets": {
-        "one": "Puedes usarla después para horarios, branding y preferencias globales.",
-        "two": "El switch de theme y locale ya anticipa parte de ese futuro panel.",
-        "three": "Mantener este espacio desde ahora evita rediseños del shell más adelante."
+        "one": "Branding, horarios globales y preferencias del tenant.",
+        "two": "Ajustes de experiencia como theme, idioma y comportamiento operativo.",
+        "three": "Espacio listo para crecer sin rehacer la arquitectura visual del shell."
       },
-      "cta": "Ver UI Kit"
+      "ctaPrimary": "Ver UI Kit",
+      "ctaSecondary": "Volver al dashboard"
     }
   }
 }

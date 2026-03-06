@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ColumnDef, PaginationState, SortingState } from "@tanstack/react-table";
 import { useLocale, useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { type ServicePayload } from "@/lib/backend";
 import { apiFetch } from "@/lib/api-client";
@@ -43,6 +43,8 @@ function toTestIdSegment(value: string) {
 
 export function ServicesTable({ roles }: { roles: readonly string[] }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const locale = useLocale();
   const tCommon = useTranslations("common");
   const tConfirmations = useTranslations("confirmations");
@@ -89,6 +91,25 @@ export function ServicesTable({ roles }: { roles: readonly string[] }) {
 
     return () => window.clearTimeout(timeoutId);
   }, [fetchServices]);
+
+  useEffect(() => {
+    if (searchParams.get("create") !== "1" || !canManageServices || formMode !== null) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setEditingService(null);
+      setFormMode("create");
+      setProblem(null);
+
+      const nextParams = new URLSearchParams(searchParams.toString());
+      nextParams.delete("create");
+      const nextUrl = nextParams.size > 0 ? `${pathname}?${nextParams.toString()}` : pathname;
+      router.replace(nextUrl, { scroll: false });
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [canManageServices, formMode, pathname, router, searchParams]);
 
   const reloadServices = useCallback(async () => {
     setIsLoading(true);

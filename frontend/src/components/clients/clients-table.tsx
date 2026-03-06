@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ColumnDef, PaginationState } from "@tanstack/react-table";
 import { useLocale, useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { type ClientPagePayload, type ClientPayload } from "@/lib/backend";
 import { apiFetch } from "@/lib/api-client";
@@ -47,6 +47,8 @@ export function ClientsTable({
   roles: readonly string[];
 }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const locale = useLocale();
   const tClients = useTranslations("clients");
   const tCommon = useTranslations("common");
@@ -103,6 +105,25 @@ export function ClientsTable({
 
     return () => window.clearTimeout(timeoutId);
   }, [fetchClients]);
+
+  useEffect(() => {
+    if (searchParams.get("create") !== "1" || formMode !== null) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setEditingClient(null);
+      setFormMode("create");
+      setProblem(null);
+
+      const nextParams = new URLSearchParams(searchParams.toString());
+      nextParams.delete("create");
+      const nextUrl = nextParams.size > 0 ? `${pathname}?${nextParams.toString()}` : pathname;
+      router.replace(nextUrl, { scroll: false });
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [formMode, pathname, router, searchParams]);
 
   const reloadClients = useCallback(async () => {
     setIsLoading(true);

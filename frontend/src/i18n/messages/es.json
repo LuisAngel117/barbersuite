@@ -604,6 +604,69 @@
       "reasonValidation": "El motivo debe tener al menos 2 caracteres."
     }
   },
+  "reports": {
+    "pageEyebrow": "Reports",
+    "title": "Reportes",
+    "subtitle": "Ventas, ocupación y desempeño en una sola vista branch-scoped.",
+    "description": "Las métricas leen solo la sucursal activa y respetan la zona horaria operativa para ventas y agenda.",
+    "branchScoped": "Branch scoped",
+    "backToDashboard": "Volver al dashboard",
+    "noAccessTitle": "No tienes acceso a Reportes",
+    "noAccessDescription": "Solo ADMIN y MANAGER pueden consultar métricas y desempeño por sucursal.",
+    "noBranchTitle": "Selecciona una sucursal para ver reportes",
+    "noBranchDescription": "Los reportes son branch-scoped. Elige una sucursal arriba para cargar ventas, agenda y desempeño del equipo.",
+    "selectBranchCta": "Ir a clientes",
+    "salesSummary": "Resumen de ventas",
+    "dailySales": "Ventas por día",
+    "dailySalesDescription": "Serie diaria del rango seleccionado, incluyendo días sin ventas para una lectura limpia.",
+    "topServices": "Servicios top",
+    "appointmentsSummary": "Resumen de citas",
+    "barbersSummary": "Desempeño por barbero",
+    "filters": {
+      "from": "Desde",
+      "to": "Hasta",
+      "apply": "Aplicar"
+    },
+    "metrics": {
+      "grossSales": "Ventas emitidas",
+      "receiptsCount": "Recibos",
+      "avgTicket": "Ticket promedio",
+      "discountTotal": "Descuentos",
+      "taxTotal": "Impuestos",
+      "voidedCount": "Anulados"
+    },
+    "appointments": {
+      "scheduled": "Agendadas",
+      "checkedIn": "Check-in",
+      "completed": "Completadas",
+      "cancelled": "Canceladas",
+      "noShow": "No show",
+      "bookedMinutes": "Minutos reservados"
+    },
+    "tables": {
+      "service": "Servicio",
+      "quantity": "Cantidad",
+      "revenue": "Ingreso",
+      "barber": "Barbero",
+      "appointments": "Citas",
+      "completed": "Completadas",
+      "noShow": "No show",
+      "bookedMinutes": "Minutos"
+    },
+    "empty": {
+      "topServicesTitle": "Todavía no hay servicios vendidos",
+      "topServicesDescription": "Emite recibos con servicios vinculados para ver este ranking.",
+      "barbersTitle": "Todavía no hay actividad por barbero",
+      "barbersDescription": "Cuando existan citas dentro del rango, aquí verás ocupación y desempeño."
+    },
+    "errors": {
+      "loadFailed": "No pudimos cargar los reportes.",
+      "validationTitle": "Validación local",
+      "rangeRequired": "Selecciona un rango de fechas válido para consultar reportes.",
+      "invalidRange": "La fecha inicial no puede ser mayor que la final.",
+      "noData": "No hay datos para este rango todavía."
+    }
+  },
   "placeholders": {
     "common": {
       "comingSoon": "Coming soon",

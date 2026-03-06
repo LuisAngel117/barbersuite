@@ -164,6 +164,7 @@ export const APP_NAV_ITEMS: AppNavItem[] = [
     },
     group: "administration",
     allowedRoles: ["ADMIN", "MANAGER"],
+    testId: "nav-reports",
   },
   {
     key: "notifications",

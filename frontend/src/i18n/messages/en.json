@@ -604,6 +604,69 @@
       "reasonValidation": "Reason must be at least 2 characters long."
     }
   },
+  "reports": {
+    "pageEyebrow": "Reports",
+    "title": "Reports",
+    "subtitle": "Sales, utilization and team performance in one branch-scoped surface.",
+    "description": "Metrics read only from the active branch and respect its operating time zone for sales and appointments.",
+    "branchScoped": "Branch scoped",
+    "backToDashboard": "Back to dashboard",
+    "noAccessTitle": "You do not have access to Reports",
+    "noAccessDescription": "Only ADMIN and MANAGER can view branch performance and metrics.",
+    "noBranchTitle": "Select a branch to view reports",
+    "noBranchDescription": "Reports are branch-scoped. Pick a branch above to load sales, appointments and staff performance.",
+    "selectBranchCta": "Go to clients",
+    "salesSummary": "Sales summary",
+    "dailySales": "Daily sales",
+    "dailySalesDescription": "Daily series for the selected range, including zero-sales days for a clean read.",
+    "topServices": "Top services",
+    "appointmentsSummary": "Appointments summary",
+    "barbersSummary": "Barber performance",
+    "filters": {
+      "from": "From",
+      "to": "To",
+      "apply": "Apply"
+    },
+    "metrics": {
+      "grossSales": "Issued sales",
+      "receiptsCount": "Receipts",
+      "avgTicket": "Average ticket",
+      "discountTotal": "Discounts",
+      "taxTotal": "Taxes",
+      "voidedCount": "Voided"
+    },
+    "appointments": {
+      "scheduled": "Scheduled",
+      "checkedIn": "Checked in",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "noShow": "No show",
+      "bookedMinutes": "Booked minutes"
+    },
+    "tables": {
+      "service": "Service",
+      "quantity": "Quantity",
+      "revenue": "Revenue",
+      "barber": "Barber",
+      "appointments": "Appointments",
+      "completed": "Completed",
+      "noShow": "No show",
+      "bookedMinutes": "Minutes"
+    },
+    "empty": {
+      "topServicesTitle": "No services sold yet",
+      "topServicesDescription": "Issue receipts with linked services to unlock this ranking.",
+      "barbersTitle": "No barber activity yet",
+      "barbersDescription": "Once appointments exist in the selected range, this table will show utilization and performance."
+    },
+    "errors": {
+      "loadFailed": "We could not load reports.",
+      "validationTitle": "Local validation",
+      "rangeRequired": "Select a valid date range before loading reports.",
+      "invalidRange": "The start date cannot be later than the end date.",
+      "noData": "There is no data for this range yet."
+    }
+  },
   "placeholders": {
     "common": {
       "comingSoon": "Coming soon",

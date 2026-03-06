@@ -50,3 +50,6 @@ coverage/
 /frontend/.next/
 /frontend/dist/
 /frontend/coverage/
+
+# Demo artifacts
+/scripts/demo-credentials.json

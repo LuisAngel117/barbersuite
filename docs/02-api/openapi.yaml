@@ -23,6 +23,8 @@ tags:
     description: Tenant-scoped service catalog endpoints.
   - name: Clients
     description: Branch-scoped client management endpoints.
+  - name: Staff
+    description: Branch-scoped staff discovery endpoints.
   - name: Appointments
     description: Scheduling and appointment management.
   - name: Invoices
@@ -85,6 +87,19 @@ components:
             detail: A unique value already exists for this tenant.
             instance: https://api.barbersuite.local/api/v1/branches
             code: CONFLICT
+    AppointmentOverlapProblem:
+      description: Appointment time range conflicts with another appointment for the same barber in the same branch
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+          example:
+            type: about:blank
+            title: Conflict
+            status: 409
+            detail: The requested time range overlaps another appointment for the same barber.
+            instance: https://api.barbersuite.local/api/v1/appointments
+            code: APPOINTMENT_OVERLAP
     BranchScopedBadRequestProblem:
       description: Missing `X-Branch-Id` or invalid request payload on a branch-scoped endpoint
       content:
@@ -110,6 +125,19 @@ components:
                 detail: One or more fields are invalid.
                 instance: https://api.barbersuite.local/api/v1/clients
                 code: VALIDATION_ERROR
+    BranchForbiddenProblem:
+      description: Authenticated user does not have access to the requested branch context
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+          example:
+            type: about:blank
+            title: Branch forbidden
+            status: 403
+            detail: The authenticated user does not have access to the requested branch.
+            instance: https://api.barbersuite.local/api/v1/clients
+            code: BRANCH_FORBIDDEN
     UnauthorizedProblem:
       description: Missing or invalid bearer token
       content:
@@ -485,6 +513,133 @@ components:
           format: int32
           minimum: 0
           example: 8
+    BarberSummary:
+      type: object
+      required: [id, fullName, active]
+      properties:
+        id:
+          type: string
+          format: uuid
+        fullName:
+          type: string
+          minLength: 2
+          example: Diego Herrera
+        active:
+          type: boolean
+          example: true
+    BarberListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/BarberSummary"
+    LocalDateTimeMinute:
+      type: string
+      description: Local date-time without zone, interpreted in the branch IANA time zone.
+      pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$
+      example: 2026-03-06T14:30
+    AppointmentStatus:
+      type: string
+      enum: [scheduled, checked_in, completed, cancelled, no_show]
+      example: scheduled
+    Appointment:
+      type: object
+      required:
+        - id
+        - clientId
+        - barberId
+        - serviceId
+        - status
+        - startAt
+        - endAt
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        clientId:
+          type: string
+          format: uuid
+        barberId:
+          type: string
+          format: uuid
+        serviceId:
+          type: string
+          format: uuid
+        status:
+          $ref: "#/components/schemas/AppointmentStatus"
+        startAt:
+          type: string
+          format: date-time
+          description: UTC instant.
+          example: 2026-03-06T19:30:00Z
+        endAt:
+          type: string
+          format: date-time
+          description: UTC instant.
+          example: 2026-03-06T20:15:00Z
+        notes:
+          type: string
+          example: Cliente pidió terminar antes de las 18:00.
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    AppointmentListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Appointment"
+    CreateAppointmentRequest:
+      type: object
+      required: [clientId, barberId, serviceId, startAtLocal]
+      properties:
+        clientId:
+          type: string
+          format: uuid
+        barberId:
+          type: string
+          format: uuid
+        serviceId:
+          type: string
+          format: uuid
+        startAtLocal:
+          $ref: "#/components/schemas/LocalDateTimeMinute"
+        durationMinutes:
+          type: integer
+          format: int32
+          minimum: 5
+          maximum: 480
+          description: If omitted, the backend uses the selected service duration.
+          example: 45
+        notes:
+          type: string
+          example: Confirmar corte + barba.
+    PatchAppointmentRequest:
+      type: object
+      minProperties: 1
+      properties:
+        startAtLocal:
+          $ref: "#/components/schemas/LocalDateTimeMinute"
+        durationMinutes:
+          type: integer
+          format: int32
+          minimum: 5
+          maximum: 480
+          example: 60
+        status:
+          $ref: "#/components/schemas/AppointmentStatus"
+        notes:
+          type: string
+          example: Cliente llegó 10 minutos tarde.
 
 paths:
   /health:
@@ -1000,3 +1155,220 @@ paths:
           $ref: "#/components/responses/NotFoundProblem"
         "409":
           $ref: "#/components/responses/ConflictProblem"
+
+  /barbers:
+    get:
+      operationId: listBarbers
+      tags: [Staff]
+      summary: List barbers available in the authenticated branch context
+      description: |
+        Branch-scoped staff endpoint.
+        Requires `X-Branch-Id`.
+        Returns users with role `BARBER` that also have access to the requested branch through `user_branch_access`.
+        Any authenticated role can read this endpoint, but the branch access check still applies.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/XBranchId"
+      responses:
+        "200":
+          description: Barbers available in the requested branch
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BarberListResponse"
+        "400":
+          $ref: "#/components/responses/BranchScopedBadRequestProblem"
+        "401":
+          $ref: "#/components/responses/UnauthorizedProblem"
+        "403":
+          $ref: "#/components/responses/BranchForbiddenProblem"
+
+  /appointments:
+    get:
+      operationId: listAppointments
+      tags: [Appointments]
+      summary: List appointments in the authenticated branch context
+      description: |
+        Branch-scoped appointments endpoint.
+        Requires `X-Branch-Id`.
+        Any authenticated role can query the agenda for the current branch context.
+        Filters are interpreted in the branch time zone, while `startAt` and `endAt` are always returned as UTC instants.
+        If `date` is provided, the backend resolves the day range `[00:00, 23:59]` in the branch time zone.
+        If `from` and `to` are provided, the backend resolves an inclusive range by branch day.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/XBranchId"
+        - name: date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: Branch-local day (`YYYY-MM-DD`) for single-day calendar views.
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: Inclusive branch-local start day for range views.
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: Inclusive branch-local end day for range views.
+        - name: barberId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Restrict appointments to a single barber inside the selected branch.
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/AppointmentStatus"
+          description: Restrict appointments by current workflow status.
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Free-text search by client name, phone, or email.
+      responses:
+        "200":
+          description: Appointments for the selected branch and filters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppointmentListResponse"
+        "400":
+          $ref: "#/components/responses/BranchScopedBadRequestProblem"
+        "401":
+          $ref: "#/components/responses/UnauthorizedProblem"
+        "403":
+          $ref: "#/components/responses/BranchForbiddenProblem"
+    post:
+      operationId: createAppointment
+      tags: [Appointments]
+      summary: Create an appointment in the authenticated branch context
+      description: |
+        Branch-scoped appointments endpoint.
+        Requires `X-Branch-Id`.
+        `ADMIN`, `MANAGER`, and `RECEPTION` can create appointments. `BARBER` must receive `403 FORBIDDEN`.
+        The backend converts `startAtLocal` to UTC using the branch IANA time zone.
+        If `durationMinutes` is omitted, the backend uses the selected service duration.
+        Validation errors must return `400 VALIDATION_ERROR`.
+        Related resources must resolve inside the authenticated tenant and selected branch scope.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/XBranchId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAppointmentRequest"
+      responses:
+        "201":
+          description: Appointment created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Appointment"
+        "400":
+          $ref: "#/components/responses/BranchScopedBadRequestProblem"
+        "401":
+          $ref: "#/components/responses/UnauthorizedProblem"
+        "403":
+          $ref: "#/components/responses/ForbiddenProblem"
+        "404":
+          $ref: "#/components/responses/NotFoundProblem"
+        "409":
+          $ref: "#/components/responses/AppointmentOverlapProblem"
+
+  /appointments/{appointmentId}:
+    get:
+      operationId: getAppointmentById
+      tags: [Appointments]
+      summary: Get an appointment by id in the authenticated branch context
+      description: |
+        Branch-scoped appointments endpoint.
+        Requires `X-Branch-Id`.
+        Any authenticated role can read appointment details within the selected branch scope.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/XBranchId"
+        - name: appointmentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Appointment identifier scoped to `(tenant, branch)`.
+      responses:
+        "200":
+          description: Appointment resolved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Appointment"
+        "400":
+          $ref: "#/components/responses/BranchScopedBadRequestProblem"
+        "401":
+          $ref: "#/components/responses/UnauthorizedProblem"
+        "403":
+          $ref: "#/components/responses/BranchForbiddenProblem"
+        "404":
+          $ref: "#/components/responses/NotFoundProblem"
+    patch:
+      operationId: updateAppointment
+      tags: [Appointments]
+      summary: Update an appointment by id in the authenticated branch context
+      description: |
+        Branch-scoped appointments endpoint.
+        Requires `X-Branch-Id`.
+        `ADMIN`, `MANAGER`, and `RECEPTION` can patch appointments. `BARBER` must receive `403 FORBIDDEN`.
+        Empty patches must return `400 VALIDATION_ERROR`.
+        Moving the time range into an overlap for the same barber in the same branch must return `409 APPOINTMENT_OVERLAP`.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/XBranchId"
+        - name: appointmentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Appointment identifier scoped to `(tenant, branch)`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatchAppointmentRequest"
+      responses:
+        "200":
+          description: Appointment updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Appointment"
+        "400":
+          $ref: "#/components/responses/BranchScopedBadRequestProblem"
+        "401":
+          $ref: "#/components/responses/UnauthorizedProblem"
+        "403":
+          $ref: "#/components/responses/ForbiddenProblem"
+        "404":
+          $ref: "#/components/responses/NotFoundProblem"
+        "409":
+          $ref: "#/components/responses/AppointmentOverlapProblem"

@@ -73,6 +73,7 @@ http://localhost:3000
 Notas:
 - El backend debe estar corriendo en `http://localhost:8080`.
 - `BACKEND_BASE_URL` por defecto apunta a `http://localhost:8080/api/v1`.
+- `COOKIE_SECURE=false` en local/demo porque el frontend corre sobre `http://localhost`.
 - El JWT se guarda en cookie `httpOnly`; no se usa `localStorage`.
 - El login usa `email` y `password`; el backend resuelve el `tenantId` desde el usuario autenticado.
 

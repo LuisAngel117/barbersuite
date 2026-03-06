@@ -36,6 +36,9 @@ Checks rapidos:
 - Frontend: `http://localhost:3000`
 - MailHog UI: `http://localhost:8025`
 
+Nota:
+- el demo Docker corre sobre `http://localhost`, por eso el frontend usa `COOKIE_SECURE=false`
+
 ## 2. Crear el tenant demo
 Desde la raiz del repo:
 
@@ -127,3 +130,11 @@ docker compose -f docker-compose.yml -f docker-compose.app.yml -f docker-compose
 - Asegurate de que el backend ya este arriba
 - Vuelve a correr `./scripts/demo-seed.ps1`
 - Si el puerto `8080` esta ocupado por otro proceso, libera el puerto o usa el stack Docker sin procesos locales paralelos
+
+### Login entra pero navegar a Services o Clients devuelve al login
+- Verifica que el frontend tenga `COOKIE_SECURE=false` en local/demo
+- Si cambiaste variables, reconstruye el frontend:
+
+```powershell
+docker compose -f docker-compose.yml -f docker-compose.app.yml -f docker-compose.frontend.yml up -d --build barbersuite-frontend
+```

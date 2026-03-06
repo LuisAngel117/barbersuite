@@ -2,10 +2,14 @@ import { NextResponse } from "next/server";
 
 export const ACCESS_TOKEN_COOKIE = "bs_access_token";
 
+function cookieSecureEnabled() {
+  return process.env.COOKIE_SECURE === "true";
+}
+
 const authCookieOptions = {
   httpOnly: true,
   sameSite: "lax" as const,
-  secure: process.env.NODE_ENV === "production",
+  secure: cookieSecureEnabled(),
   path: "/",
 };
 

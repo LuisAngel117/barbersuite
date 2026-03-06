@@ -2,10 +2,14 @@ import { NextResponse } from "next/server";
 
 export const BRANCH_COOKIE = "bs_branch_id";
 
+function cookieSecureEnabled() {
+  return process.env.COOKIE_SECURE === "true";
+}
+
 const branchCookieOptions = {
   httpOnly: false,
   sameSite: "lax" as const,
-  secure: process.env.NODE_ENV === "production",
+  secure: cookieSecureEnabled(),
   path: "/",
 };
 

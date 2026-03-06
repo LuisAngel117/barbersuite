@@ -16,18 +16,10 @@ import {
 } from "@/lib/problem";
 import { DataTable } from "@/components/data-table/data-table";
 import { DataTableRowActions } from "@/components/data-table/data-table-row-actions";
-import { ServiceForm, type ServiceFormSubmission } from "@/components/services/service-form";
+import { ServiceForm } from "@/components/services/service-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { ProblemBanner } from "@/components/ui/problem-banner";
-import { Separator } from "@/components/ui/separator";
 
 function sortServices(services: ServicePayload[], locale: string) {
   return [...services].sort((left, right) => {
@@ -53,11 +45,11 @@ export function ServicesTable({ roles }: { roles: readonly string[] }) {
   const router = useRouter();
   const locale = useLocale();
   const tCommon = useTranslations("common");
+  const tConfirmations = useTranslations("confirmations");
   const tServices = useTranslations("services");
   const tUi = useTranslations("ui");
   const [services, setServices] = useState<ServicePayload[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [pendingServiceId, setPendingServiceId] = useState<string | null>(null);
   const [problem, setProblem] = useState<ProblemBannerState | null>(null);
   const [formMode, setFormMode] = useState<"create" | "edit" | null>(null);
@@ -70,6 +62,7 @@ export function ServicesTable({ roles }: { roles: readonly string[] }) {
   });
 
   const canManageServices = hasAnyRole(roles, ["ADMIN", "MANAGER"]);
+  const isSheetOpen = formMode !== null;
 
   const fetchServices = useCallback(async () => {
     const response = await fetch("/api/services", {
@@ -102,89 +95,54 @@ export function ServicesTable({ roles }: { roles: readonly string[] }) {
     await fetchServices();
   }, [fetchServices]);
 
-  const openServiceEditor = useCallback(async (serviceId: string) => {
-    setPendingServiceId(serviceId);
-    setProblem(null);
+  const openServiceEditor = useCallback(
+    async (serviceId: string) => {
+      setPendingServiceId(serviceId);
+      setProblem(null);
 
-    const response = await fetch(`/api/services/${serviceId}`, {
-      cache: "no-store",
-    });
-    const result = await readApiResponse<ServicePayload>(response);
+      const response = await fetch(`/api/services/${serviceId}`, {
+        cache: "no-store",
+      });
+      const result = await readApiResponse<ServicePayload>(response);
 
-    setPendingServiceId(null);
-    if (!response.ok || !result.data) {
-      setProblem(toProblemBanner(result.problem, tServices("loadOneFailed")));
-      return;
-    }
+      setPendingServiceId(null);
+      if (!response.ok || !result.data) {
+        setProblem(toProblemBanner(result.problem, tServices("loadOneFailed")));
+        return;
+      }
 
-    setEditingService(result.data);
-    setFormMode("edit");
-  }, [tServices]);
+      setEditingService(result.data);
+      setFormMode("edit");
+    },
+    [tServices],
+  );
 
-  async function handleSubmit(payload: ServiceFormSubmission) {
-    const isEditing = formMode === "edit" && editingService;
-    const target = isEditing ? `/api/services/${editingService.id}` : "/api/services";
-    const method = isEditing ? "PATCH" : "POST";
+  const handleToggleActive = useCallback(
+    async (service: ServicePayload) => {
+      setPendingServiceId(service.id);
+      setProblem(null);
 
-    setIsSubmitting(true);
-    setProblem(null);
+      const response = await apiFetch(`/api/services/${service.id}`, {
+        method: "PATCH",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ active: !service.active }),
+      });
+      const result = await readApiResponse<ServicePayload>(response);
 
-    const response = await apiFetch(target, {
-      method,
-      headers: {
-        "content-type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
-    const result = await readApiResponse<ServicePayload>(response);
+      setPendingServiceId(null);
+      if (!response.ok) {
+        setProblem(toProblemBanner(result.problem, tServices("toggleFailed")));
+        return;
+      }
 
-    setIsSubmitting(false);
-    if (!response.ok) {
-      setProblem(
-        result.problem?.code === "CONFLICT"
-          ? {
-              title: result.problem.title || "Conflict",
-              detail: tServices("conflict"),
-              code: result.problem.code,
-            }
-          : toProblemBanner(
-              result.problem,
-              isEditing ? tServices("updateFailed") : tServices("createFailed"),
-            ),
-      );
-      return;
-    }
-
-    toast.success(isEditing ? tServices("updateSuccess") : tServices("createSuccess"));
-    setFormMode(null);
-    setEditingService(null);
-    await reloadServices();
-    router.refresh();
-  }
-
-  const handleToggleActive = useCallback(async (service: ServicePayload) => {
-    setPendingServiceId(service.id);
-    setProblem(null);
-
-    const response = await apiFetch(`/api/services/${service.id}`, {
-      method: "PATCH",
-      headers: {
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({ active: !service.active }),
-    });
-    const result = await readApiResponse<ServicePayload>(response);
-
-    setPendingServiceId(null);
-    if (!response.ok) {
-      setProblem(toProblemBanner(result.problem, tServices("toggleFailed")));
-      return;
-    }
-
-    toast.success(service.active ? tServices("deactivateSuccess") : tServices("activateSuccess"));
-    await reloadServices();
-    router.refresh();
-  }, [reloadServices, router, tServices]);
+      toast.success(service.active ? tServices("deactivateSuccess") : tServices("activateSuccess"));
+      await reloadServices();
+      router.refresh();
+    },
+    [reloadServices, router, tServices],
+  );
 
   const filteredServices = useMemo(() => {
     const normalizedSearch = search.trim().toLocaleLowerCase(locale);
@@ -252,28 +210,32 @@ export function ServicesTable({ roles }: { roles: readonly string[] }) {
           cell: ({ row }) => {
             const service = row.original;
             const segment = toTestIdSegment(service.name);
+            const isPending = pendingServiceId === service.id;
 
             return (
               <DataTableRowActions
                 actions={[
                   {
-                    label: pendingServiceId === service.id ? tServices("loading") : tServices("edit"),
+                    label: isPending ? tServices("loading") : tServices("edit"),
                     onClick: () => openServiceEditor(service.id),
-                    disabled: pendingServiceId === service.id || isSubmitting,
+                    disabled: isPending,
                     testId: `services-edit-${segment}`,
                   },
                   {
-                    label:
-                      pendingServiceId === service.id
-                        ? tServices("saving")
-                        : service.active
-                          ? tServices("deactivate")
-                          : tServices("activate"),
+                    label: isPending
+                      ? tServices("saving")
+                      : service.active
+                        ? tServices("deactivate")
+                        : tServices("activate"),
                     onClick: () => handleToggleActive(service),
                     destructive: true,
-                    disabled: pendingServiceId === service.id || isSubmitting,
-                    confirmTitle: service.active ? tServices("deactivate") : tServices("activate"),
-                    confirmDescription: tServices("selectActionDescription"),
+                    disabled: isPending,
+                    confirmTitle: service.active
+                      ? tConfirmations("deactivateTitle")
+                      : tConfirmations("activateTitle"),
+                    confirmDescription: service.active
+                      ? tConfirmations("deactivateDescription")
+                      : tConfirmations("activateDescription"),
                     confirmLabel: service.active
                       ? tServices("deactivate")
                       : tServices("activate"),
@@ -290,11 +252,11 @@ export function ServicesTable({ roles }: { roles: readonly string[] }) {
     [
       canManageServices,
       handleToggleActive,
-      isSubmitting,
       locale,
       openServiceEditor,
       pendingServiceId,
       tCommon,
+      tConfirmations,
       tServices,
     ],
   );
@@ -317,106 +279,86 @@ export function ServicesTable({ roles }: { roles: readonly string[] }) {
 
       {problem ? <ProblemBanner problem={problem} /> : null}
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.9fr)]">
-        <DataTable
-          columns={columns}
-          data={filteredServices}
-          emptyCta={
-            canManageServices ? (
-              <Button
-                className="rounded-full"
-                onClick={() => {
-                  setEditingService(null);
-                  setFormMode("create");
-                  setProblem(null);
-                }}
-                type="button"
-              >
-                {tServices("add")}
-              </Button>
-            ) : null
-          }
-          emptyDescription={
-            search.trim() ? tCommon("emptyDescription") : tServices("emptyDescription")
-          }
-          emptyTitle={search.trim() ? tCommon("emptyTitle") : tServices("emptyTitle")}
-          globalFilter={{
-            value: search,
-            onChange: (value) => {
-              setPagination((current) => ({ ...current, pageIndex: 0 }));
-              setSearch(value);
-            },
-            placeholder: tCommon("search"),
-            testId: "services-search",
-          }}
-          isLoading={isLoading}
-          pagination={{
-            mode: "client",
-            pageIndex: pagination.pageIndex,
-            pageSize: pagination.pageSize,
-            onPaginationChange: setPagination,
-            totalItems: filteredServices.length,
-          }}
-          rightSlot={
-            canManageServices ? (
-              <Button
-                className="rounded-xl"
-                data-testid="services-add"
-                onClick={() => {
-                  setEditingService(null);
-                  setFormMode("create");
-                  setProblem(null);
-                }}
-                type="button"
-              >
-                {tServices("add")}
-              </Button>
-            ) : null
-          }
-          rowId={(service) => service.id}
-          rowTestId={(service) => `services-row-${toTestIdSegment(service.name)}`}
-          sorting={{
-            sortingState: sorting,
-            onSortingChange: setSorting,
-          }}
-          title={tServices("listTitle")}
-        />
+      <DataTable
+        columns={columns}
+        data={filteredServices}
+        emptyCta={
+          canManageServices ? (
+            <Button
+              className="rounded-full"
+              onClick={() => {
+                setEditingService(null);
+                setFormMode("create");
+                setProblem(null);
+              }}
+              type="button"
+            >
+              {tServices("add")}
+            </Button>
+          ) : null
+        }
+        emptyDescription={search.trim() ? tCommon("emptyDescription") : tServices("emptyDescription")}
+        emptyTitle={search.trim() ? tCommon("emptyTitle") : tServices("emptyTitle")}
+        globalFilter={{
+          value: search,
+          onChange: (value) => {
+            setPagination((current) => ({ ...current, pageIndex: 0 }));
+            setSearch(value);
+          },
+          placeholder: tCommon("search"),
+          testId: "services-search",
+        }}
+        isLoading={isLoading}
+        pagination={{
+          mode: "client",
+          pageIndex: pagination.pageIndex,
+          pageSize: pagination.pageSize,
+          onPaginationChange: setPagination,
+          totalItems: filteredServices.length,
+        }}
+        rightSlot={
+          canManageServices ? (
+            <Button
+              className="rounded-xl"
+              data-testid="services-add"
+              onClick={() => {
+                setEditingService(null);
+                setFormMode("create");
+                setProblem(null);
+              }}
+              type="button"
+            >
+              {tServices("add")}
+            </Button>
+          ) : null
+        }
+        rowId={(service) => service.id}
+        rowTestId={(service) => `services-row-${toTestIdSegment(service.name)}`}
+        sorting={{
+          sortingState: sorting,
+          onSortingChange: setSorting,
+        }}
+        title={tServices("listTitle")}
+      />
 
-        <Card className="rounded-[1.5rem] border-border/70 bg-card/80 shadow-lg shadow-black/5">
-          <CardHeader className="space-y-3">
-            <CardTitle className="text-xl tracking-tight">
-              {formMode ? tServices("edit") : tCommon("create")}
-            </CardTitle>
-            <CardDescription>
-              {formMode ? tServices("selectActionDescription") : tServices("selectActionTitle")}
-            </CardDescription>
-          </CardHeader>
-          <Separator />
-          <CardContent className="pt-6">
-            {formMode ? (
-              <ServiceForm
-                initialService={editingService}
-                isSubmitting={isSubmitting}
-                key={editingService?.id ?? "create-service"}
-                onCancel={() => {
-                  setFormMode(null);
-                  setEditingService(null);
-                }}
-                onSubmit={handleSubmit}
-              />
-            ) : (
-              <div className="rounded-2xl border border-dashed border-border/70 bg-muted/40 p-6">
-                <strong className="block text-base font-semibold tracking-tight">
-                  {tServices("selectActionTitle")}
-                </strong>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  {tServices("selectActionDescription")}
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      {isSheetOpen ? (
+        <ServiceForm
+          initialService={editingService}
+          key={`${formMode}-${editingService?.id ?? "new-service"}`}
+          mode={formMode === "edit" ? "edit" : "create"}
+          onOpenChange={(open) => {
+            if (!open) {
+              setFormMode(null);
+              setEditingService(null);
+            }
+          }}
+          onSuccess={async () => {
+            await reloadServices();
+            router.refresh();
+          }}
+          open
+        />
+      ) : null}
     </div>
   );
 }

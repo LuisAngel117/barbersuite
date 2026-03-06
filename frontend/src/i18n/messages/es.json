@@ -1,6 +1,7 @@
 {
   "common": {
     "save": "Guardar",
+    "saveChanges": "Guardar cambios",
     "cancel": "Cancelar",
     "close": "Cerrar",
     "confirm": "Confirmar",
@@ -22,6 +23,35 @@
     "next": "Siguiente",
     "previous": "Anterior",
     "backToLogin": "Volver al login"
+  },
+  "forms": {
+    "createService": "Crear servicio",
+    "editService": "Editar servicio",
+    "createClient": "Crear cliente",
+    "editClient": "Editar cliente",
+    "name": "Nombre",
+    "durationMinutes": "Duración (minutos)",
+    "price": "Precio",
+    "active": "Activo",
+    "fullName": "Nombre completo",
+    "phone": "Teléfono",
+    "email": "Email",
+    "notes": "Notas",
+    "create": "Crear",
+    "update": "Actualizar",
+    "saveChanges": "Guardar cambios"
+  },
+  "confirmations": {
+    "activateTitle": "Activar registro",
+    "activateDescription": "El registro volverá a quedar disponible para el equipo.",
+    "deactivateTitle": "Desactivar registro",
+    "deactivateDescription": "El registro dejará de estar disponible hasta que lo vuelvas a activar."
+  },
+  "toasts": {
+    "saved": "Cambios guardados.",
+    "created": "Registro creado.",
+    "updated": "Registro actualizado.",
+    "error": "No pudimos completar la acción."
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -195,10 +225,12 @@
       "creating": "Creando...",
       "saving": "Guardando...",
       "cancel": "Cancelar",
+      "emptyPatch": "Realiza al menos un cambio antes de guardar.",
       "validationTitle": "Validación local",
       "nameValidation": "El nombre debe tener al menos 2 caracteres.",
       "durationValidation": "La duración debe estar entre 5 y 480 minutos.",
-      "priceValidation": "El precio debe ser mayor o igual a 0."
+      "priceValidation": "El precio debe ser un monto válido con máximo 2 decimales.",
+      "activeDescription": "Mantén este servicio disponible para reservas y caja."
     }
   },
   "clients": {
@@ -267,9 +299,11 @@
       "creating": "Creando...",
       "saving": "Guardando...",
       "cancel": "Cancelar",
+      "emptyPatch": "Realiza al menos un cambio antes de guardar.",
       "validationTitle": "Validación local",
       "fullNameValidation": "El nombre completo debe tener al menos 2 caracteres.",
-      "emailValidation": "Ingresa un email válido o deja el campo vacío."
+      "emailValidation": "Ingresa un email válido o deja el campo vacío.",
+      "activeDescription": "Desactiva al cliente si ya no debe aparecer en la operación diaria."
     }
   },
   "placeholders": {

@@ -13,20 +13,12 @@ import {
   toProblemBanner,
   type ProblemBannerState,
 } from "@/lib/problem";
-import { ClientForm, type ClientFormSubmission } from "@/components/clients/client-form";
+import { ClientForm } from "@/components/clients/client-form";
 import { DataTable } from "@/components/data-table/data-table";
 import { DataTableRowActions } from "@/components/data-table/data-table-row-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { ProblemBanner } from "@/components/ui/problem-banner";
-import { Separator } from "@/components/ui/separator";
 
 const DEFAULT_PAGE_SIZE = 20;
 
@@ -57,13 +49,13 @@ export function ClientsTable({
   const router = useRouter();
   const locale = useLocale();
   const tClients = useTranslations("clients");
-  const tUi = useTranslations("ui");
   const tCommon = useTranslations("common");
+  const tConfirmations = useTranslations("confirmations");
+  const tUi = useTranslations("ui");
   const [queryInput, setQueryInput] = useState("");
   const [query, setQuery] = useState("");
   const [clientPage, setClientPage] = useState<ClientPagePayload | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [pendingClientId, setPendingClientId] = useState<string | null>(null);
   const [problem, setProblem] = useState<ProblemBannerState | null>(null);
   const [formMode, setFormMode] = useState<"create" | "edit" | null>(null);
@@ -75,6 +67,7 @@ export function ClientsTable({
 
   const canCreateClients = true;
   const canEditClients = hasAnyRole(roles, ["ADMIN", "MANAGER", "RECEPTION"]);
+  const isSheetOpen = formMode !== null;
 
   const fetchClients = useCallback(async () => {
     const params = new URLSearchParams({
@@ -116,83 +109,54 @@ export function ClientsTable({
     await fetchClients();
   }, [fetchClients]);
 
-  const openClientEditor = useCallback(async (clientId: string) => {
-    setPendingClientId(clientId);
-    setProblem(null);
+  const openClientEditor = useCallback(
+    async (clientId: string) => {
+      setPendingClientId(clientId);
+      setProblem(null);
 
-    const response = await fetch(`/api/clients/${clientId}`, {
-      cache: "no-store",
-    });
-    const result = await readApiResponse<ClientPayload>(response);
+      const response = await fetch(`/api/clients/${clientId}`, {
+        cache: "no-store",
+      });
+      const result = await readApiResponse<ClientPayload>(response);
 
-    setPendingClientId(null);
-    if (!response.ok || !result.data) {
-      setProblem(toProblemBanner(result.problem, tClients("loadOneFailed")));
-      return;
-    }
+      setPendingClientId(null);
+      if (!response.ok || !result.data) {
+        setProblem(toProblemBanner(result.problem, tClients("loadOneFailed")));
+        return;
+      }
 
-    setEditingClient(result.data);
-    setFormMode("edit");
-  }, [tClients]);
+      setEditingClient(result.data);
+      setFormMode("edit");
+    },
+    [tClients],
+  );
 
-  async function handleSubmit(payload: ClientFormSubmission) {
-    const isEditing = formMode === "edit" && editingClient;
-    const target = isEditing ? `/api/clients/${editingClient.id}` : "/api/clients";
-    const method = isEditing ? "PATCH" : "POST";
+  const handleToggleActive = useCallback(
+    async (client: ClientPayload) => {
+      setPendingClientId(client.id);
+      setProblem(null);
 
-    setIsSubmitting(true);
-    setProblem(null);
+      const response = await apiFetch(`/api/clients/${client.id}`, {
+        method: "PATCH",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ active: !client.active }),
+      });
+      const result = await readApiResponse<ClientPayload>(response);
 
-    const response = await apiFetch(target, {
-      method,
-      headers: {
-        "content-type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
-    const result = await readApiResponse<ClientPayload>(response);
+      setPendingClientId(null);
+      if (!response.ok) {
+        setProblem(toProblemBanner(result.problem, tClients("toggleFailed")));
+        return;
+      }
 
-    setIsSubmitting(false);
-    if (!response.ok) {
-      setProblem(
-        toProblemBanner(
-          result.problem,
-          isEditing ? tClients("updateFailed") : tClients("createFailed"),
-        ),
-      );
-      return;
-    }
-
-    toast.success(isEditing ? tClients("updateSuccess") : tClients("createSuccess"));
-    setFormMode(null);
-    setEditingClient(null);
-    await reloadClients();
-    router.refresh();
-  }
-
-  const handleToggleActive = useCallback(async (client: ClientPayload) => {
-    setPendingClientId(client.id);
-    setProblem(null);
-
-    const response = await apiFetch(`/api/clients/${client.id}`, {
-      method: "PATCH",
-      headers: {
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({ active: !client.active }),
-    });
-    const result = await readApiResponse<ClientPayload>(response);
-
-    setPendingClientId(null);
-    if (!response.ok) {
-      setProblem(toProblemBanner(result.problem, tClients("toggleFailed")));
-      return;
-    }
-
-    toast.success(client.active ? tClients("deactivateSuccess") : tClients("activateSuccess"));
-    await reloadClients();
-    router.refresh();
-  }, [reloadClients, router, tClients]);
+      toast.success(client.active ? tClients("deactivateSuccess") : tClients("activateSuccess"));
+      await reloadClients();
+      router.refresh();
+    },
+    [reloadClients, router, tClients],
+  );
 
   function applySearch() {
     setProblem(null);
@@ -266,29 +230,35 @@ export function ClientsTable({
           cell: ({ row }) => {
             const client = row.original;
             const segment = toTestIdSegment(client.fullName);
+            const isPending = pendingClientId === client.id;
 
             return (
               <DataTableRowActions
                 actions={[
                   {
-                    label: pendingClientId === client.id ? tClients("loading") : tClients("edit"),
+                    label: isPending ? tClients("loading") : tClients("edit"),
                     onClick: () => openClientEditor(client.id),
-                    disabled: pendingClientId === client.id || isSubmitting,
+                    disabled: isPending,
                     testId: `clients-edit-${segment}`,
                   },
                   {
-                    label:
-                      pendingClientId === client.id
-                        ? tClients("saving")
-                        : client.active
-                          ? tClients("deactivate")
-                          : tClients("activate"),
+                    label: isPending
+                      ? tClients("saving")
+                      : client.active
+                        ? tClients("deactivate")
+                        : tClients("activate"),
                     onClick: () => handleToggleActive(client),
                     destructive: true,
-                    disabled: pendingClientId === client.id || isSubmitting,
-                    confirmTitle: client.active ? tClients("deactivate") : tClients("activate"),
-                    confirmDescription: tClients("selectActionDescription"),
-                    confirmLabel: client.active ? tClients("deactivate") : tClients("activate"),
+                    disabled: isPending,
+                    confirmTitle: client.active
+                      ? tConfirmations("deactivateTitle")
+                      : tConfirmations("activateTitle"),
+                    confirmDescription: client.active
+                      ? tConfirmations("deactivateDescription")
+                      : tConfirmations("activateDescription"),
+                    confirmLabel: client.active
+                      ? tClients("deactivate")
+                      : tClients("activate"),
                     testId: `clients-toggle-${segment}`,
                   },
                 ]}
@@ -302,12 +272,12 @@ export function ClientsTable({
     [
       canEditClients,
       handleToggleActive,
-      isSubmitting,
       locale,
       openClientEditor,
       pendingClientId,
       tClients,
       tCommon,
+      tConfirmations,
     ],
   );
 
@@ -329,116 +299,98 @@ export function ClientsTable({
 
       {problem ? <ProblemBanner problem={problem} /> : null}
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.9fr)]">
-        <DataTable
-          columns={columns}
-          data={clientPage?.items ?? []}
-          emptyCta={
-            canCreateClients ? (
-              <Button
-                className="rounded-full"
-                onClick={() => {
-                  setEditingClient(null);
-                  setFormMode("create");
-                  setProblem(null);
-                }}
-                type="button"
-              >
-                {tClients("add")}
-              </Button>
-            ) : null
-          }
-          emptyDescription={query ? tClients("searchEmptyDescription") : tClients("emptyDescription")}
-          emptyTitle={query ? tClients("searchEmptyTitle") : tClients("emptyTitle")}
-          filtersSlot={
-            <div className="flex flex-wrap items-center gap-2">
-              <Button
-                className="rounded-xl"
-                data-testid="clients-search-submit"
-                disabled={isLoading}
-                onClick={applySearch}
-                type="button"
-                variant="outline"
-              >
-                {tClients("searchSubmit")}
-              </Button>
-            </div>
-          }
-          globalFilter={{
-            value: queryInput,
-            onChange: setQueryInput,
-            onSubmit: applySearch,
-            placeholder: tClients("searchPlaceholder"),
-            testId: "clients-search",
-          }}
-          isLoading={isLoading}
-          pagination={{
-            mode: "manual",
-            pageCount: clientPage?.totalPages ?? 1,
-            pageIndex: pagination.pageIndex,
-            pageSize: pagination.pageSize,
-            totalItems: clientPage?.totalItems,
-            onPaginationChange: (next) => {
-              setIsLoading(true);
-              setPagination(next);
-            },
-          }}
-          rightSlot={
-            canCreateClients ? (
-              <Button
-                className="rounded-xl"
-                data-testid="clients-add"
-                onClick={() => {
-                  setEditingClient(null);
-                  setFormMode("create");
-                  setProblem(null);
-                }}
-                type="button"
-              >
-                {tClients("add")}
-              </Button>
-            ) : null
-          }
-          rowId={(client) => client.id}
-          rowTestId={(client) => `clients-row-${toTestIdSegment(client.fullName)}`}
-          title={tClients("listTitle")}
-        />
+      <DataTable
+        columns={columns}
+        data={clientPage?.items ?? []}
+        emptyCta={
+          canCreateClients ? (
+            <Button
+              className="rounded-full"
+              onClick={() => {
+                setEditingClient(null);
+                setFormMode("create");
+                setProblem(null);
+              }}
+              type="button"
+            >
+              {tClients("add")}
+            </Button>
+          ) : null
+        }
+        emptyDescription={query ? tClients("searchEmptyDescription") : tClients("emptyDescription")}
+        emptyTitle={query ? tClients("searchEmptyTitle") : tClients("emptyTitle")}
+        filtersSlot={
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              className="rounded-xl"
+              data-testid="clients-search-submit"
+              disabled={isLoading}
+              onClick={applySearch}
+              type="button"
+              variant="outline"
+            >
+              {tClients("searchSubmit")}
+            </Button>
+          </div>
+        }
+        globalFilter={{
+          value: queryInput,
+          onChange: setQueryInput,
+          onSubmit: applySearch,
+          placeholder: tClients("searchPlaceholder"),
+          testId: "clients-search",
+        }}
+        isLoading={isLoading}
+        pagination={{
+          mode: "manual",
+          pageCount: clientPage?.totalPages ?? 1,
+          pageIndex: pagination.pageIndex,
+          pageSize: pagination.pageSize,
+          totalItems: clientPage?.totalItems,
+          onPaginationChange: (next) => {
+            setIsLoading(true);
+            setPagination(next);
+          },
+        }}
+        rightSlot={
+          canCreateClients ? (
+            <Button
+              className="rounded-xl"
+              data-testid="clients-add"
+              onClick={() => {
+                setEditingClient(null);
+                setFormMode("create");
+                setProblem(null);
+              }}
+              type="button"
+            >
+              {tClients("add")}
+            </Button>
+          ) : null
+        }
+        rowId={(client) => client.id}
+        rowTestId={(client) => `clients-row-${toTestIdSegment(client.fullName)}`}
+        title={tClients("listTitle")}
+      />
 
-        <Card className="rounded-[1.5rem] border-border/70 bg-card/80 shadow-lg shadow-black/5">
-          <CardHeader className="space-y-3">
-            <CardTitle className="text-xl tracking-tight">
-              {formMode ? tClients("edit") : tCommon("create")}
-            </CardTitle>
-            <CardDescription>
-              {formMode ? tClients("selectActionDescription") : tClients("selectActionTitle")}
-            </CardDescription>
-          </CardHeader>
-          <Separator />
-          <CardContent className="pt-6">
-            {formMode ? (
-              <ClientForm
-                initialClient={editingClient}
-                isSubmitting={isSubmitting}
-                key={editingClient?.id ?? "create-client"}
-                onCancel={() => {
-                  setFormMode(null);
-                  setEditingClient(null);
-                }}
-                onSubmit={handleSubmit}
-              />
-            ) : (
-              <div className="rounded-2xl border border-dashed border-border/70 bg-muted/40 p-6">
-                <strong className="block text-base font-semibold tracking-tight">
-                  {tClients("selectActionTitle")}
-                </strong>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  {tClients("selectActionDescription")}
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      {isSheetOpen ? (
+        <ClientForm
+          initialClient={editingClient}
+          key={`${formMode}-${editingClient?.id ?? "new-client"}`}
+          mode={formMode === "edit" ? "edit" : "create"}
+          onOpenChange={(open) => {
+            if (!open) {
+              setFormMode(null);
+              setEditingClient(null);
+            }
+          }}
+          onSuccess={async () => {
+            await reloadClients();
+            router.refresh();
+          }}
+          open
+        />
+      ) : null}
     </div>
   );
 }

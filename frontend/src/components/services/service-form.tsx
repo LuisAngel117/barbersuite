@@ -1,183 +1,262 @@
 "use client";
 
+import { useMemo, useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 import { useTranslations } from "next-intl";
-import { FormEvent, useState } from "react";
+import { toast } from "sonner";
+import { ZodError } from "zod";
 import { type ServicePayload } from "@/lib/backend";
+import { apiFetch } from "@/lib/api-client";
+import { normalizeMoneyInput, toProblemToast } from "@/lib/forms";
+import {
+  createServiceFormSchema,
+  getServiceDefaultValues,
+  toServiceCreatePayload,
+  toServicePatchPayload,
+  type ServiceFormValues,
+} from "@/lib/schemas/service.schema";
+import { EntitySheet } from "@/components/forms/entity-sheet";
 import { ProblemBanner } from "@/components/ui/problem-banner";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-
-export type ServiceFormSubmission = {
-  name: string;
-  durationMinutes: number;
-  price: number;
-  active?: boolean;
-};
+import { Switch } from "@/components/ui/switch";
+import { readApiResponse, type ProblemBannerState } from "@/lib/problem";
 
 type ServiceFormProps = {
+  mode: "create" | "edit";
+  open: boolean;
   initialService?: ServicePayload | null;
-  isSubmitting: boolean;
-  onCancel: () => void;
-  onSubmit: (payload: ServiceFormSubmission) => Promise<void> | void;
+  onOpenChange: (open: boolean) => void;
+  onSuccess: () => Promise<void> | void;
 };
 
 export function ServiceForm({
+  mode,
+  open,
   initialService,
-  isSubmitting,
-  onCancel,
-  onSubmit,
+  onOpenChange,
+  onSuccess,
 }: ServiceFormProps) {
+  const tCommon = useTranslations("common");
+  const tErrors = useTranslations("errors");
   const tServices = useTranslations("services");
   const tForm = useTranslations("services.form");
-  const [name, setName] = useState(initialService?.name ?? "");
-  const [durationMinutes, setDurationMinutes] = useState(
-    initialService ? String(initialService.durationMinutes) : "30",
+  const [submitProblem, setSubmitProblem] = useState<ProblemBannerState | null>(null);
+
+  const schema = useMemo(
+    () =>
+      createServiceFormSchema({
+        nameValidation: tForm("nameValidation"),
+        durationValidation: tForm("durationValidation"),
+        priceValidation: tForm("priceValidation"),
+        emptyPatch: tForm("emptyPatch"),
+      }),
+    [tForm],
   );
-  const [price, setPrice] = useState(initialService ? initialService.price.toFixed(2) : "10.00");
-  const [active, setActive] = useState(initialService?.active ?? true);
-  const [error, setError] = useState("");
+  const defaultValues = useMemo(() => getServiceDefaultValues(initialService), [initialService]);
+  const form = useForm<ServiceFormValues>({
+    resolver: zodResolver(schema),
+    defaultValues,
+  });
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function handleValidSubmit(values: ServiceFormValues) {
+    setSubmitProblem(null);
 
-    const normalizedName = name.trim();
-    const normalizedDuration = Number.parseInt(durationMinutes, 10);
-    const normalizedPrice = Number.parseFloat(price);
+    try {
+      const isEditing = mode === "edit" && initialService;
+      const target = isEditing ? `/api/services/${initialService.id}` : "/api/services";
+      const method = isEditing ? "PATCH" : "POST";
+      const payload = isEditing
+        ? toServicePatchPayload(values, initialService, {
+            emptyPatch: tForm("emptyPatch"),
+          })
+        : toServiceCreatePayload(values);
 
-    if (normalizedName.length < 2) {
-      setError(tForm("nameValidation"));
-      return;
+      const response = await apiFetch(target, {
+        method,
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+      const result = await readApiResponse<ServicePayload>(response);
+
+      if (!response.ok) {
+        const toastProblem = toProblemToast(
+          result.problem,
+          {
+            generic: isEditing ? tServices("updateFailed") : tServices("createFailed"),
+            unauthorized: tErrors("unauthorized"),
+            forbidden: tErrors("forbidden"),
+            branchRequired: tErrors("branchRequired"),
+            branchForbidden: tErrors("branchForbidden"),
+            conflict: tServices("conflict"),
+            validation: tErrors("validation"),
+          },
+          isEditing ? tServices("updateFailed") : tServices("createFailed"),
+        );
+
+        const nextProblem = {
+          title: toastProblem.title,
+          detail: toastProblem.description,
+          code: result.problem?.code,
+        };
+        setSubmitProblem(nextProblem);
+        toast.error(toastProblem.title, {
+          description: toastProblem.description,
+        });
+        return;
+      }
+
+      toast.success(mode === "edit" ? tServices("updateSuccess") : tServices("createSuccess"));
+      onOpenChange(false);
+      await onSuccess();
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const nextProblem = {
+          title: tForm("validationTitle"),
+          detail: error.issues[0]?.message || tErrors("validation"),
+          code: "VALIDATION_ERROR",
+        } satisfies ProblemBannerState;
+        setSubmitProblem(nextProblem);
+        toast.error(nextProblem.title, {
+          description: nextProblem.detail,
+        });
+        return;
+      }
+
+      throw error;
     }
-
-    if (Number.isNaN(normalizedDuration) || normalizedDuration < 5 || normalizedDuration > 480) {
-      setError(tForm("durationValidation"));
-      return;
-    }
-
-    if (Number.isNaN(normalizedPrice) || normalizedPrice < 0) {
-      setError(tForm("priceValidation"));
-      return;
-    }
-
-    setError("");
-    await onSubmit({
-      name: normalizedName,
-      durationMinutes: normalizedDuration,
-      price: Number(normalizedPrice.toFixed(2)),
-      active: initialService ? active : undefined,
-    });
   }
 
   return (
-    <form className="space-y-6" onSubmit={handleSubmit}>
-      <div className="space-y-2">
-        <div className="inline-flex w-fit rounded-full border border-border/70 bg-muted/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-          {initialService ? tForm("editEyebrow") : tForm("newEyebrow")}
-        </div>
-        <div className="space-y-1">
-          <h2 className="text-2xl font-semibold tracking-tight">
-            {initialService ? tForm("editTitle") : tForm("newTitle")}
-          </h2>
-          <p className="text-sm leading-6 text-muted-foreground">{tForm("description")}</p>
-        </div>
-      </div>
-
-      {error ? (
-        <ProblemBanner
-          problem={{
-            title: tForm("validationTitle"),
-            detail: error,
-            code: "VALIDATION_ERROR",
-          }}
-        />
-      ) : null}
-
-      <div className="space-y-2">
-        <Label htmlFor="service-name">{tServices("name")}</Label>
-        <Input
-          className="h-11 rounded-xl"
-          data-testid="services-name"
-          id="service-name"
-          minLength={2}
-          onChange={(event) => setName(event.target.value)}
-          placeholder={tForm("namePlaceholder")}
-          required
-          value={name}
-        />
-      </div>
-
-      <div className="grid gap-5 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="service-duration">{tServices("durationMinutes")}</Label>
-          <Input
-            className="h-11 rounded-xl"
-            data-testid="services-duration"
-            id="service-duration"
-            max={480}
-            min={5}
-            onChange={(event) => setDurationMinutes(event.target.value)}
-            required
-            step={1}
-            type="number"
-            value={durationMinutes}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="service-price">{tServices("price")}</Label>
-          <Input
-            className="h-11 rounded-xl"
-            data-testid="services-price"
-            id="service-price"
-            min={0}
-            onChange={(event) => setPrice(event.target.value)}
-            required
-            step="0.01"
-            type="number"
-            value={price}
-          />
-        </div>
-      </div>
-
-      <Separator />
-
-      {initialService ? (
-        <label className="flex items-center gap-3 rounded-2xl border border-border/70 bg-muted/40 px-4 py-3 text-sm font-medium">
-          <Checkbox checked={active} onCheckedChange={(checked) => setActive(Boolean(checked))} />
-          <span>{tForm("serviceActive")}</span>
-        </label>
-      ) : (
-        <p className="text-sm leading-6 text-muted-foreground">{tForm("newDefaultActive")}</p>
-      )}
-
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <Button
-          className="h-11 rounded-xl"
-          data-testid="services-submit"
-          disabled={isSubmitting}
-          type="submit"
-        >
-          {isSubmitting
-            ? initialService
+    <Form {...form}>
+      <EntitySheet
+        cancelLabel={tCommon("cancel")}
+        description={tForm("description")}
+        onCancel={() => onOpenChange(false)}
+        onOpenChange={onOpenChange}
+        onSubmit={form.handleSubmit(handleValidSubmit)}
+        open={open}
+        submitLabel={
+          form.formState.isSubmitting
+            ? mode === "edit"
               ? tForm("saving")
               : tForm("creating")
-            : initialService
+            : mode === "edit"
               ? tForm("update")
-              : tForm("create")}
-        </Button>
-        <Button
-          className="h-11 rounded-xl"
-          disabled={isSubmitting}
-          onClick={onCancel}
-          type="button"
-          variant="outline"
-        >
-          {tForm("cancel")}
-        </Button>
-      </div>
-    </form>
+              : tForm("create")
+        }
+        submitTestId="services-submit"
+        submitting={form.formState.isSubmitting}
+        title={mode === "edit" ? tForm("editTitle") : tForm("newTitle")}
+      >
+        <div className="space-y-6">
+          {submitProblem ? <ProblemBanner problem={submitProblem} /> : null}
+
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{tServices("name")}</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    className="h-11 rounded-xl"
+                    data-testid="services-name"
+                    placeholder={tForm("namePlaceholder")}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div className="grid gap-5 sm:grid-cols-2">
+            <FormField
+              control={form.control}
+              name="durationMinutes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{tServices("durationMinutes")}</FormLabel>
+                  <FormControl>
+                    <Input
+                      className="h-11 rounded-xl"
+                      data-testid="services-duration"
+                      inputMode="numeric"
+                      max={480}
+                      min={5}
+                      onChange={(event) => field.onChange(Number(event.target.value))}
+                      type="number"
+                      value={field.value}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="price"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{tServices("price")}</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      className="h-11 rounded-xl"
+                      data-testid="services-price"
+                      inputMode="decimal"
+                      onBlur={(event) => {
+                        field.onBlur();
+                        try {
+                          form.setValue("price", normalizeMoneyInput(event.target.value), {
+                            shouldDirty: true,
+                            shouldValidate: true,
+                          });
+                        } catch {
+                          // Leave the raw value so the validation message remains visible.
+                        }
+                      }}
+                      placeholder="10.00"
+                      type="text"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {mode === "edit" ? (
+            <FormField
+              control={form.control}
+              name="active"
+              render={({ field }) => (
+                <FormItem className="rounded-2xl border border-border/70 bg-muted/35 px-4 py-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="space-y-1">
+                      <FormLabel>{tForm("serviceActive")}</FormLabel>
+                      <p className="text-sm leading-6 text-muted-foreground">
+                        {tForm("activeDescription")}
+                      </p>
+                    </div>
+                    <FormControl>
+                      <Switch checked={field.value} onCheckedChange={field.onChange} />
+                    </FormControl>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          ) : (
+            <p className="text-sm leading-6 text-muted-foreground">{tForm("newDefaultActive")}</p>
+          )}
+        </div>
+      </EntitySheet>
+    </Form>
   );
 }

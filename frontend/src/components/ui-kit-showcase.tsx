@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Rocket, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { DataTableDemo } from "@/components/data-table/data-table-demo";
+import { EntitySheet } from "@/components/forms/entity-sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,6 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { DestructiveConfirm } from "@/components/ui/destructive-confirm";
 import {
   Dialog,
   DialogContent,
@@ -37,6 +39,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export function UiKitShowcase() {
   const [dialogName, setDialogName] = useState("Corte Signature");
+  const [isFormSheetOpen, setIsFormSheetOpen] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isConfirmPending, setIsConfirmPending] = useState(false);
 
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_360px]">
@@ -207,6 +212,27 @@ export function UiKitShowcase() {
             </div>
           </CardContent>
         </Card>
+
+        <Card className="rounded-[1.5rem] border-border/70 bg-card/80 shadow-lg shadow-black/5">
+          <CardHeader className="space-y-3">
+            <CardTitle className="text-xl tracking-tight">Form patterns</CardTitle>
+            <CardDescription>
+              Sheets con footer sticky, pending states y confirmación destructiva.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Button className="w-full rounded-xl" onClick={() => setIsFormSheetOpen(true)}>
+              Open entity sheet
+            </Button>
+            <Button
+              className="w-full rounded-xl"
+              onClick={() => setIsConfirmOpen(true)}
+              variant="outline"
+            >
+              Open destructive confirm
+            </Button>
+          </CardContent>
+        </Card>
       </div>
 
       <Card className="xl:col-span-2 rounded-[1.5rem] border-border/70 bg-card/80 shadow-lg shadow-black/5">
@@ -229,6 +255,56 @@ export function UiKitShowcase() {
           <DataTableDemo />
         </CardContent>
       </Card>
+
+      <EntitySheet
+        cancelLabel="Cancel"
+        description="Reusable drawer shell for entity create/edit flows."
+        onCancel={() => setIsFormSheetOpen(false)}
+        onOpenChange={setIsFormSheetOpen}
+        onSubmit={(event) => {
+          event.preventDefault();
+          toast.success("Demo saved", {
+            description: "Entity sheet stays reusable across services and clients.",
+          });
+          setIsFormSheetOpen(false);
+        }}
+        open={isFormSheetOpen}
+        submitLabel="Save changes"
+        submitting={false}
+        title="Entity sheet demo"
+      >
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="ui-kit-sheet-name">Display name</Label>
+            <Input className="h-11 rounded-xl" defaultValue="Fade Signature" id="ui-kit-sheet-name" />
+          </div>
+          <div className="rounded-2xl border border-dashed border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+            RHF field errors land here in the real forms. This mock keeps the pattern visible in the UI Kit.
+          </div>
+        </div>
+      </EntitySheet>
+
+      <DestructiveConfirm
+        cancelLabel="Cancel"
+        confirmLabel="Deactivate"
+        description="This is the same confirmation wrapper used by row actions in the real tables."
+        onConfirm={async () => {
+          setIsConfirmPending(true);
+          try {
+            await new Promise((resolve) => window.setTimeout(resolve, 500));
+            toast.message("Demo confirmed", {
+              description: "The wrapper handles focus, pending state and destructive styling.",
+            });
+            setIsConfirmOpen(false);
+          } finally {
+            setIsConfirmPending(false);
+          }
+        }}
+        onOpenChange={setIsConfirmOpen}
+        open={isConfirmOpen}
+        pending={isConfirmPending}
+        title="Deactivate demo record?"
+      />
     </div>
   );
 }

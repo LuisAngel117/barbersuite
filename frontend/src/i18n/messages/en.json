@@ -1,6 +1,7 @@
 {
   "common": {
     "save": "Save",
+    "saveChanges": "Save changes",
     "cancel": "Cancel",
     "close": "Close",
     "confirm": "Confirm",
@@ -22,6 +23,35 @@
     "next": "Next",
     "previous": "Previous",
     "backToLogin": "Back to login"
+  },
+  "forms": {
+    "createService": "Create service",
+    "editService": "Edit service",
+    "createClient": "Create client",
+    "editClient": "Edit client",
+    "name": "Name",
+    "durationMinutes": "Duration (minutes)",
+    "price": "Price",
+    "active": "Active",
+    "fullName": "Full name",
+    "phone": "Phone",
+    "email": "Email",
+    "notes": "Notes",
+    "create": "Create",
+    "update": "Update",
+    "saveChanges": "Save changes"
+  },
+  "confirmations": {
+    "activateTitle": "Activate record",
+    "activateDescription": "The record will be available again for the team.",
+    "deactivateTitle": "Deactivate record",
+    "deactivateDescription": "The record will stay unavailable until you activate it again."
+  },
+  "toasts": {
+    "saved": "Changes saved.",
+    "created": "Record created.",
+    "updated": "Record updated.",
+    "error": "We couldn't complete the action."
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -195,10 +225,12 @@
       "creating": "Creating...",
       "saving": "Saving...",
       "cancel": "Cancel",
+      "emptyPatch": "Make at least one change before saving.",
       "validationTitle": "Local validation",
       "nameValidation": "The name must be at least 2 characters long.",
       "durationValidation": "Duration must be between 5 and 480 minutes.",
-      "priceValidation": "Price must be greater than or equal to 0."
+      "priceValidation": "Price must be a valid amount with up to 2 decimals.",
+      "activeDescription": "Keep this service available for bookings and checkout."
     }
   },
   "clients": {
@@ -267,9 +299,11 @@
       "creating": "Creating...",
       "saving": "Saving...",
       "cancel": "Cancel",
+      "emptyPatch": "Make at least one change before saving.",
       "validationTitle": "Local validation",
       "fullNameValidation": "Full name must be at least 2 characters long.",
-      "emailValidation": "Enter a valid email or leave the field empty."
+      "emailValidation": "Enter a valid email or leave the field empty.",
+      "activeDescription": "Deactivate the client if they should no longer appear in daily operations."
     }
   },
   "placeholders": {

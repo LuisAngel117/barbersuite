@@ -3,16 +3,6 @@
 import { MoreHorizontal } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -21,6 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { DestructiveConfirm } from "@/components/ui/destructive-confirm";
 
 export type DataTableRowAction = {
   label: string;
@@ -112,44 +103,29 @@ export function DataTableRowActions({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <AlertDialog
+      <DestructiveConfirm
+        cancelLabel={tCommon("cancel")}
+        confirmLabel={confirmAction?.confirmLabel || tCommon("confirm")}
+        confirmTestId={confirmAction?.testId ? `${confirmAction.testId}-confirm` : undefined}
+        description={
+          confirmAction?.confirmDescription || `${confirmAction?.label || tCommon("confirm")}.`
+        }
+        onConfirm={async () => {
+          if (!confirmAction) {
+            return;
+          }
+
+          await runAction(confirmAction);
+        }}
         onOpenChange={(open) => {
           if (!open) {
             setConfirmAction(null);
           }
         }}
         open={Boolean(confirmAction)}
-      >
-        <AlertDialogContent className="rounded-[1.5rem] border-border/70">
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {confirmAction?.confirmTitle || tCommon("confirm")}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {confirmAction?.confirmDescription ||
-                `${confirmAction?.label || tCommon("confirm")}.`}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isRunning}>{tCommon("cancel")}</AlertDialogCancel>
-            <AlertDialogAction
-              data-testid={confirmAction?.testId ? `${confirmAction.testId}-confirm` : undefined}
-              disabled={isRunning}
-              onClick={(event) => {
-                event.preventDefault();
-                if (!confirmAction) {
-                  return;
-                }
-
-                void runAction(confirmAction);
-              }}
-              variant="destructive"
-            >
-              {confirmAction?.confirmLabel || tCommon("confirm")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        pending={isRunning}
+        title={confirmAction?.confirmTitle || tCommon("confirm")}
+      />
     </>
   );
 }

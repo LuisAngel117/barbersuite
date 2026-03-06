@@ -30,7 +30,7 @@ class FlywayMigrationIntegrationTest {
     assertThat(jdbcTemplate.queryForObject("select version()", String.class))
       .contains("PostgreSQL");
     assertThat(flyway.info().current()).isNotNull();
-    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("8");
+    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("9");
 
     assertThat(
       List.of(
@@ -42,7 +42,8 @@ class FlywayMigrationIntegrationTest {
         "user_branch_access",
         "services",
         "clients",
-        "appointments"
+        "appointments",
+        "barber_services"
       )
     )
       .allMatch(this::tableExists);
@@ -50,6 +51,8 @@ class FlywayMigrationIntegrationTest {
     assertThat(columnType("branches", "id")).isEqualTo("uuid");
     assertThat(columnType("users", "id")).isEqualTo("uuid");
     assertThat(columnType("users", "full_name")).isEqualTo("character varying");
+    assertThat(columnType("users", "active")).isEqualTo("boolean");
+    assertThat(columnType("users", "phone")).isEqualTo("text");
     assertThat(columnType("receipt_sequences", "id")).isEqualTo("uuid");
     assertThat(columnType("branches", "active")).isEqualTo("boolean");
     assertThat(columnType("user_roles", "tenant_id")).isEqualTo("uuid");
@@ -72,6 +75,14 @@ class FlywayMigrationIntegrationTest {
     assertThat(columnType("appointments", "service_id")).isEqualTo("uuid");
     assertThat(columnType("appointments", "start_at")).isEqualTo("timestamp with time zone");
     assertThat(columnType("appointments", "end_at")).isEqualTo("timestamp with time zone");
+    assertThat(columnType("barber_services", "id")).isEqualTo("uuid");
+    assertThat(columnType("barber_services", "tenant_id")).isEqualTo("uuid");
+    assertThat(columnType("barber_services", "barber_id")).isEqualTo("uuid");
+    assertThat(columnType("barber_services", "service_id")).isEqualTo("uuid");
+    assertThat(columnType("barber_services", "created_at")).isEqualTo("timestamp with time zone");
+    assertThat(columnNullable("users", "active")).isFalse();
+    assertThat(columnNullable("users", "phone")).isTrue();
+    assertThat(columnDefault("users", "active")).contains("true");
 
     assertThat(constraintExists("branches", "uq_branches_tenant_code", "UNIQUE")).isTrue();
     assertThat(constraintExists("branches", "uq_branches_tenant_branch", "UNIQUE")).isTrue();
@@ -134,6 +145,21 @@ class FlywayMigrationIntegrationTest {
       constraintExists("appointments", "ck_appointments_duration_seconds_range", "CHECK")
     ).isTrue();
     assertThat(exclusionConstraintExists("appointments", "ex_appt_no_overlap")).isTrue();
+    assertThat(constraintExists(
+      "barber_services",
+      "uq_barber_services_tenant_barber_service",
+      "UNIQUE"
+    )).isTrue();
+    assertThat(constraintExists(
+      "barber_services",
+      "fk_barber_services_barber",
+      "FOREIGN KEY"
+    )).isTrue();
+    assertThat(constraintExists(
+      "barber_services",
+      "fk_barber_services_service",
+      "FOREIGN KEY"
+    )).isTrue();
 
     assertThat(constraintDefinition(
       "user_branch_access",
@@ -192,6 +218,18 @@ class FlywayMigrationIntegrationTest {
       .contains("status")
       .contains("scheduled")
       .contains("checked_in");
+    assertThat(constraintDefinition(
+      "barber_services",
+      "uq_barber_services_tenant_barber_service"
+    )).contains("UNIQUE (tenant_id, barber_id, service_id)");
+    assertThat(constraintDefinition("barber_services", "fk_barber_services_barber"))
+      .contains("FOREIGN KEY (tenant_id, barber_id)")
+      .contains("REFERENCES users(tenant_id, id)")
+      .contains("ON DELETE CASCADE");
+    assertThat(constraintDefinition("barber_services", "fk_barber_services_service"))
+      .contains("FOREIGN KEY (tenant_id, service_id)")
+      .contains("REFERENCES services(tenant_id, id)")
+      .contains("ON DELETE RESTRICT");
 
     assertThat(indexDefinition("ix_user_branch_access_tenant_user"))
       .contains("ON public.user_branch_access")
@@ -227,6 +265,12 @@ class FlywayMigrationIntegrationTest {
     assertThat(indexDefinition("idx_user_roles_tenant_role"))
       .contains("ON public.user_roles")
       .contains("(tenant_id, role)");
+    assertThat(indexDefinition("idx_users_tenant_active"))
+      .contains("ON public.users")
+      .contains("(tenant_id, active)");
+    assertThat(indexDefinition("idx_uba_tenant_branch_user"))
+      .contains("ON public.user_branch_access")
+      .contains("(tenant_id, branch_id, user_id)");
     assertThat(indexDefinition("idx_appt_tenant_branch_start"))
       .contains("ON public.appointments")
       .contains("(tenant_id, branch_id, start_at)");
@@ -236,6 +280,12 @@ class FlywayMigrationIntegrationTest {
     assertThat(indexDefinition("idx_appt_tenant_branch_status_start"))
       .contains("ON public.appointments")
       .contains("(tenant_id, branch_id, status, start_at)");
+    assertThat(indexDefinition("idx_barber_services_tenant_barber"))
+      .contains("ON public.barber_services")
+      .contains("(tenant_id, barber_id)");
+    assertThat(indexDefinition("idx_barber_services_tenant_service"))
+      .contains("ON public.barber_services")
+      .contains("(tenant_id, service_id)");
   }
 
   private boolean tableExists(String tableName) {
@@ -257,6 +307,36 @@ class FlywayMigrationIntegrationTest {
     return jdbcTemplate.queryForObject(
       """
       select data_type
+      from information_schema.columns
+      where table_schema = 'public'
+        and table_name = ?
+        and column_name = ?
+      """,
+      String.class,
+      tableName,
+      columnName
+    );
+  }
+
+  private boolean columnNullable(String tableName, String columnName) {
+    return "YES".equals(jdbcTemplate.queryForObject(
+      """
+      select is_nullable
+      from information_schema.columns
+      where table_schema = 'public'
+        and table_name = ?
+        and column_name = ?
+      """,
+      String.class,
+      tableName,
+      columnName
+    ));
+  }
+
+  private String columnDefault(String tableName, String columnName) {
+    return jdbcTemplate.queryForObject(
+      """
+      select column_default
       from information_schema.columns
       where table_schema = 'public'
         and table_name = ?

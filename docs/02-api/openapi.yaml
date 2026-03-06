@@ -23,6 +23,8 @@ tags:
     description: Tenant-scoped service catalog endpoints.
   - name: Clients
     description: Branch-scoped client management endpoints.
+  - name: StaffAdmin
+    description: Tenant-scoped staff administration endpoints.
   - name: Staff
     description: Branch-scoped staff discovery endpoints.
   - name: Appointments
@@ -535,6 +537,151 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/BarberSummary"
+    StaffBranchSummary:
+      type: object
+      required: [id, name, code, active]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 2
+          example: Sucursal Centro
+        code:
+          type: string
+          pattern: ^[A-Z0-9]{2,10}$
+          example: UIO01
+        active:
+          type: boolean
+          example: true
+    StaffBarberListItem:
+      type: object
+      required: [id, fullName, email, active, branches]
+      properties:
+        id:
+          type: string
+          format: uuid
+        fullName:
+          type: string
+          minLength: 2
+          example: Diego Herrera
+        email:
+          type: string
+          format: email
+          example: diego@example.com
+        phone:
+          type: string
+          example: "+593999123456"
+        active:
+          type: boolean
+          example: true
+        branches:
+          type: array
+          items:
+            $ref: "#/components/schemas/StaffBranchSummary"
+    StaffBarberListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/StaffBarberListItem"
+    BarberDetail:
+      type: object
+      required: [id, fullName, email, active, branches, services]
+      properties:
+        id:
+          type: string
+          format: uuid
+        fullName:
+          type: string
+          minLength: 2
+          example: Diego Herrera
+        email:
+          type: string
+          format: email
+          example: diego@example.com
+        phone:
+          type: string
+          example: "+593999123456"
+        active:
+          type: boolean
+          example: true
+        branches:
+          type: array
+          items:
+            $ref: "#/components/schemas/StaffBranchSummary"
+        services:
+          type: array
+          items:
+            $ref: "#/components/schemas/Service"
+    CreateBarberRequest:
+      type: object
+      required: [fullName, email, password, branchIds]
+      properties:
+        fullName:
+          type: string
+          minLength: 2
+          example: Diego Herrera
+        email:
+          type: string
+          format: email
+          example: diego@example.com
+        phone:
+          type: string
+          example: "+593999123456"
+        password:
+          type: string
+          minLength: 8
+          format: password
+          example: Barber123!
+        branchIds:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            format: uuid
+        serviceIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        active:
+          type: boolean
+          default: true
+    PatchBarberRequest:
+      type: object
+      minProperties: 1
+      properties:
+        fullName:
+          type: string
+          minLength: 2
+          example: Diego Herrera Flores
+        phone:
+          type: string
+          example: "+593999123456"
+        active:
+          type: boolean
+          example: false
+        branchIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Replaces the full set of branch assignments when provided.
+        serviceIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Replaces the full set of service assignments when provided.
+        password:
+          type: string
+          minLength: 8
+          format: password
+          example: Reset123!
     LocalDateTimeMinute:
       type: string
       description: Local date-time without zone, interpreted in the branch IANA time zone.
@@ -1155,6 +1302,158 @@ paths:
           $ref: "#/components/responses/NotFoundProblem"
         "409":
           $ref: "#/components/responses/ConflictProblem"
+
+  /staff/barbers:
+    get:
+      operationId: listStaffBarbers
+      tags: [StaffAdmin]
+      summary: List barbers for tenant staff administration
+      description: |
+        Tenant-scoped staff administration endpoint.
+        Requires `ADMIN` or `MANAGER`.
+        This endpoint must not require `X-Branch-Id`.
+        Supports free-text search by full name, email, or phone, and can optionally filter by branch assignment.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: active
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: Restrict results by active flag.
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Free-text search by full name, email, or phone.
+        - name: branchId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Restrict results to barbers assigned to the specified branch.
+      responses:
+        "200":
+          description: Barbers visible to tenant staff administration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StaffBarberListResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedProblem"
+        "403":
+          $ref: "#/components/responses/ForbiddenProblem"
+    post:
+      operationId: createStaffBarber
+      tags: [StaffAdmin]
+      summary: Create a barber user with branch assignments
+      description: |
+        Tenant-scoped staff administration endpoint.
+        Requires `ADMIN` or `MANAGER`.
+        This endpoint must not require `X-Branch-Id`.
+        Creates a user with role `BARBER`, initial branch access, and optional service assignments.
+        Duplicate emails must return `409 CONFLICT`.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBarberRequest"
+      responses:
+        "201":
+          description: Barber created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BarberDetail"
+        "400":
+          $ref: "#/components/responses/ValidationProblem"
+        "401":
+          $ref: "#/components/responses/UnauthorizedProblem"
+        "403":
+          $ref: "#/components/responses/ForbiddenProblem"
+        "409":
+          $ref: "#/components/responses/ConflictProblem"
+
+  /staff/barbers/{barberId}:
+    get:
+      operationId: getStaffBarberById
+      tags: [StaffAdmin]
+      summary: Get a barber by id for tenant staff administration
+      description: |
+        Tenant-scoped staff administration endpoint.
+        Requires `ADMIN` or `MANAGER`.
+        This endpoint must not require `X-Branch-Id`.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: barberId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Barber identifier scoped to the authenticated tenant.
+      responses:
+        "200":
+          description: Barber resolved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BarberDetail"
+        "401":
+          $ref: "#/components/responses/UnauthorizedProblem"
+        "403":
+          $ref: "#/components/responses/ForbiddenProblem"
+        "404":
+          $ref: "#/components/responses/NotFoundProblem"
+    patch:
+      operationId: updateStaffBarber
+      tags: [StaffAdmin]
+      summary: Update a barber by id for tenant staff administration
+      description: |
+        Tenant-scoped staff administration endpoint.
+        Requires `ADMIN` or `MANAGER`.
+        This endpoint must not require `X-Branch-Id`.
+        Empty patches must return `400 VALIDATION_ERROR`.
+        If `branchIds` is present, it replaces the full set of branch assignments.
+        If `serviceIds` is present, it replaces the full set of service assignments.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: barberId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Barber identifier scoped to the authenticated tenant.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatchBarberRequest"
+      responses:
+        "200":
+          description: Barber updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BarberDetail"
+        "400":
+          $ref: "#/components/responses/ValidationProblem"
+        "401":
+          $ref: "#/components/responses/UnauthorizedProblem"
+        "403":
+          $ref: "#/components/responses/ForbiddenProblem"
+        "404":
+          $ref: "#/components/responses/NotFoundProblem"
 
   /barbers:
     get:

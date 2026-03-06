@@ -1,0 +1,30 @@
+package com.barbersuite.backend.branches;
+
+import java.util.Optional;
+import java.util.UUID;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public class JdbcBranchInfoRepository {
+
+  private final JdbcTemplate jdbcTemplate;
+
+  public JdbcBranchInfoRepository(JdbcTemplate jdbcTemplate) {
+    this.jdbcTemplate = jdbcTemplate;
+  }
+
+  public Optional<String> findTimeZone(UUID tenantId, UUID branchId) {
+    return jdbcTemplate.query(
+      """
+      select time_zone
+      from branches
+      where tenant_id = ?
+        and id = ?
+      """,
+      (resultSet, rowNum) -> resultSet.getString("time_zone"),
+      tenantId,
+      branchId
+    ).stream().findFirst();
+  }
+}

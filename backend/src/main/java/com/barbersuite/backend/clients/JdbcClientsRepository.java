@@ -76,6 +76,24 @@ public class JdbcClientsRepository {
     ).stream().findFirst();
   }
 
+  public boolean existsById(UUID tenantId, UUID branchId, UUID clientId) {
+    return Boolean.TRUE.equals(jdbcTemplate.queryForObject(
+      """
+      select exists (
+        select 1
+        from clients
+        where tenant_id = ?
+          and branch_id = ?
+          and id = ?
+      )
+      """,
+      Boolean.class,
+      tenantId,
+      branchId,
+      clientId
+    ));
+  }
+
   public List<ClientRow> list(UUID tenantId, UUID branchId, String query, int page, int size) {
     QueryParts queryParts = queryParts(
       """

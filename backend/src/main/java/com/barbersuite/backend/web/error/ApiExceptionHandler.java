@@ -39,7 +39,7 @@ public class ApiExceptionHandler {
   ) {
     return problemResponse(
       HttpStatus.CONFLICT,
-      "Conflict",
+      exception instanceof AppointmentOverlapException ? "Appointment overlap" : "Conflict",
       exception.getMessage(),
       exception.getCode(),
       request,

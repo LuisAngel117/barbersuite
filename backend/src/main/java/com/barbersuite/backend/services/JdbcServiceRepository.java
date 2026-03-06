@@ -48,6 +48,20 @@ public class JdbcServiceRepository {
     ).stream().findFirst();
   }
 
+  public Optional<Integer> findDurationMinutesByTenantAndId(UUID tenantId, UUID serviceId) {
+    return jdbcTemplate.query(
+      """
+      select duration_minutes
+      from services
+      where tenant_id = ?
+        and id = ?
+      """,
+      (resultSet, rowNum) -> resultSet.getInt("duration_minutes"),
+      tenantId,
+      serviceId
+    ).stream().findFirst();
+  }
+
   public void insert(
     UUID serviceId,
     UUID tenantId,

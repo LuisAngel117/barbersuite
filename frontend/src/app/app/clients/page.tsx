@@ -4,6 +4,7 @@ import { ClientsTable } from "@/components/clients/clients-table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BRANCH_COOKIE } from "@/lib/branch-cookie";
+import { getDashboardContext } from "@/lib/dashboard-context";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +12,8 @@ export default async function ClientsPage() {
   const cookieStore = await cookies();
   const tClients = await getTranslations("clients");
   const branchId = cookieStore.get(BRANCH_COOKIE)?.value ?? null;
+  const { payload } = await getDashboardContext();
+  const roles = payload?.user.roles ?? [];
 
   return (
     <Card className="rounded-[1.75rem] border-border/70 bg-card/80 shadow-xl shadow-black/5">
@@ -42,7 +45,7 @@ export default async function ClientsPage() {
           </p>
         </div>
       ) : (
-        <ClientsTable branchId={branchId} key={branchId} />
+        <ClientsTable branchId={branchId} key={branchId} roles={roles} />
       )}
       </CardContent>
     </Card>

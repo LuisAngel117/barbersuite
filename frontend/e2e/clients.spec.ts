@@ -59,12 +59,15 @@ test("select branch and operate clients", async ({ page }) => {
   await page.getByTestId("clients-search-submit").click();
   await expect(clientRow).toBeVisible();
 
+  await page.getByTestId(`clients-actions-${toTestIdSegment(clientName)}`).click();
   await page.getByTestId(`clients-edit-${toTestIdSegment(clientName)}`).click();
   await page.getByTestId("client-notes").fill("Actualizado por Playwright");
   await page.getByTestId("client-submit").click();
 
   await expect(clientRow).toContainText("Actualizado por Playwright");
 
+  await page.getByTestId(`clients-actions-${toTestIdSegment(clientName)}`).click();
   await page.getByTestId(`clients-toggle-${toTestIdSegment(clientName)}`).click();
+  await page.getByTestId(`clients-toggle-${toTestIdSegment(clientName)}-confirm`).click();
   await expect(clientRow).toContainText("Inactivo");
 });

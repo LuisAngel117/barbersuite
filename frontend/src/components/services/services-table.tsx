@@ -1,18 +1,22 @@
 "use client";
 
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { ColumnDef, PaginationState, SortingState } from "@tanstack/react-table";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { type ServicePayload } from "@/lib/backend";
+import { apiFetch } from "@/lib/api-client";
+import { formatMoneyUSD, formatMinutes } from "@/lib/format";
+import { hasAnyRole } from "@/lib/roles";
 import {
   readApiResponse,
   toProblemBanner,
   type ProblemBannerState,
 } from "@/lib/problem";
-import { apiFetch } from "@/lib/api-client";
+import { DataTable } from "@/components/data-table/data-table";
+import { DataTableRowActions } from "@/components/data-table/data-table-row-actions";
 import { ServiceForm, type ServiceFormSubmission } from "@/components/services/service-form";
-import { ProblemBanner } from "@/components/ui/problem-banner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,8 +26,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { ProblemBanner } from "@/components/ui/problem-banner";
 import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
 
 function sortServices(services: ServicePayload[], locale: string) {
   return [...services].sort((left, right) => {
@@ -45,24 +49,10 @@ function toTestIdSegment(value: string) {
   );
 }
 
-function ServicesLoadingState() {
-  return (
-    <div className="space-y-4 px-6 py-6">
-      {Array.from({ length: 4 }).map((_, index) => (
-        <div className="grid gap-3 sm:grid-cols-[2fr_1fr_1fr_1fr]" key={index}>
-          <Skeleton className="h-12 rounded-xl" />
-          <Skeleton className="h-12 rounded-xl" />
-          <Skeleton className="h-12 rounded-xl" />
-          <Skeleton className="h-12 rounded-xl" />
-        </div>
-      ))}
-    </div>
-  );
-}
-
-export function ServicesTable() {
+export function ServicesTable({ roles }: { roles: readonly string[] }) {
   const router = useRouter();
   const locale = useLocale();
+  const tCommon = useTranslations("common");
   const tServices = useTranslations("services");
   const tUi = useTranslations("ui");
   const [services, setServices] = useState<ServicePayload[]>([]);
@@ -72,12 +62,14 @@ export function ServicesTable() {
   const [problem, setProblem] = useState<ProblemBannerState | null>(null);
   const [formMode, setFormMode] = useState<"create" | "edit" | null>(null);
   const [editingService, setEditingService] = useState<ServicePayload | null>(null);
-
-  const currencyFormatter = new Intl.NumberFormat(locale === "en" ? "en-US" : "es-EC", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
+  const [search, setSearch] = useState("");
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
   });
+
+  const canManageServices = hasAnyRole(roles, ["ADMIN", "MANAGER"]);
 
   const fetchServices = useCallback(async () => {
     const response = await fetch("/api/services", {
@@ -105,12 +97,12 @@ export function ServicesTable() {
     return () => window.clearTimeout(timeoutId);
   }, [fetchServices]);
 
-  async function reloadServices() {
+  const reloadServices = useCallback(async () => {
     setIsLoading(true);
     await fetchServices();
-  }
+  }, [fetchServices]);
 
-  async function openServiceEditor(serviceId: string) {
+  const openServiceEditor = useCallback(async (serviceId: string) => {
     setPendingServiceId(serviceId);
     setProblem(null);
 
@@ -127,7 +119,7 @@ export function ServicesTable() {
 
     setEditingService(result.data);
     setFormMode("edit");
-  }
+  }, [tServices]);
 
   async function handleSubmit(payload: ServiceFormSubmission) {
     const isEditing = formMode === "edit" && editingService;
@@ -170,7 +162,7 @@ export function ServicesTable() {
     router.refresh();
   }
 
-  async function handleToggleActive(service: ServicePayload) {
+  const handleToggleActive = useCallback(async (service: ServicePayload) => {
     setPendingServiceId(service.id);
     setProblem(null);
 
@@ -192,7 +184,120 @@ export function ServicesTable() {
     toast.success(service.active ? tServices("deactivateSuccess") : tServices("activateSuccess"));
     await reloadServices();
     router.refresh();
-  }
+  }, [reloadServices, router, tServices]);
+
+  const filteredServices = useMemo(() => {
+    const normalizedSearch = search.trim().toLocaleLowerCase(locale);
+    if (!normalizedSearch) {
+      return services;
+    }
+
+    return services.filter((service) =>
+      service.name.toLocaleLowerCase(locale).includes(normalizedSearch),
+    );
+  }, [locale, search, services]);
+
+  const columns = useMemo<ColumnDef<ServicePayload>[]>(
+    () => {
+      const baseColumns: ColumnDef<ServicePayload>[] = [
+        {
+          accessorKey: "name",
+          header: tServices("name"),
+          enableSorting: true,
+          cell: ({ row }) => (
+            <div className="space-y-1">
+              <p className="font-medium tracking-tight">{row.original.name}</p>
+              <p className="text-xs text-muted-foreground">{row.original.id}</p>
+            </div>
+          ),
+        },
+        {
+          accessorKey: "durationMinutes",
+          header: tServices("duration"),
+          enableSorting: true,
+          cell: ({ row }) => formatMinutes(row.original.durationMinutes),
+        },
+        {
+          accessorKey: "price",
+          header: tServices("price"),
+          enableSorting: true,
+          cell: ({ row }) =>
+            formatMoneyUSD(row.original.price, locale === "en" ? "en-US" : "es-EC"),
+        },
+        {
+          accessorKey: "active",
+          header: tServices("active"),
+          enableSorting: true,
+          cell: ({ row }) => (
+            <Badge
+              className="rounded-full"
+              variant={row.original.active ? "secondary" : "outline"}
+            >
+              {row.original.active ? tServices("rowActive") : tServices("rowInactive")}
+            </Badge>
+          ),
+        },
+      ];
+
+      if (!canManageServices) {
+        return baseColumns;
+      }
+
+      return [
+        ...baseColumns,
+        {
+          id: "actions",
+          header: tCommon("actions"),
+          enableSorting: false,
+          cell: ({ row }) => {
+            const service = row.original;
+            const segment = toTestIdSegment(service.name);
+
+            return (
+              <DataTableRowActions
+                actions={[
+                  {
+                    label: pendingServiceId === service.id ? tServices("loading") : tServices("edit"),
+                    onClick: () => openServiceEditor(service.id),
+                    disabled: pendingServiceId === service.id || isSubmitting,
+                    testId: `services-edit-${segment}`,
+                  },
+                  {
+                    label:
+                      pendingServiceId === service.id
+                        ? tServices("saving")
+                        : service.active
+                          ? tServices("deactivate")
+                          : tServices("activate"),
+                    onClick: () => handleToggleActive(service),
+                    destructive: true,
+                    disabled: pendingServiceId === service.id || isSubmitting,
+                    confirmTitle: service.active ? tServices("deactivate") : tServices("activate"),
+                    confirmDescription: tServices("selectActionDescription"),
+                    confirmLabel: service.active
+                      ? tServices("deactivate")
+                      : tServices("activate"),
+                    testId: `services-toggle-${segment}`,
+                  },
+                ]}
+                triggerTestId={`services-actions-${segment}`}
+              />
+            );
+          },
+        },
+      ];
+    },
+    [
+      canManageServices,
+      handleToggleActive,
+      isSubmitting,
+      locale,
+      openServiceEditor,
+      pendingServiceId,
+      tCommon,
+      tServices,
+    ],
+  );
 
   return (
     <div className="space-y-6">
@@ -208,121 +313,85 @@ export function ServicesTable() {
           </div>
           <p className="text-sm leading-6 text-muted-foreground">{tServices("description")}</p>
         </div>
-
-        <Button
-          className="rounded-full"
-          data-testid="services-add"
-          onClick={() => {
-            setEditingService(null);
-            setFormMode("create");
-            setProblem(null);
-          }}
-          type="button"
-        >
-          {tServices("add")}
-        </Button>
       </div>
 
       {problem ? <ProblemBanner problem={problem} /> : null}
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.9fr)]">
-        <Card className="overflow-hidden rounded-[1.5rem] border-border/70 bg-card/80 shadow-lg shadow-black/5">
-          <CardHeader className="space-y-3">
-            <CardTitle className="text-xl tracking-tight">{tServices("listTitle")}</CardTitle>
-            <CardDescription>{tServices("listDescription")}</CardDescription>
-          </CardHeader>
-          <Separator />
-          <CardContent className="p-0">
-            {isLoading ? (
-              <ServicesLoadingState />
-            ) : services.length === 0 ? (
-              <div className="px-6 py-8">
-                <div className="rounded-2xl border border-dashed border-border/70 bg-muted/40 p-6">
-                  <strong className="block text-base font-semibold tracking-tight">
-                    {tServices("emptyTitle")}
-                  </strong>
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                    {tServices("emptyDescription")}
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-sm">
-                  <thead className="bg-muted/40 text-left text-xs uppercase tracking-[0.22em] text-muted-foreground">
-                    <tr>
-                      <th className="px-6 py-4 font-semibold">{tServices("name")}</th>
-                      <th className="px-6 py-4 font-semibold">{tServices("duration")}</th>
-                      <th className="px-6 py-4 font-semibold">{tServices("price")}</th>
-                      <th className="px-6 py-4 font-semibold">{tServices("active")}</th>
-                      <th className="px-6 py-4 font-semibold">{tServices("actions")}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {services.map((service) => (
-                      <tr
-                        className="border-t border-border/70 align-top"
-                        data-testid={`services-row-${toTestIdSegment(service.name)}`}
-                        key={service.id}
-                      >
-                        <td className="px-6 py-4">
-                          <div className="space-y-1">
-                            <p className="font-medium">{service.name}</p>
-                            <p className="text-xs text-muted-foreground">{service.id}</p>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">{service.durationMinutes} min</td>
-                        <td className="px-6 py-4">{currencyFormatter.format(service.price)}</td>
-                        <td className="px-6 py-4">
-                          <Badge
-                            className="rounded-full"
-                            variant={service.active ? "secondary" : "outline"}
-                          >
-                            {service.active ? tServices("rowActive") : tServices("rowInactive")}
-                          </Badge>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex flex-wrap gap-2">
-                            <Button
-                              className="rounded-full"
-                              data-testid={`services-edit-${toTestIdSegment(service.name)}`}
-                              disabled={pendingServiceId === service.id || isSubmitting}
-                              onClick={() => void openServiceEditor(service.id)}
-                              size="sm"
-                              type="button"
-                              variant="outline"
-                            >
-                              {pendingServiceId === service.id
-                                ? tServices("loading")
-                                : tServices("edit")}
-                            </Button>
-                            <Button
-                              className="rounded-full"
-                              data-testid={`services-toggle-${toTestIdSegment(service.name)}`}
-                              disabled={pendingServiceId === service.id || isSubmitting}
-                              onClick={() => void handleToggleActive(service)}
-                              size="sm"
-                              type="button"
-                              variant="ghost"
-                            >
-                              {pendingServiceId === service.id
-                                ? tServices("saving")
-                                : service.active
-                                  ? tServices("deactivate")
-                                  : tServices("activate")}
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <DataTable
+          columns={columns}
+          data={filteredServices}
+          emptyCta={
+            canManageServices ? (
+              <Button
+                className="rounded-full"
+                onClick={() => {
+                  setEditingService(null);
+                  setFormMode("create");
+                  setProblem(null);
+                }}
+                type="button"
+              >
+                {tServices("add")}
+              </Button>
+            ) : null
+          }
+          emptyDescription={
+            search.trim() ? tCommon("emptyDescription") : tServices("emptyDescription")
+          }
+          emptyTitle={search.trim() ? tCommon("emptyTitle") : tServices("emptyTitle")}
+          globalFilter={{
+            value: search,
+            onChange: (value) => {
+              setPagination((current) => ({ ...current, pageIndex: 0 }));
+              setSearch(value);
+            },
+            placeholder: tCommon("search"),
+            testId: "services-search",
+          }}
+          isLoading={isLoading}
+          pagination={{
+            mode: "client",
+            pageIndex: pagination.pageIndex,
+            pageSize: pagination.pageSize,
+            onPaginationChange: setPagination,
+            totalItems: filteredServices.length,
+          }}
+          rightSlot={
+            canManageServices ? (
+              <Button
+                className="rounded-xl"
+                data-testid="services-add"
+                onClick={() => {
+                  setEditingService(null);
+                  setFormMode("create");
+                  setProblem(null);
+                }}
+                type="button"
+              >
+                {tServices("add")}
+              </Button>
+            ) : null
+          }
+          rowId={(service) => service.id}
+          rowTestId={(service) => `services-row-${toTestIdSegment(service.name)}`}
+          sorting={{
+            sortingState: sorting,
+            onSortingChange: setSorting,
+          }}
+          title={tServices("listTitle")}
+        />
 
         <Card className="rounded-[1.5rem] border-border/70 bg-card/80 shadow-lg shadow-black/5">
+          <CardHeader className="space-y-3">
+            <CardTitle className="text-xl tracking-tight">
+              {formMode ? tServices("edit") : tCommon("create")}
+            </CardTitle>
+            <CardDescription>
+              {formMode ? tServices("selectActionDescription") : tServices("selectActionTitle")}
+            </CardDescription>
+          </CardHeader>
+          <Separator />
           <CardContent className="pt-6">
             {formMode ? (
               <ServiceForm

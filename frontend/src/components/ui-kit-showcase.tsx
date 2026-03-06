@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Rocket, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { DataTableDemo } from "@/components/data-table/data-table-demo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -207,6 +208,27 @@ export function UiKitShowcase() {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="xl:col-span-2 rounded-[1.5rem] border-border/70 bg-card/80 shadow-lg shadow-black/5">
+        <CardHeader className="space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge className="rounded-full bg-brand-muted text-brand-foreground hover:bg-brand-muted">
+              DataTable
+            </Badge>
+            <Badge className="rounded-full" variant="outline">
+              TanStack + shadcn
+            </Badge>
+          </div>
+          <CardTitle className="text-2xl tracking-tight">DataTable demo</CardTitle>
+          <CardDescription>
+            Patrón reutilizable para listados operativos con toolbar, acciones, paginación y
+            estados vacíos.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <DataTableDemo />
+        </CardContent>
+      </Card>
     </div>
   );
 }

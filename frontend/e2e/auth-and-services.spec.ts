@@ -49,13 +49,16 @@ test("signup, operate services, and logout", async ({ page }) => {
   await expect(serviceRow).toContainText("30 min");
   await expect(serviceRow).toContainText("Activa");
 
+  await page.getByTestId(`services-actions-${toTestIdSegment(serviceName)}`).click();
   await page.getByTestId(`services-edit-${toTestIdSegment(serviceName)}`).click();
   await page.getByTestId("services-duration").fill("45");
   await page.getByTestId("services-submit").click();
 
   await expect(serviceRow).toContainText("45 min");
 
+  await page.getByTestId(`services-actions-${toTestIdSegment(serviceName)}`).click();
   await page.getByTestId(`services-toggle-${toTestIdSegment(serviceName)}`).click();
+  await page.getByTestId(`services-toggle-${toTestIdSegment(serviceName)}-confirm`).click();
   await expect(serviceRow).toContainText("Inactiva");
 
   await page.getByTestId("nav-user-menu").click();

@@ -1,11 +1,14 @@
 import { getTranslations } from "next-intl/server";
 import { ServicesTable } from "@/components/services/services-table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { getDashboardContext } from "@/lib/dashboard-context";
 
 export const dynamic = "force-dynamic";
 
 export default async function ServicesPage() {
   const tServices = await getTranslations("services");
+  const { payload } = await getDashboardContext();
+  const roles = payload?.user.roles ?? [];
 
   return (
     <Card className="rounded-[1.75rem] border-border/70 bg-card/80 shadow-xl shadow-black/5">
@@ -19,7 +22,7 @@ export default async function ServicesPage() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <ServicesTable />
+        <ServicesTable roles={roles} />
       </CardContent>
     </Card>
   );

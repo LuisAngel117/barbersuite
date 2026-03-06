@@ -82,12 +82,15 @@ No se usan tags con `tenantId`, `userId`, `email` o `branchId` para evitar cardi
 Nota:
 - se usa `creations_total` en lugar de `created_total` porque el sufijo `_created` tiene semantica reservada en Prometheus/OpenMetrics y termina colapsando nombres de contador ambiguos.
 
-## Demo con Prometheus
+## Demo con Prometheus y Grafana
 Compose adicional:
 - [docker-compose.observability.yml](/Users/luisa/Proyecto/barbersuite/docker-compose.observability.yml)
 
 Config de scrape:
 - [prometheus.yml](/Users/luisa/Proyecto/barbersuite/observability/prometheus.yml)
+- [datasource.yml](/Users/luisa/Proyecto/barbersuite/observability/grafana/provisioning/datasources/datasource.yml)
+- [dashboards.yml](/Users/luisa/Proyecto/barbersuite/observability/grafana/provisioning/dashboards/dashboards.yml)
+- [barbersuite-overview.json](/Users/luisa/Proyecto/barbersuite/observability/grafana/dashboards/barbersuite-overview.json)
 
 Levantar stack completo con observabilidad:
 - `docker compose -f docker-compose.yml -f docker-compose.app.yml -f docker-compose.frontend.yml -f docker-compose.observability.yml up -d --build`
@@ -96,11 +99,27 @@ Verificacion:
 - backend metrics: `http://localhost:8080/actuator/prometheus`
 - Prometheus UI: `http://localhost:9090`
 - targets: `http://localhost:9090/targets`
+- Grafana: `http://localhost:3001`
+- credenciales demo de Grafana: `admin / admin`
+- dashboard provisionado: `BarberSuite Overview` en la carpeta `BarberSuite`
+
+El provisioning de Grafana deja listo:
+- datasource `Prometheus` apuntando a `http://prometheus:9090`
+- dashboard home `BarberSuite Overview` sin import manual
+
+Paneles incluidos:
+- `HTTP Requests rate (2m)`
+- `HTTP p95 latency (5m, avg fallback)`
+- `Service creations (rate 5m)`
+- `Client creations (rate 5m)`
+- `Branch Required / Forbidden (rate 5m)`
+- `Prometheus target UP`
 
 ## Demo y operacion local
 Checks utiles:
 - `http://localhost:8080/actuator/health`
 - `http://localhost:8080/actuator/prometheus`
 - `http://localhost:9090`
+- `http://localhost:3001`
 
 Cuando un request falle, busca el `X-Request-Id` de la respuesta y luego filtra los logs JSON por el campo `requestId`.

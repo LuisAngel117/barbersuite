@@ -39,6 +39,19 @@ Checks rapidos:
 Nota:
 - el demo Docker corre sobre `http://localhost`, por eso el frontend usa `COOKIE_SECURE=false`
 
+## 1.b Observabilidad demo (Prometheus + Grafana)
+Si quieres la demo completa con observabilidad:
+
+```powershell
+docker compose -f docker-compose.yml -f docker-compose.app.yml -f docker-compose.frontend.yml -f docker-compose.observability.yml up -d --build
+```
+
+Checks extra:
+- Prometheus UI: `http://localhost:9090`
+- Grafana: `http://localhost:3001`
+- login Grafana: `admin / admin`
+- dashboard listo: `BarberSuite Overview` en la carpeta `BarberSuite`
+
 ## 2. Crear el tenant demo
 Desde la raiz del repo:
 
@@ -89,6 +102,20 @@ Ejemplo del archivo generado:
 4. Busca por `Juan`
 5. Edita `notes` y desactiva el cliente
 
+## 3.b Ver observabilidad
+Despues de crear servicios o clientes, abre:
+- Prometheus: `http://localhost:9090`
+- Grafana: `http://localhost:3001`
+
+En Grafana:
+1. inicia sesion con `admin / admin`
+2. abre el dashboard `BarberSuite Overview`
+3. revisa paneles como:
+   - `HTTP Requests rate (2m)`
+   - `Service creations (rate 5m)`
+   - `Client creations (rate 5m)`
+   - `Branch Required / Forbidden (rate 5m)`
+
 ## 4. Apagar el stack
 
 ```powershell
@@ -105,6 +132,12 @@ Si quieres resetear la demo por completo, incluyendo la base Docker:
 
 ```powershell
 ./scripts/demo-reset.ps1
+```
+
+Si levantaste tambien observabilidad, puedes bajar todo con:
+
+```powershell
+docker compose -f docker-compose.yml -f docker-compose.app.yml -f docker-compose.frontend.yml -f docker-compose.observability.yml down
 ```
 
 ## Troubleshooting
@@ -124,6 +157,19 @@ docker compose -f docker-compose.yml -f docker-compose.app.yml -f docker-compose
 
 ```powershell
 docker compose -f docker-compose.yml -f docker-compose.app.yml -f docker-compose.frontend.yml logs barbersuite-frontend
+```
+
+### Grafana no carga en 3001
+- Verifica el estado:
+
+```powershell
+docker compose -f docker-compose.yml -f docker-compose.app.yml -f docker-compose.frontend.yml -f docker-compose.observability.yml ps
+```
+
+- Mira logs:
+
+```powershell
+docker compose -f docker-compose.yml -f docker-compose.app.yml -f docker-compose.frontend.yml -f docker-compose.observability.yml logs grafana
 ```
 
 ### El seed falla

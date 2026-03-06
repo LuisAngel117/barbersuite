@@ -54,7 +54,8 @@
     "updated": "Record updated.",
     "error": "We couldn't complete the action.",
     "receiptCreated": "Receipt issued successfully.",
-    "receiptVoided": "Receipt voided."
+    "receiptVoided": "Receipt voided.",
+    "emailEnqueued": "Email queued successfully."
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -665,6 +666,82 @@
       "rangeRequired": "Select a valid date range before loading reports.",
       "invalidRange": "The start date cannot be later than the end date.",
       "noData": "There is no data for this range yet."
+    }
+  },
+  "notifications": {
+    "pageEyebrow": "Notifications",
+    "title": "Notifications",
+    "subtitle": "Email outbox and delivery tests",
+    "tenantScoped": "Tenant scoped",
+    "outboxReady": "SMTP ready",
+    "description": "Verify the email pipeline, enqueue test messages and monitor outbox states without leaving the shell.",
+    "testEmailTitle": "Send test email",
+    "testEmailDesc": "Queue a simple message to verify MailHog or your configured SMTP without touching business data.",
+    "outboxTitle": "Outbox",
+    "detailDescription": "Operational detail for a queued email including timestamps, attempts and the latest error.",
+    "emptyTitle": "There are no emails in the outbox yet",
+    "emptyDescription": "Queue a test message to start tracking pending, sent or failed states from this table.",
+    "noAccessTitle": "You don't have access to Notifications",
+    "noAccessDescription": "Only ADMIN and MANAGER can enqueue test emails or inspect the email outbox.",
+    "backToDashboard": "Back to dashboard",
+    "subjectPlaceholder": "BarberSuite email test",
+    "bodyTextPlaceholder": "Plain text body for the test email",
+    "bodyHtmlPlaceholder": "<p>Optional HTML body for the test</p>",
+    "fields": {
+      "toEmail": "Destination email",
+      "subject": "Subject",
+      "bodyText": "Body text",
+      "bodyHtml": "Body HTML"
+    },
+    "filters": {
+      "status": "Status",
+      "kind": "Kind",
+      "from": "From",
+      "to": "To",
+      "all": "All"
+    },
+    "actions": {
+      "enqueue": "Queue test email",
+      "enqueuing": "Queueing...",
+      "applyFilters": "Apply filters",
+      "autoRefresh": "Auto-refresh",
+      "live": "Live",
+      "viewDetails": "View details"
+    },
+    "status": {
+      "pending": "Pending",
+      "sent": "Sent",
+      "failed": "Failed",
+      "cancelled": "Cancelled"
+    },
+    "kind": {
+      "appointment_confirmation": "Appointment confirmation",
+      "appointment_reminder": "Appointment reminder"
+    },
+    "table": {
+      "createdAt": "Created",
+      "scheduledAt": "Scheduled",
+      "sentAt": "Sent",
+      "attempts": "Attempts",
+      "lastError": "Last error",
+      "to": "To",
+      "subject": "Subject",
+      "kind": "Kind",
+      "status": "Status",
+      "noError": "No error registered."
+    },
+    "validation": {
+      "email": "Enter a valid email address.",
+      "subject": "Subject must be at least 2 characters.",
+      "bodyRequired": "Write bodyText or bodyHtml before queueing the email."
+    },
+    "errors": {
+      "loadFailed": "We couldn't load the outbox.",
+      "enqueueFailed": "We couldn't queue the test email.",
+      "validationTitle": "Local validation",
+      "validation": "Review the fields and try again.",
+      "invalidRange": "The start date cannot be later than the end date.",
+      "conflict": "An equivalent queued email already exists for this time window."
     }
   },
   "placeholders": {

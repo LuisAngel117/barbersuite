@@ -54,7 +54,8 @@
     "updated": "Registro actualizado.",
     "error": "No pudimos completar la acción.",
     "receiptCreated": "Recibo emitido correctamente.",
-    "receiptVoided": "Recibo anulado."
+    "receiptVoided": "Recibo anulado.",
+    "emailEnqueued": "Email encolado correctamente."
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -665,6 +666,82 @@
       "rangeRequired": "Selecciona un rango de fechas válido para consultar reportes.",
       "invalidRange": "La fecha inicial no puede ser mayor que la final.",
       "noData": "No hay datos para este rango todavía."
+    }
+  },
+  "notifications": {
+    "pageEyebrow": "Notifications",
+    "title": "Notificaciones",
+    "subtitle": "Email outbox y pruebas de envío",
+    "tenantScoped": "Tenant scoped",
+    "outboxReady": "SMTP ready",
+    "description": "Verifica el pipeline de email, encola pruebas y sigue el estado del outbox sin salir del shell.",
+    "testEmailTitle": "Enviar email de prueba",
+    "testEmailDesc": "Encola un email simple para verificar MailHog o tu SMTP configurado sin tocar datos de negocio.",
+    "outboxTitle": "Outbox",
+    "detailDescription": "Detalle operativo del email encolado con timestamps, intentos y último error.",
+    "emptyTitle": "Todavía no hay emails en el outbox",
+    "emptyDescription": "Encola una prueba para empezar a seguir estados pending, sent o failed desde esta tabla.",
+    "noAccessTitle": "No tienes acceso a Notificaciones",
+    "noAccessDescription": "Solo ADMIN y MANAGER pueden encolar pruebas o revisar el outbox de email.",
+    "backToDashboard": "Volver al dashboard",
+    "subjectPlaceholder": "Prueba de email BarberSuite",
+    "bodyTextPlaceholder": "Texto plano del email de prueba",
+    "bodyHtmlPlaceholder": "<p>HTML opcional para la prueba</p>",
+    "fields": {
+      "toEmail": "Email destino",
+      "subject": "Asunto",
+      "bodyText": "Body text",
+      "bodyHtml": "Body HTML"
+    },
+    "filters": {
+      "status": "Estado",
+      "kind": "Tipo",
+      "from": "Desde",
+      "to": "Hasta",
+      "all": "Todos"
+    },
+    "actions": {
+      "enqueue": "Encolar prueba",
+      "enqueuing": "Encolando...",
+      "applyFilters": "Aplicar filtros",
+      "autoRefresh": "Auto-refresh",
+      "live": "Live",
+      "viewDetails": "Ver detalle"
+    },
+    "status": {
+      "pending": "Pendiente",
+      "sent": "Enviado",
+      "failed": "Fallido",
+      "cancelled": "Cancelado"
+    },
+    "kind": {
+      "appointment_confirmation": "Confirmación de cita",
+      "appointment_reminder": "Recordatorio de cita"
+    },
+    "table": {
+      "createdAt": "Creado",
+      "scheduledAt": "Programado",
+      "sentAt": "Enviado",
+      "attempts": "Intentos",
+      "lastError": "Último error",
+      "to": "Destino",
+      "subject": "Asunto",
+      "kind": "Tipo",
+      "status": "Estado",
+      "noError": "Sin errores registrados."
+    },
+    "validation": {
+      "email": "Ingresa un email válido.",
+      "subject": "El asunto debe tener al menos 2 caracteres.",
+      "bodyRequired": "Escribe bodyText o bodyHtml para encolar el email."
+    },
+    "errors": {
+      "loadFailed": "No pudimos cargar el outbox.",
+      "enqueueFailed": "No pudimos encolar el email de prueba.",
+      "validationTitle": "Validación local",
+      "validation": "Revisa los campos e inténtalo de nuevo.",
+      "invalidRange": "La fecha inicial no puede ser mayor que la final.",
+      "conflict": "Ya existe un email equivalente encolado para esta ventana."
     }
   },
   "placeholders": {

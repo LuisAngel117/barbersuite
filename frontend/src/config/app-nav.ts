@@ -175,7 +175,8 @@ export const APP_NAV_ITEMS: AppNavItem[] = [
       en: "Notifications",
     },
     group: "system",
-    allowedRoles: ALL_APP_ROLES,
+    allowedRoles: ["ADMIN", "MANAGER"],
+    testId: "nav-notifications",
   },
   {
     key: "settings",

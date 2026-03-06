@@ -1,0 +1,20 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: barbersuite-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://barbersuite-postgres:5432/${POSTGRES_DB:-barbersuite}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-barbersuite}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-change-me-local}
+      SPRING_FLYWAY_ENABLED: "true"
+      JWT_SECRET: ${JWT_SECRET:-change-me-local-barbersuite-jwt-secret-please-override}
+      MANAGEMENT_ENDPOINTS_WEB_BASE_PATH: /api/v1
+      MANAGEMENT_ENDPOINTS_WEB_PATH_MAPPING_HEALTH: health

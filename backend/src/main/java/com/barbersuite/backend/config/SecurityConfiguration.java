@@ -49,6 +49,8 @@ public class SecurityConfiguration {
       .authorizeHttpRequests(authorize -> authorize
         .requestMatchers(POST, "/api/v1/auth/login").permitAll()
         .requestMatchers(POST, "/api/v1/tenants/signup").permitAll()
+        .requestMatchers("/actuator/health", "/actuator/health/**", "/api/v1/health", "/api/v1/health/**")
+        .permitAll()
         .requestMatchers("/api/v1/branches", "/api/v1/branches/**").hasAnyRole("ADMIN", "MANAGER")
         .requestMatchers("/error").permitAll()
         .anyRequest().authenticated()

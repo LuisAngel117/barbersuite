@@ -928,5 +928,283 @@
       "ctaPrimary": "Open UI Kit",
       "ctaSecondary": "Back to dashboard"
     }
+  },
+  "marketing": {
+    "meta": {
+      "defaultTitle": "BarberSuite | SaaS to run multi-branch barbershops",
+      "description": "Appointments, cash, reports, staff and notifications in one platform for barbershops that need operational clarity."
+    },
+    "nav": {
+      "features": "Features",
+      "pricing": "Pricing",
+      "login": "Login",
+      "signup": "Create account"
+    },
+    "hero": {
+      "badge": "Multi-branch barbershops, without operational chaos",
+      "title": "BarberSuite runs the full barbershop without switching tools.",
+      "subtitle": "One system for appointments, cash, staff, reporting and notifications. Less improvised backoffice, more visible operations per branch.",
+      "ctaPrimary": "Create account",
+      "ctaSecondary": "See features",
+      "metrics": {
+        "ops": {
+          "label": "Operations in one surface",
+          "value": "Agenda + cash + staff"
+        },
+        "cash": {
+          "label": "Branch checkout",
+          "value": "Internal receipts ready"
+        },
+        "visibility": {
+          "label": "Manager visibility",
+          "value": "Reports and outbox visible"
+        }
+      }
+    },
+    "home": {
+      "preview": {
+        "eyebrow": "Product preview",
+        "title": "A shell designed for reception and managers",
+        "badge": "Real product",
+        "calendarTitle": "Scheduling with real availability",
+        "calendarSubtitle": "Backend-calculated slots and per-branch time zone.",
+        "liveBadge": "Active branch",
+        "cashTitle": "Cash and tickets",
+        "cashSubtitle": "Charge, void and inspect detail without leaving the flow.",
+        "reportTitle": "Reports ready",
+        "reportSubtitle": "Sales, top services and barber performance."
+      },
+      "audienceEyebrow": "Who it is for",
+      "audienceTitle": "Built for teams that need to operate, not improvise.",
+      "audienceSubtitle": "BarberSuite is designed for owners, managers and front-desk teams that need branch-scoped control with less friction.",
+      "audience": {
+        "owners": {
+          "title": "Multi-branch owners",
+          "description": "Get visibility on cash, appointments and performance without relying on parallel spreadsheets or manual closeouts."
+        },
+        "managers": {
+          "title": "Operating managers",
+          "description": "Resolve availability, no-shows, staff shifts and daily metrics from a single product surface."
+        },
+        "teams": {
+          "title": "Reception and front desk",
+          "description": "Schedule, charge and follow clients with fewer screen hops and less room for manual errors."
+        }
+      },
+      "finalCta": {
+        "eyebrow": "Ready to sell",
+        "title": "Turn appointments, checkout and reporting into a clean day-one operation.",
+        "subtitle": "Start with simple onboarding and grow into multiple branches without rebuilding architecture or internal workflows.",
+        "secondary": "See pricing"
+      }
+    },
+    "sections": {
+      "featuresEyebrow": "What it solves",
+      "featuresTitle": "Real modules, not empty screens.",
+      "featuresSubtitle": "What you see on the marketing site already exists in product: appointments, checkout, reports, outbox and branch control.",
+      "faqEyebrow": "FAQ",
+      "faqTitle": "Frequently asked questions"
+    },
+    "highlights": {
+      "agenda": {
+        "title": "Scheduling with real availability",
+        "description": "Barbers, service slots and backend availability validation prevent appointments outside working hours."
+      },
+      "cash": {
+        "title": "Checkout ready to operate",
+        "description": "Internal receipts per branch, branch numbering and controlled voiding with traceability."
+      },
+      "reports": {
+        "title": "Reports that are actually readable",
+        "description": "Sales, top services, utilization and barber performance with range filters and real time zone handling."
+      },
+      "notifications": {
+        "title": "Outbox and email without magic",
+        "description": "Transactional confirmations and reminders with outbox, SMTP worker and observability."
+      },
+      "multibranch": {
+        "title": "Multi-tenant + multi-branch",
+        "description": "Every module respects tenant, branch and RBAC boundaries so you can scale without leaking data."
+      },
+      "rbac": {
+        "title": "Serious permissions and context",
+        "description": "ADMIN, MANAGER, RECEPTION and BARBER only see what they need, with no unsafe shortcuts."
+      }
+    },
+    "faq": {
+      "one": {
+        "question": "Does it work for more than one branch?",
+        "answer": "Yes. The model is multi-tenant and branch-scoped, with a branch selector, permissions and numbering per location."
+      },
+      "two": {
+        "question": "Does the scheduler prevent overlaps and off-hours appointments?",
+        "answer": "Yes. The backend validates both overlap and effective barber availability before confirming an appointment."
+      },
+      "three": {
+        "question": "Are checkout and receipts already operational?",
+        "answer": "Yes. You can issue internal sales, void receipts and inspect branch history from the same UI."
+      },
+      "four": {
+        "question": "What is next on the roadmap?",
+        "answer": "WhatsApp, advanced availability improvements and later SRI/commercial automation steps."
+      }
+    },
+    "featuresPage": {
+      "meta": {
+        "title": "Features",
+        "description": "Appointments, checkout, reporting, notifications and multi-branch architecture for barbershops that need operational order."
+      },
+      "title": "Everything you can already operate today.",
+      "subtitle": "A coherent stack for the full barbershop: staff, clients, checkout, scheduling and branch visibility.",
+      "architectureEyebrow": "Architecture",
+      "architectureTitle": "Technical foundations ready to scale",
+      "architectureSubtitle": "The product already sits on clear boundaries for tenant, branch, web security, outbox and observability.",
+      "modules": {
+        "agenda": {
+          "title": "Scheduling with context",
+          "description": "Day/week/list views with availability, drag and drop and real validations.",
+          "bullets": {
+            "one": "Slots per barber and service from backend.",
+            "two": "Protection against overlap and off-hours booking.",
+            "three": "Confirmation and reminder flows ready to grow."
+          }
+        },
+        "cash": {
+          "title": "Checkout by branch",
+          "description": "Internal sales, custom items, payments and controlled voiding with branch numbering.",
+          "bullets": {
+            "one": "Exact calculation with BigDecimal and validated formulas.",
+            "two": "Receipt detail, filters and issued/voided states.",
+            "three": "History ready for exports and reporting."
+          }
+        },
+        "reports": {
+          "title": "Operational reporting",
+          "description": "Sales summary, top services, appointments and barber performance in one executive view.",
+          "bullets": {
+            "one": "Date ranges interpreted in the branch real time zone.",
+            "two": "Daily series with zero-sales days.",
+            "three": "KPIs that help the team make same-day decisions."
+          }
+        },
+        "notifications": {
+          "title": "Notifications with outbox",
+          "description": "Reliable email pipeline with queues, retries and attempt tracing.",
+          "bullets": {
+            "one": "Admin API for send tests and auditability.",
+            "two": "SMTP worker separated from the HTTP request path.",
+            "three": "MailHog in demo and GreenMail in tests."
+          }
+        },
+        "multibranch": {
+          "title": "Multi-branch operations",
+          "description": "Branch selector, branch-scoped modules and tenant-scoped administration.",
+          "bullets": {
+            "one": "Clients, appointments, checkout and reports live per branch.",
+            "two": "Staff and services are managed at tenant level.",
+            "three": "Same visual system ready for multiple locations."
+          }
+        },
+        "security": {
+          "title": "Modern web security",
+          "description": "BFF with httpOnly cookies, double-submit CSRF and origin validation.",
+          "bullets": {
+            "one": "JWT stays out of localStorage.",
+            "two": "Request IDs, JSON logs and business metrics included.",
+            "three": "Consistent RBAC across backend and frontend."
+          }
+        }
+      },
+      "architecture": {
+        "tenancy": {
+          "title": "Real multi-tenancy",
+          "description": "Every query and constraint filters by tenant to prevent cross-business leaks."
+        },
+        "branchScope": {
+          "title": "Branch scope where it matters",
+          "description": "Appointments, clients, checkout and reports require branch context and are enforced in backend."
+        },
+        "outbox": {
+          "title": "Transactional outbox",
+          "description": "Confirmations, reminders and send tests are persisted first and sent later by a worker."
+        },
+        "observability": {
+          "title": "Integrated observability",
+          "description": "Actuator, Prometheus, Grafana, request IDs and business metrics from the start."
+        }
+      }
+    },
+    "pricingPage": {
+      "meta": {
+        "title": "Pricing",
+        "description": "Per-branch plans for appointments, checkout, reporting and staff, with a clear roadmap for advanced functions."
+      },
+      "title": "Clear per-branch pricing, no hidden complexity.",
+      "subtitle": "Start with a solid operation and scale into multiple branches without rebuilding internal workflows.",
+      "perBranch": "Per-branch pricing",
+      "featured": "Most chosen",
+      "billingNote": "USD per branch / month",
+      "roadmapTitle": "Commercial roadmap",
+      "roadmapSubtitle": "What is already ready and what comes next in upcoming iterations.",
+      "plans": {
+        "starter": {
+          "name": "Starter",
+          "price": "USD 39",
+          "description": "For a barbershop that wants to leave operational chaos quickly.",
+          "bullets": {
+            "one": "Appointments, clients and services ready.",
+            "two": "Internal checkout with branch receipts.",
+            "three": "Base reporting and admin navigation.",
+            "four": "Up to 1 operating branch."
+          },
+          "cta": "Start now"
+        },
+        "pro": {
+          "name": "Pro",
+          "price": "USD 79",
+          "description": "For teams that already need multi-branch control and day-to-day visibility.",
+          "bullets": {
+            "one": "Everything in Starter.",
+            "two": "Executive reporting and email notifications.",
+            "three": "Staff admin, availability and full scheduling.",
+            "four": "Multi-branch operations with one control plane."
+          },
+          "cta": "Create account"
+        },
+        "enterprise": {
+          "name": "Enterprise",
+          "price": "Custom",
+          "description": "For chains that need rollout, support and coordinated roadmap work.",
+          "bullets": {
+            "one": "Implementation support.",
+            "two": "Expanded multi-branch governance and reporting.",
+            "three": "Prioritized integrations and automations.",
+            "four": "Support for more demanding deployments."
+          },
+          "cta": "See features"
+        }
+      },
+      "roadmap": {
+        "whatsapp": {
+          "title": "WhatsApp v1.1",
+          "description": "Reminders and confirmations over conversational channels to reduce no-shows."
+        },
+        "sri": {
+          "title": "SRI v1.1 / v2",
+          "description": "A later step from internal receipt to formal invoicing when the business needs it."
+        },
+        "enterprise": {
+          "title": "Commercial automation",
+          "description": "More signals, segmentation and flows for retention, reactivation and client follow-up."
+        }
+      }
+    },
+    "footer": {
+      "features": "Features",
+      "pricing": "Pricing",
+      "docs": "Docs",
+      "login": "Login",
+      "rights": "© BarberSuite. Serious operations for barbershops that grow."
+    }
   }
 }

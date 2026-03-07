@@ -928,5 +928,283 @@
       "ctaPrimary": "Ver UI Kit",
       "ctaSecondary": "Volver al dashboard"
     }
+  },
+  "marketing": {
+    "meta": {
+      "defaultTitle": "BarberSuite | SaaS para operar barberías multi-sucursal",
+      "description": "Agenda, caja, reportes, staff y notificaciones en una sola plataforma para barberías que quieren operar con claridad."
+    },
+    "nav": {
+      "features": "Features",
+      "pricing": "Pricing",
+      "login": "Entrar",
+      "signup": "Crear cuenta"
+    },
+    "hero": {
+      "badge": "Barberías multi-sucursal, sin caos operativo",
+      "title": "BarberSuite opera la barbería completa sin cambiar de herramientas.",
+      "subtitle": "Un solo sistema para agenda, caja, staff, reportes y notificaciones. Menos backoffice improvisado; más operación visible por sucursal.",
+      "ctaPrimary": "Crear cuenta",
+      "ctaSecondary": "Ver features",
+      "metrics": {
+        "ops": {
+          "label": "Operación en una sola vista",
+          "value": "Agenda + caja + staff"
+        },
+        "cash": {
+          "label": "Cobro por sucursal",
+          "value": "Recibos internos listos"
+        },
+        "visibility": {
+          "label": "Lectura gerencial",
+          "value": "Reportes y outbox visibles"
+        }
+      }
+    },
+    "home": {
+      "preview": {
+        "eyebrow": "Vista de producto",
+        "title": "Un shell pensado para recepción y managers",
+        "badge": "Producto real",
+        "calendarTitle": "Agenda con disponibilidad real",
+        "calendarSubtitle": "Slots calculados por backend y time zone por sucursal.",
+        "liveBadge": "Sucursal activa",
+        "cashTitle": "Caja y tickets",
+        "cashSubtitle": "Cobro, anulación y detalle sin salir del flujo.",
+        "reportTitle": "Reportes listos",
+        "reportSubtitle": "Ventas, top services y desempeño por barbero."
+      },
+      "audienceEyebrow": "Para quién",
+      "audienceTitle": "Hecho para equipos que necesitan operar, no improvisar.",
+      "audienceSubtitle": "BarberSuite está diseñado para dueños, managers y equipos de recepción que necesitan control branch-scoped con menos fricción.",
+      "audience": {
+        "owners": {
+          "title": "Dueños multi-sucursal",
+          "description": "Ten visibility sobre caja, agenda y desempeño sin depender de hojas paralelas ni cierres manuales."
+        },
+        "managers": {
+          "title": "Managers operativos",
+          "description": "Resuelve disponibilidad, no-shows, turnos y métricas diarias desde una sola superficie de producto."
+        },
+        "teams": {
+          "title": "Recepción y front desk",
+          "description": "Agendar, cobrar y seguir clientes con menos saltos entre pantallas y menos margen para errores manuales."
+        }
+      },
+      "finalCta": {
+        "eyebrow": "Listo para vender",
+        "title": "Convierte agenda, caja y reportes en una operación limpia desde el primer día.",
+        "subtitle": "Empieza con onboarding simple y crece a varias sucursales sin rehacer arquitectura ni procesos internos.",
+        "secondary": "Ver pricing"
+      }
+    },
+    "sections": {
+      "featuresEyebrow": "Qué resuelve",
+      "featuresTitle": "Módulos reales, no pantallas vacías.",
+      "featuresSubtitle": "Lo que ves en el marketing site ya existe en producto: agenda, caja, reportes, outbox y control por sucursal.",
+      "faqEyebrow": "FAQ",
+      "faqTitle": "Preguntas frecuentes"
+    },
+    "highlights": {
+      "agenda": {
+        "title": "Agenda con disponibilidad real",
+        "description": "Barberos, slots por servicio y validación de horario desde backend para evitar citas fuera de turno."
+      },
+      "cash": {
+        "title": "Caja lista para operar",
+        "description": "Recibos internos por sucursal, numeración por branch y anulación controlada con trazabilidad."
+      },
+      "reports": {
+        "title": "Reportes que sí se leen",
+        "description": "Ventas, top services, ocupación y desempeño por barbero con filtros por rango y zona horaria real."
+      },
+      "notifications": {
+        "title": "Outbox y emails sin magia",
+        "description": "Confirmaciones y recordatorios encolados con outbox transaccional, worker SMTP y observabilidad."
+      },
+      "multibranch": {
+        "title": "Multi-tenant + multi-branch",
+        "description": "Cada módulo respeta tenant, branch y RBAC para crecer sin filtrar datos entre sucursales."
+      },
+      "rbac": {
+        "title": "Permisos y contexto serios",
+        "description": "ADMIN, MANAGER, RECEPTION y BARBER ven exactamente lo que necesitan, sin atajos inseguros."
+      }
+    },
+    "faq": {
+      "one": {
+        "question": "¿Sirve para más de una sucursal?",
+        "answer": "Sí. El modelo es multi-tenant y branch-scoped, con selector de sucursal, permisos y numeración por branch."
+      },
+      "two": {
+        "question": "¿La agenda evita solapamientos y citas fuera de horario?",
+        "answer": "Sí. El backend valida overlap y disponibilidad efectiva del barbero antes de confirmar una cita."
+      },
+      "three": {
+        "question": "¿Caja y recibos ya están operativos?",
+        "answer": "Sí. Puedes emitir ventas internas, anular recibos y consultar histórico por sucursal desde la misma UI."
+      },
+      "four": {
+        "question": "¿Qué sigue en el roadmap?",
+        "answer": "WhatsApp, mejoras de disponibilidad avanzada y pasos posteriores de SRI/automatización comercial."
+      }
+    },
+    "featuresPage": {
+      "meta": {
+        "title": "Features",
+        "description": "Agenda, caja, reportes, notificaciones y arquitectura multi-branch para barberías que necesitan orden operativo."
+      },
+      "title": "Todo lo que ya puedes operar hoy.",
+      "subtitle": "Un stack coherente para la barbería completa: staff, clientes, caja, agenda y visibilidad por sucursal.",
+      "architectureEyebrow": "Arquitectura",
+      "architectureTitle": "Base técnica lista para crecer",
+      "architectureSubtitle": "El producto ya está montado sobre fronteras claras de tenant, branch, seguridad web, outbox y observabilidad.",
+      "modules": {
+        "agenda": {
+          "title": "Agenda con contexto",
+          "description": "Vistas día/semana/lista con disponibilidad, drag & drop y validaciones reales.",
+          "bullets": {
+            "one": "Slots por barbero y servicio desde backend.",
+            "two": "Protección contra overlap y fuera de horario.",
+            "three": "Confirmaciones y recordatorios por email listos para crecer."
+          }
+        },
+        "cash": {
+          "title": "Caja por sucursal",
+          "description": "Ventas internas, items custom, pagos y anulación con secuencia por branch.",
+          "bullets": {
+            "one": "Cálculo exacto con BigDecimal y fórmulas validadas.",
+            "two": "Detalle de recibo, filtros y estados issued/voided.",
+            "three": "Histórico listo para exportes y reportes."
+          }
+        },
+        "reports": {
+          "title": "Reportes operativos",
+          "description": "Resumen de ventas, top services, citas y barberos en una vista ejecutiva.",
+          "bullets": {
+            "one": "Rangos por fecha interpretados en la TZ real de la sucursal.",
+            "two": "Series diarias con días en cero.",
+            "three": "KPIs que sí ayudan a tomar decisiones del día."
+          }
+        },
+        "notifications": {
+          "title": "Notificaciones con outbox",
+          "description": "Pipeline de email confiable con colas, retries y seguimiento de intentos.",
+          "bullets": {
+            "one": "API admin para pruebas de envío y auditoría.",
+            "two": "Worker SMTP separado del request HTTP.",
+            "three": "MailHog en demo y GreenMail en tests."
+          }
+        },
+        "multibranch": {
+          "title": "Operación multi-branch",
+          "description": "Selector de sucursal, módulos branch-scoped y administración tenant-scoped.",
+          "bullets": {
+            "one": "Clientes, agenda, caja y reportes viven por sucursal.",
+            "two": "Staff y servicios se administran a nivel tenant.",
+            "three": "Misma base visual para crecer a varias ubicaciones."
+          }
+        },
+        "security": {
+          "title": "Seguridad web moderna",
+          "description": "BFF con cookies httpOnly, CSRF double-submit y validación de origen.",
+          "bullets": {
+            "one": "JWT fuera de localStorage.",
+            "two": "Request IDs, logs JSON y métricas de negocio.",
+            "three": "RBAC consistente entre backend y frontend."
+          }
+        }
+      },
+      "architecture": {
+        "tenancy": {
+          "title": "Multi-tenant real",
+          "description": "Cada query y constraint filtra por tenant y evita fugas entre negocios."
+        },
+        "branchScope": {
+          "title": "Branch-scoped donde importa",
+          "description": "Agenda, clientes, caja y reportes requieren contexto de sucursal y se validan en backend."
+        },
+        "outbox": {
+          "title": "Outbox transaccional",
+          "description": "Confirmaciones, recordatorios y pruebas de email se persisten primero y luego se envían con worker."
+        },
+        "observability": {
+          "title": "Observabilidad integrada",
+          "description": "Actuator, Prometheus, Grafana, request IDs y métricas de negocio desde el inicio."
+        }
+      }
+    },
+    "pricingPage": {
+      "meta": {
+        "title": "Pricing",
+        "description": "Planes por sucursal para agenda, caja, reportes y staff, con roadmap claro para funciones avanzadas."
+      },
+      "title": "Planes claros por sucursal, sin letra pequeña.",
+      "subtitle": "Empieza con operación sólida y escala a varias sucursales sin rehacer tus procesos internos.",
+      "perBranch": "Precios por sucursal",
+      "featured": "Más elegido",
+      "billingNote": "USD por sucursal / mes",
+      "roadmapTitle": "Roadmap comercial",
+      "roadmapSubtitle": "Lo que ya está listo y lo que sigue en las próximas iteraciones.",
+      "plans": {
+        "starter": {
+          "name": "Starter",
+          "price": "USD 39",
+          "description": "Para una barbería que quiere salir del caos operativo rápido.",
+          "bullets": {
+            "one": "Agenda, clientes y servicios listos.",
+            "two": "Caja interna con recibos por sucursal.",
+            "three": "Reportes base y navegación admin.",
+            "four": "Hasta 1 sucursal operativa."
+          },
+          "cta": "Comenzar"
+        },
+        "pro": {
+          "name": "Pro",
+          "price": "USD 79",
+          "description": "Para equipos que ya necesitan control multi-sucursal y visibilidad diaria.",
+          "bullets": {
+            "one": "Todo Starter.",
+            "two": "Reportes ejecutivos y notificaciones por email.",
+            "three": "Staff admin, disponibilidad y agenda completa.",
+            "four": "Multi-branch con operación centralizada."
+          },
+          "cta": "Crear cuenta"
+        },
+        "enterprise": {
+          "name": "Enterprise",
+          "price": "Custom",
+          "description": "Para cadenas que necesitan rollout, soporte y roadmap coordinado.",
+          "bullets": {
+            "one": "Acompañamiento de implementación.",
+            "two": "Gobierno multi-sucursal y reporting ampliado.",
+            "three": "Integraciones y automatizaciones priorizadas.",
+            "four": "Soporte para despliegues más exigentes."
+          },
+          "cta": "Ver features"
+        }
+      },
+      "roadmap": {
+        "whatsapp": {
+          "title": "WhatsApp v1.1",
+          "description": "Recordatorios y confirmaciones por canal conversacional para reducir no-shows."
+        },
+        "sri": {
+          "title": "SRI v1.1 / v2",
+          "description": "Paso posterior para salir de recibo interno hacia facturación formal cuando el negocio lo requiera."
+        },
+        "enterprise": {
+          "title": "Automatización comercial",
+          "description": "Más señales, segmentación y flujos para retención, reactivación y seguimiento de clientes."
+        }
+      }
+    },
+    "footer": {
+      "features": "Features",
+      "pricing": "Pricing",
+      "docs": "Docs",
+      "login": "Entrar",
+      "rights": "© BarberSuite. Operación seria para barberías que crecen."
+    }
   }
 }

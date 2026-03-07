@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getDashboardContext } from "@/lib/dashboard-context";
+import { hasAnyRole } from "@/lib/roles";
 import { getClientHistory } from "@/lib/server-bff";
 
 export const dynamic = "force-dynamic";
@@ -34,6 +35,7 @@ export default async function ClientDetailPage({
   const { payload, selectedBranchId, problem } = await getDashboardContext();
   const branches = payload?.branches ?? [];
   const activeBranch = branches.find((branch) => branch.id === selectedBranchId) ?? null;
+  const canRebook = hasAnyRole(payload?.user.roles ?? [], ["ADMIN", "MANAGER", "RECEPTION"]);
 
   if (!selectedBranchId || !activeBranch) {
     return (
@@ -139,6 +141,7 @@ export default async function ClientDetailPage({
 
       <ClientDetailTabs
         branchTimeZone={activeBranch.timeZone}
+        canRebook={canRebook}
         history={historyResult.data}
       />
     </section>

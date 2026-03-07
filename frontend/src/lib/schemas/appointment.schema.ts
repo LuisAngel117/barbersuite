@@ -79,13 +79,14 @@ export function createAppointmentPatchSchema(
 export type AppointmentFormValues = z.infer<ReturnType<typeof createAppointmentFormSchema>>;
 
 export function defaultAppointmentValues(
+  clientId = "",
   barberId = "",
   serviceId = "",
   startAtLocal = "",
   durationMinutes?: number,
 ): AppointmentFormValues {
   return {
-    clientId: "",
+    clientId,
     barberId,
     serviceId,
     startAtLocal,

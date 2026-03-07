@@ -231,6 +231,10 @@
     "selectBarberAndServiceFirst": "Select a barber and service first to validate availability.",
     "availableSlotsTitle": "Available times",
     "availableSlotsHint": "Use backend-calculated slots to reduce scheduling errors.",
+    "prefilledFromClientHistory": "You opened a new appointment with prefilled data.",
+    "prefilledClient": "Client",
+    "prefilledBarber": "Barber",
+    "prefilledService": "Service",
     "noSlotsTitle": "No availability",
     "noSlotsDesc": "We couldn't find open times for this barber and service on the selected date.",
     "validationTitle": "Local validation",
@@ -388,6 +392,10 @@
     "detailSubtitle": "Operating context, history and tickets for the client in the active branch.",
     "emptyAppointments": "There are no appointments for this client yet.",
     "emptyReceipts": "There are no receipts for this client yet.",
+    "actions": {
+      "rebook": "Rebook",
+      "newAppointment": "New appointment"
+    },
     "tabs": {
       "overview": "Overview",
       "appointments": "Appointments",

@@ -64,8 +64,18 @@ export async function postJsonThroughBrowser(
   payload: unknown,
   csrfToken?: string,
 ) {
+  return requestJsonThroughBrowser(page, path, "POST", payload, csrfToken);
+}
+
+export async function requestJsonThroughBrowser(
+  page: Page,
+  path: string,
+  method: "POST" | "PUT" | "PATCH",
+  payload: unknown,
+  csrfToken?: string,
+) {
   return page.evaluate(
-    async ({ innerPath, innerPayload, innerCsrfToken }) => {
+    async ({ innerPath, innerMethod, innerPayload, innerCsrfToken }) => {
       const headers: Record<string, string> = {
         "content-type": "application/json",
       };
@@ -75,7 +85,7 @@ export async function postJsonThroughBrowser(
       }
 
       const response = await fetch(innerPath, {
-        method: "POST",
+        method: innerMethod,
         headers,
         body: JSON.stringify(innerPayload),
         credentials: "same-origin",
@@ -88,6 +98,7 @@ export async function postJsonThroughBrowser(
     },
     {
       innerPath: path,
+      innerMethod: method,
       innerPayload: payload,
       innerCsrfToken: csrfToken ?? null,
     },

@@ -69,6 +69,7 @@ export function ClientsTable({
   });
 
   const canCreateClients = true;
+  const canBookAppointments = hasAnyRole(roles, ["ADMIN", "MANAGER", "RECEPTION"]);
   const canEditClients = hasAnyRole(roles, ["ADMIN", "MANAGER", "RECEPTION"]);
   const isSheetOpen = formMode !== null;
 
@@ -246,7 +247,7 @@ export function ClientsTable({
         },
       ];
 
-      if (!canEditClients) {
+      if (!canEditClients && !canBookAppointments) {
         return baseColumns;
       }
 
@@ -263,6 +264,19 @@ export function ClientsTable({
             return (
               <DataTableRowActions
                 actions={[
+                  ...(canBookAppointments
+                    ? [{
+                        label: tClients("actions.newAppointment"),
+                        onClick: () => {
+                          const nextParams = new URLSearchParams({
+                            create: "1",
+                            clientId: client.id,
+                          });
+                          router.push(`/app/appointments?${nextParams.toString()}`);
+                        },
+                        testId: `clients-appointment-${segment}`,
+                      }]
+                    : []),
                   {
                     label: isPending ? tClients("loading") : tClients("edit"),
                     onClick: () => openClientEditor(client.id),
@@ -298,11 +312,13 @@ export function ClientsTable({
       ];
     },
     [
+      canBookAppointments,
       canEditClients,
       handleToggleActive,
       locale,
       openClientEditor,
       pendingClientId,
+      router,
       tClients,
       tCommon,
       tConfirmations,

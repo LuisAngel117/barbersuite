@@ -17,6 +17,7 @@ import luxonPlugin from "@fullcalendar/luxon3";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import { DateTime } from "luxon";
 import { CalendarClock, Filter, Plus } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import type { ServicePayload } from "@/lib/backend";
@@ -62,6 +63,7 @@ type AppointmentSheetState = {
   mode: "create" | "edit" | "detail";
   appointment?: Appointment | null;
   draft?: {
+    clientId?: string;
     barberId?: string;
     serviceId?: string;
     startAtLocal?: string;
@@ -124,10 +126,17 @@ function buildSlotsCacheKey(date: string, barberId: string, serviceId: string) {
   return `${date}|${barberId}|${serviceId}`;
 }
 
+function isUuid(value: string | null) {
+  return !!value && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
 export function AppointmentsCalendar({
   timeZone,
   roles,
 }: AppointmentsCalendarProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const locale = useLocale();
   const tAppointments = useTranslations("appointments");
   const tErrors = useTranslations("errors");
@@ -137,6 +146,7 @@ export function AppointmentsCalendar({
   const slotCacheRef = useRef(new Map<string, Set<string>>());
   const slotPromisesRef = useRef(new Map<string, Promise<Set<string>>>());
   const lastSelectToastAtRef = useRef(0);
+  const prefillHandledRef = useRef<string | null>(null);
   const [barbers, setBarbers] = useState<BarberItem[]>([]);
   const [services, setServices] = useState<ServicePayload[]>([]);
   const [isCatalogsLoading, setIsCatalogsLoading] = useState(true);
@@ -407,19 +417,54 @@ export function AppointmentsCalendar({
     }
   }
 
-  function openCreateSheet(startAtLocal?: string, durationMinutes?: number) {
+  const openCreateSheet = useCallback((draftOverrides?: AppointmentSheetState["draft"]) => {
     setSheetState({
       open: true,
       mode: "create",
       appointment: null,
       draft: {
-        barberId: barberFilter !== "all" ? barberFilter : undefined,
-        serviceId: serviceFilter !== "all" ? serviceFilter : undefined,
-        startAtLocal,
-        durationMinutes,
+        clientId: draftOverrides?.clientId,
+        barberId:
+          draftOverrides?.barberId ?? (barberFilter !== "all" ? barberFilter : undefined),
+        serviceId:
+          draftOverrides?.serviceId ?? (serviceFilter !== "all" ? serviceFilter : undefined),
+        startAtLocal: draftOverrides?.startAtLocal,
+        durationMinutes: draftOverrides?.durationMinutes,
       },
     });
-  }
+  }, [barberFilter, serviceFilter]);
+
+  useEffect(() => {
+    if (searchParams.get("create") !== "1" || isCatalogsLoading || !canMutate) {
+      return;
+    }
+
+    const token = searchParams.toString();
+    if (prefillHandledRef.current === token) {
+      return;
+    }
+
+    const nextDraft = {
+      clientId: isUuid(searchParams.get("clientId")) ? searchParams.get("clientId") ?? undefined : undefined,
+      barberId: isUuid(searchParams.get("barberId")) ? searchParams.get("barberId") ?? undefined : undefined,
+      serviceId: isUuid(searchParams.get("serviceId")) ? searchParams.get("serviceId") ?? undefined : undefined,
+    };
+
+    const timeoutId = window.setTimeout(() => {
+      openCreateSheet(nextDraft);
+      prefillHandledRef.current = token;
+
+      const nextParams = new URLSearchParams(searchParams.toString());
+      nextParams.delete("create");
+      nextParams.delete("clientId");
+      nextParams.delete("barberId");
+      nextParams.delete("serviceId");
+      const nextUrl = nextParams.size > 0 ? `${pathname}?${nextParams.toString()}` : pathname;
+      router.replace(nextUrl, { scroll: false });
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [canMutate, isCatalogsLoading, openCreateSheet, pathname, router, searchParams]);
 
   function openAppointmentSheet(appointment: Appointment) {
     setSheetState({
@@ -675,10 +720,10 @@ export function AppointmentsCalendar({
                       return;
                     }
 
-                    openCreateSheet(
-                      toLocalDateTime(info.start, timeZone),
-                      durationMinutesFromRange(info.start, info.end),
-                    );
+                    openCreateSheet({
+                      startAtLocal: toLocalDateTime(info.start, timeZone),
+                      durationMinutes: durationMinutesFromRange(info.start, info.end),
+                    });
                     calendarRef.current?.getApi().unselect();
                   }}
                   selectable={canMutate}
@@ -701,7 +746,15 @@ export function AppointmentsCalendar({
           canMutate={canMutate}
           initialAppointment={sheetState.appointment}
           initialDraft={sheetState.draft}
-          key={`${sheetState.mode}-${sheetState.appointment?.id ?? sheetState.draft?.startAtLocal ?? "new"}`}
+          key={[
+            sheetState.mode,
+            sheetState.appointment?.id ?? "new",
+            sheetState.draft?.clientId ?? "no-client",
+            sheetState.draft?.barberId ?? "no-barber",
+            sheetState.draft?.serviceId ?? "no-service",
+            sheetState.draft?.startAtLocal ?? "no-start",
+            sheetState.draft?.durationMinutes ?? "no-duration",
+          ].join(":")}
           mode={sheetState.mode}
           onOpenChange={(open) => {
             setSheetState((current) => ({

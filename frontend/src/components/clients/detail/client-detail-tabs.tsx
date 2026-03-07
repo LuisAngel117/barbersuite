@@ -10,9 +10,11 @@ import type { ClientHistoryResponse } from "@/lib/types/client-history";
 export function ClientDetailTabs({
   history,
   branchTimeZone,
+  canRebook,
 }: {
   history: ClientHistoryResponse;
   branchTimeZone: string;
+  canRebook: boolean;
 }) {
   const tClients = useTranslations("clients");
 
@@ -37,6 +39,8 @@ export function ClientDetailTabs({
         <ClientAppointmentsList
           appointments={history.appointments}
           branchTimeZone={branchTimeZone}
+          canRebook={canRebook}
+          clientId={history.client.id}
         />
       </TabsContent>
       <TabsContent value="receipts">

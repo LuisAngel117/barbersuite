@@ -156,12 +156,17 @@ export function ClientPicker({
       {problem ? <ProblemBanner problem={problem} /> : null}
 
       {selectedClient ? (
-        <div className="rounded-2xl border border-border/70 bg-muted/35 p-4">
+        <div
+          className="rounded-2xl border border-border/70 bg-muted/35 p-4"
+          data-testid="appointment-client-selected"
+        >
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <UserRoundCheck className="size-4 text-brand-foreground" />
-                <p className="font-medium tracking-tight">{selectedClient.fullName}</p>
+                <p className="font-medium tracking-tight" data-testid="appointment-client-name">
+                  {selectedClient.fullName}
+                </p>
               </div>
               <p className="text-sm text-muted-foreground">
                 {clientMeta(selectedClient, labels.noContact)}
@@ -170,6 +175,7 @@ export function ClientPicker({
             {!disabled ? (
               <Button
                 className="rounded-full"
+                data-testid="appointment-client-change"
                 onClick={() => {
                   setSelectedClient(null);
                   onChange("");

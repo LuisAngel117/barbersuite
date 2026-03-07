@@ -44,6 +44,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { type ProblemBannerState } from "@/lib/problem";
 
 type AppointmentDraft = {
+  clientId?: string;
   barberId?: string;
   serviceId?: string;
   startAtLocal?: string;
@@ -83,6 +84,7 @@ function getDefaultValues(
   if (!initialAppointment) {
     return {
       ...defaultAppointmentValues(
+        initialDraft?.clientId ?? "",
         initialDraft?.barberId ?? "",
         initialDraft?.serviceId ?? "",
         initialDraft?.startAtLocal ?? "",
@@ -162,6 +164,9 @@ export function AppointmentSheet({
   });
   const selectedDate = getLocalDate(selectedStartAtLocal);
   const selectedTime = getLocalTime(selectedStartAtLocal);
+  const hasPrefilledContext = Boolean(
+    initialDraft?.clientId || initialDraft?.barberId || initialDraft?.serviceId,
+  );
 
   useEffect(() => {
     if (mode !== "create" || !selectedServiceId) {
@@ -411,6 +416,34 @@ export function AppointmentSheet({
         <div className="space-y-6">
           {submitProblem ? <ProblemBanner problem={submitProblem} /> : null}
 
+          {mode === "create" && hasPrefilledContext ? (
+            <div
+              className="rounded-2xl border border-brand/30 bg-brand-muted/50 px-4 py-4"
+              data-testid="appointment-prefill-banner"
+            >
+              <p className="text-sm font-medium tracking-tight">
+                {tAppointments("prefilledFromClientHistory")}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {initialDraft?.clientId ? (
+                  <Button className="rounded-full" disabled size="sm" type="button" variant="outline">
+                    {tAppointments("prefilledClient")}
+                  </Button>
+                ) : null}
+                {initialDraft?.barberId ? (
+                  <Button className="rounded-full" disabled size="sm" type="button" variant="outline">
+                    {tAppointments("prefilledBarber")}
+                  </Button>
+                ) : null}
+                {initialDraft?.serviceId ? (
+                  <Button className="rounded-full" disabled size="sm" type="button" variant="outline">
+                    {tAppointments("prefilledService")}
+                  </Button>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
+
           <FormField
             control={form.control}
             name="clientId"
@@ -442,7 +475,7 @@ export function AppointmentSheet({
                     value={field.value || undefined}
                   >
                     <FormControl>
-                      <SelectTrigger className="h-11 w-full rounded-xl">
+                      <SelectTrigger className="h-11 w-full rounded-xl" data-testid="appointment-barber">
                         <SelectValue placeholder={tAppointments("filters.barber")} />
                       </SelectTrigger>
                     </FormControl>
@@ -471,7 +504,7 @@ export function AppointmentSheet({
                     value={field.value || undefined}
                   >
                     <FormControl>
-                      <SelectTrigger className="h-11 w-full rounded-xl">
+                      <SelectTrigger className="h-11 w-full rounded-xl" data-testid="appointment-service">
                         <SelectValue placeholder={tAppointments("fields.service")} />
                       </SelectTrigger>
                     </FormControl>

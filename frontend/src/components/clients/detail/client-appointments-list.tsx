@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ClientHistoryAppointment } from "@/lib/types/client-history";
 
@@ -16,9 +18,13 @@ function formatDateTime(value: string, locale: string, timeZone: string) {
 export function ClientAppointmentsList({
   appointments,
   branchTimeZone,
+  clientId,
+  canRebook,
 }: {
   appointments: ClientHistoryAppointment[];
   branchTimeZone: string;
+  clientId: string;
+  canRebook: boolean;
 }) {
   const locale = useLocale();
   const tClients = useTranslations("clients");
@@ -52,6 +58,31 @@ export function ClientAppointmentsList({
           <CardContent className="space-y-1 text-sm text-muted-foreground">
             <p>{formatDateTime(appointment.startAt, locale, branchTimeZone)}</p>
             <p>{formatDateTime(appointment.endAt, locale, branchTimeZone)}</p>
+            {canRebook && appointment.status !== "scheduled" && appointment.status !== "checked_in" ? (
+              <div className="pt-3">
+                <Button
+                  asChild
+                  className="rounded-full"
+                  data-testid={`client-rebook-${appointment.id}`}
+                  size="sm"
+                  variant="outline"
+                >
+                  <Link
+                    href={{
+                      pathname: "/app/appointments",
+                      query: {
+                        create: "1",
+                        clientId,
+                        barberId: appointment.barberId,
+                        serviceId: appointment.serviceId,
+                      },
+                    }}
+                  >
+                    {tClients("actions.rebook")}
+                  </Link>
+                </Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       ))}

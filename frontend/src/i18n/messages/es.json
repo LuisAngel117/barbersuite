@@ -231,6 +231,10 @@
     "selectBarberAndServiceFirst": "Selecciona barbero y servicio para validar la disponibilidad.",
     "availableSlotsTitle": "Horas disponibles",
     "availableSlotsHint": "Usa los slots del backend para reducir errores al agendar.",
+    "prefilledFromClientHistory": "Abriste una nueva cita con datos prellenados.",
+    "prefilledClient": "Cliente",
+    "prefilledBarber": "Barbero",
+    "prefilledService": "Servicio",
     "noSlotsTitle": "Sin disponibilidad",
     "noSlotsDesc": "No encontramos horas libres para este servicio y barbero en la fecha elegida.",
     "validationTitle": "Validación local",
@@ -388,6 +392,10 @@
     "detailSubtitle": "Contexto operativo, historial y tickets del cliente en la sucursal activa.",
     "emptyAppointments": "Todavía no hay citas para este cliente.",
     "emptyReceipts": "Todavía no hay recibos para este cliente.",
+    "actions": {
+      "rebook": "Reagendar",
+      "newAppointment": "Nueva cita"
+    },
     "tabs": {
       "overview": "Resumen",
       "appointments": "Citas",

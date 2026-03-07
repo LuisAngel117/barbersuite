@@ -28,10 +28,12 @@ jobs:
           cache: maven
 
       - name: Ensure Maven wrapper is executable
-        run: chmod +x ./backend/mvnw
+        working-directory: backend
+        run: chmod +x ./mvnw
 
       - name: Run backend tests
-        run: ./backend/mvnw -q test
+        working-directory: backend
+        run: ./mvnw -q test
 
   frontend:
     runs-on: ubuntu-latest

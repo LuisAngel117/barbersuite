@@ -2,6 +2,7 @@ package com.barbersuite.backend.notifications;
 
 import com.barbersuite.backend.web.error.EmailOutboxDedupConflictException;
 import com.barbersuite.backend.web.error.ValidationErrorException;
+import com.barbersuite.backend.notificationsconfig.NotificationEmailTemplatesService;
 import com.barbersuite.backend.web.notifications.dto.EmailOutboxItemResponse;
 import com.barbersuite.backend.web.notifications.dto.EmailOutboxPageResponse;
 import com.barbersuite.backend.web.notifications.dto.SendTestEmailRequest;
@@ -18,9 +19,11 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -38,13 +41,19 @@ public class NotificationsService {
 
   private final JdbcEmailOutboxRepository emailOutboxRepository;
   private final JdbcAppointmentEmailContextRepository appointmentEmailContextRepository;
+  private final NotificationEmailTemplatesService notificationEmailTemplatesService;
+  private final NotificationTemplateRenderer notificationTemplateRenderer;
 
   public NotificationsService(
     JdbcEmailOutboxRepository emailOutboxRepository,
-    JdbcAppointmentEmailContextRepository appointmentEmailContextRepository
+    JdbcAppointmentEmailContextRepository appointmentEmailContextRepository,
+    NotificationEmailTemplatesService notificationEmailTemplatesService,
+    NotificationTemplateRenderer notificationTemplateRenderer
   ) {
     this.emailOutboxRepository = emailOutboxRepository;
     this.appointmentEmailContextRepository = appointmentEmailContextRepository;
+    this.notificationEmailTemplatesService = notificationEmailTemplatesService;
+    this.notificationTemplateRenderer = notificationTemplateRenderer;
   }
 
   @Transactional
@@ -93,12 +102,6 @@ public class NotificationsService {
           tenantId,
           context,
           EmailKind.appointment_confirmation,
-          "Confirmacion de cita - " + context.branchCode(),
-          buildAppointmentConfirmationBody(
-            context,
-            context.startAt().atZone(ZoneId.of(context.branchTimeZone())),
-            context.endAt().atZone(ZoneId.of(context.branchTimeZone()))
-          ),
           "appt-confirm:" + appointmentId,
           Instant.now()
         );
@@ -114,17 +117,10 @@ public class NotificationsService {
   ) {
     appointmentEmailContextRepository.findByTenantBranchAndAppointmentId(tenantId, branchId, appointmentId)
       .ifPresent(context -> {
-        ZoneId branchZoneId = ZoneId.of(context.branchTimeZone());
         enqueueAppointmentEmail(
           tenantId,
           context,
           EmailKind.appointment_reminder,
-          "Recordatorio de cita - " + context.branchCode(),
-          buildAppointmentReminderBody(
-            context,
-            context.startAt().atZone(branchZoneId),
-            context.endAt().atZone(branchZoneId)
-          ),
           "appt-reminder-24h:" + appointmentId,
           scheduledAt
         );
@@ -135,16 +131,10 @@ public class NotificationsService {
   public void enqueueAppointmentRescheduled(UUID tenantId, UUID branchId, UUID appointmentId) {
     appointmentEmailContextRepository.findByTenantBranchAndAppointmentId(tenantId, branchId, appointmentId)
       .ifPresent(context -> {
-        ZoneId branchZoneId = ZoneId.of(context.branchTimeZone());
-        ZonedDateTime startAtLocal = context.startAt().atZone(branchZoneId);
-        ZonedDateTime endAtLocal = context.endAt().atZone(branchZoneId);
-
         enqueueAppointmentEmail(
           tenantId,
           context,
           EmailKind.appointment_rescheduled,
-          "Tu cita fue reprogramada - " + context.branchCode(),
-          buildAppointmentRescheduledBody(context, startAtLocal, endAtLocal),
           "appt-rescheduled:" + appointmentId + ":" + context.startAt().getEpochSecond(),
           Instant.now()
         );
@@ -155,16 +145,10 @@ public class NotificationsService {
   public void enqueueAppointmentCancelled(UUID tenantId, UUID branchId, UUID appointmentId) {
     appointmentEmailContextRepository.findByTenantBranchAndAppointmentId(tenantId, branchId, appointmentId)
       .ifPresent(context -> {
-        ZoneId branchZoneId = ZoneId.of(context.branchTimeZone());
-        ZonedDateTime startAtLocal = context.startAt().atZone(branchZoneId);
-        ZonedDateTime endAtLocal = context.endAt().atZone(branchZoneId);
-
         enqueueAppointmentEmail(
           tenantId,
           context,
           EmailKind.appointment_cancelled,
-          "Tu cita fue cancelada - " + context.branchCode(),
-          buildAppointmentCancelledBody(context, startAtLocal, endAtLocal),
           "appt-cancelled:" + appointmentId,
           Instant.now()
         );
@@ -330,112 +314,10 @@ public class NotificationsService {
     }
   }
 
-  private String buildAppointmentConfirmationBody(
-    JdbcAppointmentEmailContextRepository.AppointmentEmailContext context,
-    ZonedDateTime startAtLocal,
-    ZonedDateTime endAtLocal
-  ) {
-    String clientFullName = normalizeNullable(context.clientFullName());
-    StringBuilder body = new StringBuilder();
-
-    if (clientFullName != null) {
-      body.append("Hola ").append(clientFullName).append(",\n\n");
-    }
-
-    body.append("Tu cita fue registrada en BarberSuite.\n");
-    appendAppointmentSummary(body, context, startAtLocal, endAtLocal);
-
-    return body.toString();
-  }
-
-  private String buildAppointmentReminderBody(
-    JdbcAppointmentEmailContextRepository.AppointmentEmailContext context,
-    ZonedDateTime startAtLocal,
-    ZonedDateTime endAtLocal
-  ) {
-    String clientFullName = normalizeNullable(context.clientFullName());
-    StringBuilder body = new StringBuilder();
-
-    if (clientFullName != null) {
-      body.append("Hola ").append(clientFullName).append(",\n\n");
-    }
-
-    body.append("Te recordamos tu cita programada en BarberSuite.\n");
-    appendAppointmentSummary(body, context, startAtLocal, endAtLocal);
-
-    return body.toString();
-  }
-
-  private String buildAppointmentRescheduledBody(
-    JdbcAppointmentEmailContextRepository.AppointmentEmailContext context,
-    ZonedDateTime startAtLocal,
-    ZonedDateTime endAtLocal
-  ) {
-    String clientFullName = normalizeNullable(context.clientFullName());
-    StringBuilder body = new StringBuilder();
-
-    if (clientFullName != null) {
-      body.append("Hola ").append(clientFullName).append(",\n\n");
-    }
-
-    body.append("Tu cita fue reprogramada en BarberSuite.\n");
-    appendAppointmentSummary(body, context, startAtLocal, endAtLocal);
-
-    return body.toString();
-  }
-
-  private String buildAppointmentCancelledBody(
-    JdbcAppointmentEmailContextRepository.AppointmentEmailContext context,
-    ZonedDateTime startAtLocal,
-    ZonedDateTime endAtLocal
-  ) {
-    String clientFullName = normalizeNullable(context.clientFullName());
-    StringBuilder body = new StringBuilder();
-
-    if (clientFullName != null) {
-      body.append("Hola ").append(clientFullName).append(",\n\n");
-    }
-
-    body.append("Tu cita fue cancelada en BarberSuite.\n");
-    appendAppointmentSummary(body, context, startAtLocal, endAtLocal);
-
-    return body.toString();
-  }
-
-  private void appendAppointmentSummary(
-    StringBuilder body,
-    JdbcAppointmentEmailContextRepository.AppointmentEmailContext context,
-    ZonedDateTime startAtLocal,
-    ZonedDateTime endAtLocal
-  ) {
-    body.append("Sucursal: ")
-      .append(context.branchName())
-      .append(" (")
-      .append(context.branchCode())
-      .append(")\n")
-      .append("Servicio: ")
-      .append(context.serviceName())
-      .append("\n")
-      .append("Barbero: ")
-      .append(context.barberFullName())
-      .append("\n")
-      .append("Inicio: ")
-      .append(APPOINTMENT_TIME_FORMATTER.format(startAtLocal))
-      .append("\n")
-      .append("Fin: ")
-      .append(APPOINTMENT_TIME_FORMATTER.format(endAtLocal))
-      .append("\n")
-      .append("Zona horaria: ")
-      .append(context.branchTimeZone())
-      .append("\n");
-  }
-
   private void enqueueAppointmentEmail(
     UUID tenantId,
     JdbcAppointmentEmailContextRepository.AppointmentEmailContext context,
     EmailKind kind,
-    String subject,
-    String bodyText,
     String dedupKey,
     Instant scheduledAt
   ) {
@@ -443,6 +325,17 @@ public class NotificationsService {
     if (toEmail == null) {
       return;
     }
+
+    NotificationEmailTemplatesService.EffectiveNotificationEmailTemplate template =
+      notificationEmailTemplatesService.resolveEffectiveTemplate(tenantId, kind);
+    if (!template.enabled()) {
+      return;
+    }
+
+    Map<String, String> variables = templateVariables(context);
+    String subject = notificationTemplateRenderer.render(template.subjectTemplate(), variables);
+    String bodyText = notificationTemplateRenderer.render(template.bodyTextTemplate(), variables);
+    String bodyHtml = notificationTemplateRenderer.render(template.bodyHtmlTemplate(), variables);
 
     emailOutboxRepository.insertOutboxIgnoringDedup(
       tenantId,
@@ -453,11 +346,42 @@ public class NotificationsService {
       toEmail,
       subject,
       bodyText,
-      null,
+      bodyHtml,
       dedupKey,
       context.appointmentId(),
       scheduledAt
     );
+  }
+
+  private Map<String, String> templateVariables(
+    JdbcAppointmentEmailContextRepository.AppointmentEmailContext context
+  ) {
+    ZoneId branchZoneId = ZoneId.of(context.branchTimeZone());
+    ZonedDateTime startAtLocal = context.startAt().atZone(branchZoneId);
+    ZonedDateTime endAtLocal = context.endAt().atZone(branchZoneId);
+
+    Map<String, String> variables = new LinkedHashMap<>();
+    variables.put("branchCode", context.branchCode());
+    variables.put("branchName", context.branchName());
+    variables.put("branchTimeZone", context.branchTimeZone());
+    variables.put("clientName", defaultString(context.clientFullName()));
+    variables.put("serviceName", context.serviceName());
+    variables.put("barberName", context.barberFullName());
+    variables.put("startAtLocal", APPOINTMENT_TIME_FORMATTER.format(startAtLocal));
+    variables.put("endAtLocal", APPOINTMENT_TIME_FORMATTER.format(endAtLocal));
+    variables.put("appointmentDate", startAtLocal.toLocalDate().toString());
+    variables.put("appointmentTime", startAtLocal.toLocalTime().toString());
+    variables.put(
+      "greetingLine",
+      context.clientFullName() == null || context.clientFullName().isBlank()
+        ? ""
+        : "Hola " + context.clientFullName().trim() + ",\n\n"
+    );
+    return Map.copyOf(variables);
+  }
+
+  private String defaultString(String value) {
+    return value == null ? "" : value;
   }
 
   private boolean isDedupConflict(DataIntegrityViolationException exception) {

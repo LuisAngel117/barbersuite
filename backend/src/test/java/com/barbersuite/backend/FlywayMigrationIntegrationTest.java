@@ -30,7 +30,7 @@ class FlywayMigrationIntegrationTest {
     assertThat(jdbcTemplate.queryForObject("select version()", String.class))
       .contains("PostgreSQL");
     assertThat(flyway.info().current()).isNotNull();
-    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("16");
+    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("17");
 
     assertThat(
       List.of(
@@ -474,7 +474,9 @@ class FlywayMigrationIntegrationTest {
       .contains("REFERENCES appointments(tenant_id, branch_id, id)");
     assertThat(constraintDefinition("email_outbox", "ck_email_outbox_kind_valid"))
       .contains("appointment_confirmation")
-      .contains("appointment_reminder");
+      .contains("appointment_reminder")
+      .contains("appointment_rescheduled")
+      .contains("appointment_cancelled");
     assertThat(constraintDefinition("email_outbox", "ck_email_outbox_status_valid"))
       .contains("pending")
       .contains("processing")

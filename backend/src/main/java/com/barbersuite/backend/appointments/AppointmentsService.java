@@ -193,6 +193,11 @@ public class AppointmentsService {
     String notes = request.notes() == null
       ? currentAppointment.notes()
       : normalizeNullable(request.notes());
+    boolean scheduleChanged = !startAt.equals(currentAppointment.startAt()) ||
+      !endAt.equals(currentAppointment.endAt());
+    boolean statusCancelled = status == AppointmentStatus.cancelled;
+    boolean becameCancelled =
+      statusCancelled && currentAppointment.status() != AppointmentStatus.cancelled;
 
     if (request.startAtLocal() != null || request.durationMinutes() != null) {
       availabilityService.assertWithinAvailability(
@@ -225,6 +230,12 @@ public class AppointmentsService {
         throw new AppointmentOverlapException();
       }
       throw exception;
+    }
+
+    if (becameCancelled) {
+      notificationsService.enqueueAppointmentCancelled(tenantId, branchId, appointmentId);
+    } else if (scheduleChanged) {
+      notificationsService.enqueueAppointmentRescheduled(tenantId, branchId, appointmentId);
     }
 
     return appointmentsRepository.findByTenantBranchAndId(tenantId, branchId, appointmentId)

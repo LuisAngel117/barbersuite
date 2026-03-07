@@ -131,6 +131,46 @@ public class NotificationsService {
       });
   }
 
+  @Transactional
+  public void enqueueAppointmentRescheduled(UUID tenantId, UUID branchId, UUID appointmentId) {
+    appointmentEmailContextRepository.findByTenantBranchAndAppointmentId(tenantId, branchId, appointmentId)
+      .ifPresent(context -> {
+        ZoneId branchZoneId = ZoneId.of(context.branchTimeZone());
+        ZonedDateTime startAtLocal = context.startAt().atZone(branchZoneId);
+        ZonedDateTime endAtLocal = context.endAt().atZone(branchZoneId);
+
+        enqueueAppointmentEmail(
+          tenantId,
+          context,
+          EmailKind.appointment_rescheduled,
+          "Tu cita fue reprogramada - " + context.branchCode(),
+          buildAppointmentRescheduledBody(context, startAtLocal, endAtLocal),
+          "appt-rescheduled:" + appointmentId + ":" + context.startAt().getEpochSecond(),
+          Instant.now()
+        );
+      });
+  }
+
+  @Transactional
+  public void enqueueAppointmentCancelled(UUID tenantId, UUID branchId, UUID appointmentId) {
+    appointmentEmailContextRepository.findByTenantBranchAndAppointmentId(tenantId, branchId, appointmentId)
+      .ifPresent(context -> {
+        ZoneId branchZoneId = ZoneId.of(context.branchTimeZone());
+        ZonedDateTime startAtLocal = context.startAt().atZone(branchZoneId);
+        ZonedDateTime endAtLocal = context.endAt().atZone(branchZoneId);
+
+        enqueueAppointmentEmail(
+          tenantId,
+          context,
+          EmailKind.appointment_cancelled,
+          "Tu cita fue cancelada - " + context.branchCode(),
+          buildAppointmentCancelledBody(context, startAtLocal, endAtLocal),
+          "appt-cancelled:" + appointmentId,
+          Instant.now()
+        );
+      });
+  }
+
   @Transactional(readOnly = true)
   public EmailOutboxPageResponse listOutbox(
     Jwt jwt,
@@ -302,27 +342,8 @@ public class NotificationsService {
       body.append("Hola ").append(clientFullName).append(",\n\n");
     }
 
-    body.append("Tu cita fue registrada en BarberSuite.\n")
-      .append("Sucursal: ")
-      .append(context.branchName())
-      .append(" (")
-      .append(context.branchCode())
-      .append(")\n")
-      .append("Servicio: ")
-      .append(context.serviceName())
-      .append("\n")
-      .append("Barbero: ")
-      .append(context.barberFullName())
-      .append("\n")
-      .append("Inicio: ")
-      .append(APPOINTMENT_TIME_FORMATTER.format(startAtLocal))
-      .append("\n")
-      .append("Fin: ")
-      .append(APPOINTMENT_TIME_FORMATTER.format(endAtLocal))
-      .append("\n")
-      .append("Zona horaria: ")
-      .append(context.branchTimeZone())
-      .append("\n");
+    body.append("Tu cita fue registrada en BarberSuite.\n");
+    appendAppointmentSummary(body, context, startAtLocal, endAtLocal);
 
     return body.toString();
   }
@@ -339,8 +360,55 @@ public class NotificationsService {
       body.append("Hola ").append(clientFullName).append(",\n\n");
     }
 
-    body.append("Te recordamos tu cita programada en BarberSuite.\n")
-      .append("Sucursal: ")
+    body.append("Te recordamos tu cita programada en BarberSuite.\n");
+    appendAppointmentSummary(body, context, startAtLocal, endAtLocal);
+
+    return body.toString();
+  }
+
+  private String buildAppointmentRescheduledBody(
+    JdbcAppointmentEmailContextRepository.AppointmentEmailContext context,
+    ZonedDateTime startAtLocal,
+    ZonedDateTime endAtLocal
+  ) {
+    String clientFullName = normalizeNullable(context.clientFullName());
+    StringBuilder body = new StringBuilder();
+
+    if (clientFullName != null) {
+      body.append("Hola ").append(clientFullName).append(",\n\n");
+    }
+
+    body.append("Tu cita fue reprogramada en BarberSuite.\n");
+    appendAppointmentSummary(body, context, startAtLocal, endAtLocal);
+
+    return body.toString();
+  }
+
+  private String buildAppointmentCancelledBody(
+    JdbcAppointmentEmailContextRepository.AppointmentEmailContext context,
+    ZonedDateTime startAtLocal,
+    ZonedDateTime endAtLocal
+  ) {
+    String clientFullName = normalizeNullable(context.clientFullName());
+    StringBuilder body = new StringBuilder();
+
+    if (clientFullName != null) {
+      body.append("Hola ").append(clientFullName).append(",\n\n");
+    }
+
+    body.append("Tu cita fue cancelada en BarberSuite.\n");
+    appendAppointmentSummary(body, context, startAtLocal, endAtLocal);
+
+    return body.toString();
+  }
+
+  private void appendAppointmentSummary(
+    StringBuilder body,
+    JdbcAppointmentEmailContextRepository.AppointmentEmailContext context,
+    ZonedDateTime startAtLocal,
+    ZonedDateTime endAtLocal
+  ) {
+    body.append("Sucursal: ")
       .append(context.branchName())
       .append(" (")
       .append(context.branchCode())
@@ -360,8 +428,6 @@ public class NotificationsService {
       .append("Zona horaria: ")
       .append(context.branchTimeZone())
       .append("\n");
-
-    return body.toString();
   }
 
   private void enqueueAppointmentEmail(

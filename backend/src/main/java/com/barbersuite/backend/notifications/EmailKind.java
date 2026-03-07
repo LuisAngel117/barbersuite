@@ -4,7 +4,9 @@ import com.barbersuite.backend.web.error.ValidationErrorException;
 
 public enum EmailKind {
   appointment_confirmation,
-  appointment_reminder;
+  appointment_reminder,
+  appointment_rescheduled,
+  appointment_cancelled;
 
   public static EmailKind parse(String rawValue) {
     if (rawValue == null || rawValue.isBlank()) {

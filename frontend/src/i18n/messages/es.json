@@ -23,7 +23,9 @@
     "rowsPerPage": "Filas por página",
     "next": "Siguiente",
     "previous": "Anterior",
-    "backToLogin": "Volver al login"
+    "backToLogin": "Volver al login",
+    "back": "Volver",
+    "none": "Sin datos"
   },
   "forms": {
     "createService": "Crear servicio",
@@ -382,6 +384,24 @@
     "createFailed": "No pudimos crear el cliente.",
     "updateFailed": "No pudimos actualizar el cliente.",
     "toggleFailed": "No pudimos cambiar el estado del cliente.",
+    "detailTitle": "Cliente",
+    "detailSubtitle": "Contexto operativo, historial y tickets del cliente en la sucursal activa.",
+    "emptyAppointments": "Todavía no hay citas para este cliente.",
+    "emptyReceipts": "Todavía no hay recibos para este cliente.",
+    "tabs": {
+      "overview": "Resumen",
+      "appointments": "Citas",
+      "receipts": "Recibos"
+    },
+    "stats": {
+      "totalVisits": "Visitas completadas",
+      "noShows": "No shows",
+      "totalSpend": "Gasto total"
+    },
+    "sections": {
+      "recentAppointments": "Última cita",
+      "recentReceipts": "Último recibo"
+    },
     "form": {
       "newEyebrow": "New client",
       "editEyebrow": "Edit client",

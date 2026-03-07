@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ColumnDef, PaginationState } from "@tanstack/react-table";
 import { useLocale, useTranslations } from "next-intl";
+import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { type ClientPagePayload, type ClientPayload } from "@/lib/backend";
@@ -201,7 +202,13 @@ export function ClientsTable({
           header: tClients("name"),
           cell: ({ row }) => (
             <div className="space-y-1">
-              <p className="font-medium tracking-tight">{row.original.fullName}</p>
+              <Link
+                className="font-medium tracking-tight transition-colors hover:text-brand"
+                data-testid={`clients-view-${toTestIdSegment(row.original.fullName)}`}
+                href={`/app/clients/${row.original.id}`}
+              >
+                {row.original.fullName}
+              </Link>
               <p className="text-xs text-muted-foreground">
                 {formatDate(row.original.createdAt, locale)}
               </p>

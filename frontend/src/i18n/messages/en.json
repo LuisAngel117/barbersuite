@@ -23,7 +23,9 @@
     "rowsPerPage": "Rows per page",
     "next": "Next",
     "previous": "Previous",
-    "backToLogin": "Back to login"
+    "backToLogin": "Back to login",
+    "back": "Back",
+    "none": "None"
   },
   "forms": {
     "createService": "Create service",
@@ -382,6 +384,24 @@
     "createFailed": "We couldn't create the client.",
     "updateFailed": "We couldn't update the client.",
     "toggleFailed": "We couldn't change the client status.",
+    "detailTitle": "Client",
+    "detailSubtitle": "Operating context, history and tickets for the client in the active branch.",
+    "emptyAppointments": "There are no appointments for this client yet.",
+    "emptyReceipts": "There are no receipts for this client yet.",
+    "tabs": {
+      "overview": "Overview",
+      "appointments": "Appointments",
+      "receipts": "Receipts"
+    },
+    "stats": {
+      "totalVisits": "Completed visits",
+      "noShows": "No shows",
+      "totalSpend": "Total spend"
+    },
+    "sections": {
+      "recentAppointments": "Latest appointment",
+      "recentReceipts": "Latest receipt"
+    },
     "form": {
       "newEyebrow": "New client",
       "editEyebrow": "Edit client",

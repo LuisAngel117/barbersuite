@@ -7,6 +7,7 @@ import type {
   AppointmentsResponse,
   BarbersResponse,
 } from "@/lib/types/appointments";
+import type { ClientHistoryResponse } from "@/lib/types/client-history";
 
 function resolveProtocol(host: string | null, forwardedProtocol: string | null) {
   if (forwardedProtocol) {
@@ -94,4 +95,23 @@ export async function getAppointments(query?: string | URLSearchParams) {
   const path = search ? `/api/appointments?${search}` : "/api/appointments";
 
   return fetchBffJson<AppointmentsResponse>(path);
+}
+
+export async function getClientHistory(
+  clientId: string,
+  query?: Record<string, string | undefined>,
+) {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(query ?? {})) {
+    if (value) {
+      params.set(key, value);
+    }
+  }
+
+  const search = params.toString();
+  const path = search
+    ? `/api/clients/${clientId}/history?${search}`
+    : `/api/clients/${clientId}/history`;
+
+  return fetchBffJson<ClientHistoryResponse>(path);
 }

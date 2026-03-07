@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { CalendarClock } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { AppointmentsCalendar } from "@/components/appointments/appointments-calendar";
@@ -27,7 +28,7 @@ export default async function AppointmentsPage() {
         <EmptyState
           cta={(
             <Button asChild className="rounded-full">
-              <a href="/app/clients">{tAppointments("noBranchCta")}</a>
+              <Link href="/app/clients">{tAppointments("noBranchCta")}</Link>
             </Button>
           )}
           description={tAppointments("noBranchDesc")}

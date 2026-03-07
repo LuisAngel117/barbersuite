@@ -319,6 +319,12 @@ export function OutboxTable({ refreshToken }: OutboxTableProps) {
                   <SelectItem value="appointment_reminder">
                     {tNotifications("kind.appointment_reminder")}
                   </SelectItem>
+                  <SelectItem value="appointment_rescheduled">
+                    {tNotifications("kind.appointment_rescheduled")}
+                  </SelectItem>
+                  <SelectItem value="appointment_cancelled">
+                    {tNotifications("kind.appointment_cancelled")}
+                  </SelectItem>
                 </SelectContent>
               </Select>
 

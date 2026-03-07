@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { NotificationTemplatesPanel } from "@/components/notifications/notification-templates-panel";
 import { OutboxTable } from "@/components/notifications/outbox-table";
 import { TestEmailForm } from "@/components/notifications/test-email-form";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +29,8 @@ export function NotificationsPanel() {
         <TestEmailForm onEnqueued={() => setRefreshToken((current) => current + 1)} />
         <OutboxTable refreshToken={refreshToken} />
       </div>
+
+      <NotificationTemplatesPanel />
     </div>
   );
 }

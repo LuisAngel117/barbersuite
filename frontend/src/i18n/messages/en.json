@@ -59,7 +59,8 @@
     "overlap": "This appointment overlaps with another one.",
     "receiptCreated": "Receipt issued successfully.",
     "receiptVoided": "Receipt voided.",
-    "emailEnqueued": "Email queued successfully."
+    "emailEnqueued": "Email queued successfully.",
+    "templateSaved": "Template saved successfully."
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -851,6 +852,8 @@
     "testEmailTitle": "Send test email",
     "testEmailDesc": "Queue a simple message to verify MailHog or your configured SMTP without touching business data.",
     "outboxTitle": "Outbox",
+    "templatesTitle": "Email templates",
+    "templatesDesc": "Enable or adjust tenant-level templates without changing the outbox flow or the existing automations.",
     "detailDescription": "Operational detail for a queued email including timestamps, attempts and the latest error.",
     "emptyTitle": "There are no emails in the outbox yet",
     "emptyDescription": "Queue a test message to start tracking pending, sent or failed states from this table.",
@@ -889,7 +892,9 @@
     },
     "kind": {
       "appointment_confirmation": "Appointment confirmation",
-      "appointment_reminder": "Appointment reminder"
+      "appointment_reminder": "Appointment reminder",
+      "appointment_rescheduled": "Appointment rescheduled",
+      "appointment_cancelled": "Appointment cancelled"
     },
     "table": {
       "createdAt": "Created",
@@ -915,6 +920,37 @@
       "validation": "Review the fields and try again.",
       "invalidRange": "The start date cannot be later than the end date.",
       "conflict": "An equivalent queued email already exists for this time window."
+    },
+    "templates": {
+      "title": "Templates",
+      "description": "Configure subject and body per notification kind. If you disable one, the backend will stop queueing it for this tenant.",
+      "edit": "Edit template",
+      "editorDescription": "These changes only affect the current tenant and keep the email worker untouched.",
+      "enabled": "Template enabled",
+      "enabledHint": "When disabled, this notification kind will not be queued for the current tenant.",
+      "subject": "Subject template",
+      "bodyText": "Body text template",
+      "bodyHtml": "Body HTML template",
+      "variables": "Available variables",
+      "variablesHint": "The backend replaces simple placeholders like ${clientName} or ${appointmentTime} when it queues the email.",
+      "preview": "Preview",
+      "previewHint": "This preview uses mock values only to help you review the copy before saving.",
+      "stateEnabled": "Enabled",
+      "stateDisabled": "Disabled",
+      "saving": "Saving...",
+      "saveFailed": "We couldn't save the template.",
+      "loadFailed": "We couldn't load the templates.",
+      "emptyBody": "No content configured.",
+      "validation": {
+        "bodyRequired": "Provide bodyTextTemplate or bodyHtmlTemplate before saving the template.",
+        "generic": "Review the template and try again."
+      },
+      "kinds": {
+        "appointment_confirmation": "Appointment confirmation",
+        "appointment_reminder": "Appointment reminder",
+        "appointment_rescheduled": "Appointment rescheduled",
+        "appointment_cancelled": "Appointment cancelled"
+      }
     }
   },
   "settings": {

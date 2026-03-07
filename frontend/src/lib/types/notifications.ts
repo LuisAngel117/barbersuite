@@ -1,5 +1,7 @@
+import type { NotificationEmailTemplateKind } from "@/lib/types/notification-templates";
+
 export type EmailOutboxStatus = "pending" | "sent" | "failed" | "cancelled";
-export type EmailKind = "appointment_confirmation" | "appointment_reminder";
+export type EmailKind = NotificationEmailTemplateKind;
 
 export type EmailOutboxItem = {
   id: string;

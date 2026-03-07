@@ -59,7 +59,8 @@
     "overlap": "Se cruza con otra cita.",
     "receiptCreated": "Recibo emitido correctamente.",
     "receiptVoided": "Recibo anulado.",
-    "emailEnqueued": "Email encolado correctamente."
+    "emailEnqueued": "Email encolado correctamente.",
+    "templateSaved": "Template guardado correctamente."
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -851,6 +852,8 @@
     "testEmailTitle": "Enviar email de prueba",
     "testEmailDesc": "Encola un email simple para verificar MailHog o tu SMTP configurado sin tocar datos de negocio.",
     "outboxTitle": "Outbox",
+    "templatesTitle": "Templates de email",
+    "templatesDesc": "Activa o ajusta plantillas por tenant sin tocar el flujo de outbox ni las automatizaciones existentes.",
     "detailDescription": "Detalle operativo del email encolado con timestamps, intentos y último error.",
     "emptyTitle": "Todavía no hay emails en el outbox",
     "emptyDescription": "Encola una prueba para empezar a seguir estados pending, sent o failed desde esta tabla.",
@@ -889,7 +892,9 @@
     },
     "kind": {
       "appointment_confirmation": "Confirmación de cita",
-      "appointment_reminder": "Recordatorio de cita"
+      "appointment_reminder": "Recordatorio de cita",
+      "appointment_rescheduled": "Cita reprogramada",
+      "appointment_cancelled": "Cita cancelada"
     },
     "table": {
       "createdAt": "Creado",
@@ -915,6 +920,37 @@
       "validation": "Revisa los campos e inténtalo de nuevo.",
       "invalidRange": "La fecha inicial no puede ser mayor que la final.",
       "conflict": "Ya existe un email equivalente encolado para esta ventana."
+    },
+    "templates": {
+      "title": "Templates",
+      "description": "Configura subject y body por tipo de notificación. Si desactivas un kind, el backend dejará de encolarlo.",
+      "edit": "Editar template",
+      "editorDescription": "Estos cambios afectan solo al tenant actual y dejan intacto el worker de envío.",
+      "enabled": "Template habilitado",
+      "enabledHint": "Si desactivas este template, ese tipo de notificación no se encolará para este tenant.",
+      "subject": "Subject template",
+      "bodyText": "Body text template",
+      "bodyHtml": "Body HTML template",
+      "variables": "Variables disponibles",
+      "variablesHint": "El backend reemplaza placeholders simples como ${clientName} o ${appointmentTime} al momento de encolar.",
+      "preview": "Vista previa",
+      "previewHint": "La preview usa valores mock solo para ayudarte a revisar el copy antes de guardar.",
+      "stateEnabled": "Habilitado",
+      "stateDisabled": "Deshabilitado",
+      "saving": "Guardando...",
+      "saveFailed": "No pudimos guardar el template.",
+      "loadFailed": "No pudimos cargar los templates.",
+      "emptyBody": "Sin contenido configurado.",
+      "validation": {
+        "bodyRequired": "Escribe bodyTextTemplate o bodyHtmlTemplate para guardar el template.",
+        "generic": "Revisa el template e inténtalo de nuevo."
+      },
+      "kinds": {
+        "appointment_confirmation": "Confirmación de cita",
+        "appointment_reminder": "Recordatorio de cita",
+        "appointment_rescheduled": "Cita reprogramada",
+        "appointment_cancelled": "Cita cancelada"
+      }
     }
   },
   "settings": {

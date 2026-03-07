@@ -30,7 +30,7 @@ class FlywayMigrationIntegrationTest {
     assertThat(jdbcTemplate.queryForObject("select version()", String.class))
       .contains("PostgreSQL");
     assertThat(flyway.info().current()).isNotNull();
-    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("17");
+    assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("18");
 
     assertThat(
       List.of(
@@ -48,6 +48,7 @@ class FlywayMigrationIntegrationTest {
         "receipt_items",
         "receipt_payments",
         "email_outbox",
+        "notification_email_templates",
         "barber_weekly_availability",
         "barber_availability_exceptions",
         "barber_exception_intervals"
@@ -128,6 +129,15 @@ class FlywayMigrationIntegrationTest {
     assertThat(columnType("email_outbox", "processing_started_at")).isEqualTo("timestamp with time zone");
     assertThat(columnType("email_outbox", "created_at")).isEqualTo("timestamp with time zone");
     assertThat(columnType("email_outbox", "updated_at")).isEqualTo("timestamp with time zone");
+    assertThat(columnType("notification_email_templates", "id")).isEqualTo("uuid");
+    assertThat(columnType("notification_email_templates", "tenant_id")).isEqualTo("uuid");
+    assertThat(columnType("notification_email_templates", "kind")).isEqualTo("text");
+    assertThat(columnType("notification_email_templates", "enabled")).isEqualTo("boolean");
+    assertThat(columnType("notification_email_templates", "subject_template")).isEqualTo("text");
+    assertThat(columnType("notification_email_templates", "body_text_template")).isEqualTo("text");
+    assertThat(columnType("notification_email_templates", "body_html_template")).isEqualTo("text");
+    assertThat(columnType("notification_email_templates", "created_at")).isEqualTo("timestamp with time zone");
+    assertThat(columnType("notification_email_templates", "updated_at")).isEqualTo("timestamp with time zone");
     assertThat(columnType("barber_weekly_availability", "id")).isEqualTo("uuid");
     assertThat(columnType("barber_weekly_availability", "tenant_id")).isEqualTo("uuid");
     assertThat(columnType("barber_weekly_availability", "branch_id")).isEqualTo("uuid");
@@ -152,7 +162,11 @@ class FlywayMigrationIntegrationTest {
     assertThat(columnNullable("email_outbox", "appointment_id")).isTrue();
     assertThat(columnNullable("email_outbox", "sent_at")).isTrue();
     assertThat(columnNullable("email_outbox", "processing_started_at")).isTrue();
+    assertThat(columnNullable("notification_email_templates", "enabled")).isFalse();
+    assertThat(columnNullable("notification_email_templates", "body_text_template")).isTrue();
+    assertThat(columnNullable("notification_email_templates", "body_html_template")).isTrue();
     assertThat(columnDefault("users", "active")).contains("true");
+    assertThat(columnDefault("notification_email_templates", "enabled")).contains("true");
 
     assertThat(constraintExists("branches", "uq_branches_tenant_code", "UNIQUE")).isTrue();
     assertThat(constraintExists("branches", "uq_branches_tenant_branch", "UNIQUE")).isTrue();
@@ -291,6 +305,26 @@ class FlywayMigrationIntegrationTest {
     assertThat(constraintExists(
       "email_outbox",
       "ck_email_outbox_appointment_requires_branch",
+      "CHECK"
+    )).isTrue();
+    assertThat(constraintExists(
+      "notification_email_templates",
+      "uq_notification_email_templates_tenant_kind",
+      "UNIQUE"
+    )).isTrue();
+    assertThat(constraintExists(
+      "notification_email_templates",
+      "fk_notification_email_templates_tenant",
+      "FOREIGN KEY"
+    )).isTrue();
+    assertThat(constraintExists(
+      "notification_email_templates",
+      "ck_notification_email_templates_kind_valid",
+      "CHECK"
+    )).isTrue();
+    assertThat(constraintExists(
+      "notification_email_templates",
+      "ck_notification_email_templates_body_present",
       "CHECK"
     )).isTrue();
     assertThat(constraintExists(
@@ -494,6 +528,31 @@ class FlywayMigrationIntegrationTest {
       .contains("appointment_id IS NULL")
       .contains("branch_id IS NOT NULL");
     assertThat(constraintDefinition(
+      "notification_email_templates",
+      "uq_notification_email_templates_tenant_kind"
+    )).contains("UNIQUE (tenant_id, kind)");
+    assertThat(constraintDefinition(
+      "notification_email_templates",
+      "fk_notification_email_templates_tenant"
+    ))
+      .contains("FOREIGN KEY (tenant_id)")
+      .contains("REFERENCES tenants(id)")
+      .contains("ON DELETE CASCADE");
+    assertThat(constraintDefinition(
+      "notification_email_templates",
+      "ck_notification_email_templates_kind_valid"
+    ))
+      .contains("appointment_confirmation")
+      .contains("appointment_reminder")
+      .contains("appointment_rescheduled")
+      .contains("appointment_cancelled");
+    assertThat(constraintDefinition(
+      "notification_email_templates",
+      "ck_notification_email_templates_body_present"
+    ))
+      .contains("body_text_template IS NOT NULL")
+      .contains("body_html_template IS NOT NULL");
+    assertThat(constraintDefinition(
       "barber_weekly_availability",
       "fk_barber_weekly_availability_branch"
     ))
@@ -655,6 +714,9 @@ class FlywayMigrationIntegrationTest {
       .contains("ON public.email_outbox")
       .contains("(tenant_id, branch_id, appointment_id, kind)")
       .contains("WHERE (appointment_id IS NOT NULL)");
+    assertThat(indexDefinition("idx_notification_email_templates_tenant_kind"))
+      .contains("ON public.notification_email_templates")
+      .contains("(tenant_id, kind)");
     assertThat(indexDefinition("idx_weekly_lookup"))
       .contains("ON public.barber_weekly_availability")
       .contains("(tenant_id, branch_id, barber_id, day_of_week)");

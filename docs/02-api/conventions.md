@@ -36,6 +36,7 @@ Endpoints tenant-scoped (catálogo global, usuarios/roles del tenant) **no** req
 - `Cash` (`/receipts`, `/receipts/{receiptId}`, `/receipts/{receiptId}/void`) es branch-scoped y requiere `X-Branch-Id`.
 - `Reports` (`/reports/*`) es branch-scoped y requiere `X-Branch-Id`.
 - `Notifications` (`/notifications/email/*`) es tenant-scoped y NO requiere `X-Branch-Id`.
+- `NotificationsConfig` (`/notifications/email/templates`, `/notifications/email/templates/{kind}`) es tenant-scoped y NO requiere `X-Branch-Id`.
 - En endpoints branch-scoped con filtros de fecha (`/appointments`, `/receipts`, `/reports/*`, `/availability/slots`), `date`, `from` y `to` se interpretan en la `time_zone` de la branch.
 
 ### Error estándar

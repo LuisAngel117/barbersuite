@@ -430,6 +430,66 @@
       "activeDescription": "Desactiva al cliente si ya no debe aparecer en la operación diaria."
     }
   },
+  "branches": {
+    "title": "Sucursales",
+    "subtitle": "Administra sucursales y zona horaria del tenant sin salir del shell.",
+    "tenantScoped": "Tenant scoped",
+    "description": "Listado tenant-scoped con edición rápida y activación controlada para operar varias sucursales sin salir del app shell.",
+    "count": "{count} sucursales",
+    "listTitle": "Sucursales del tenant",
+    "newBranch": "Nueva sucursal",
+    "editBranch": "Editar sucursal",
+    "active": "Activa",
+    "inactive": "Inactiva",
+    "emptyTitle": "Todavía no hay sucursales adicionales.",
+    "emptyDescription": "Crea una nueva sucursal para ampliar la operación del tenant.",
+    "searchEmptyTitle": "No encontramos sucursales con esa búsqueda.",
+    "searchEmptyDescription": "Prueba otro término o crea una sucursal nueva.",
+    "searchPlaceholder": "Nombre, código o time zone",
+    "loadFailed": "No pudimos cargar las sucursales.",
+    "loadOneFailed": "No pudimos cargar la sucursal solicitada.",
+    "createFailed": "No pudimos crear la sucursal.",
+    "updateFailed": "No pudimos actualizar la sucursal.",
+    "toggleFailed": "No pudimos cambiar el estado de la sucursal.",
+    "duplicateCode": "Ya existe una sucursal con ese código dentro del tenant.",
+    "noAccessTitle": "No tienes acceso a Sucursales",
+    "noAccessDescription": "Solo ADMIN y MANAGER pueden administrar las sucursales del tenant.",
+    "backToDashboard": "Volver al dashboard",
+    "fields": {
+      "name": "Nombre",
+      "code": "Código",
+      "timeZone": "Time zone",
+      "active": "Activa"
+    },
+    "actions": {
+      "activate": "Activar",
+      "deactivate": "Desactivar"
+    },
+    "toasts": {
+      "created": "Sucursal creada correctamente.",
+      "updated": "Sucursal actualizada correctamente.",
+      "activated": "Sucursal activada.",
+      "deactivated": "Sucursal desactivada."
+    },
+    "form": {
+      "description": "Las sucursales viven a nivel tenant y no dependen de la sucursal activa seleccionada arriba.",
+      "namePlaceholder": "Sucursal Norte",
+      "codePlaceholder": "UIO02",
+      "timeZonePlaceholder": "America/Guayaquil",
+      "create": "Crear sucursal",
+      "update": "Guardar cambios",
+      "creating": "Creando...",
+      "saving": "Guardando...",
+      "newDefaultActive": "Las sucursales nuevas se crean activas por defecto.",
+      "activeDescription": "Desactiva la sucursal si ya no debe estar disponible para operación diaria.",
+      "codeHelp": "Usa un código corto en mayúsculas o números. Luego queda fijo para operación.",
+      "codeLocked": "El código de sucursal queda fijo después de crearla.",
+      "emptyPatch": "Realiza al menos un cambio antes de guardar.",
+      "nameValidation": "El nombre debe tener al menos 2 caracteres.",
+      "codeValidation": "El código debe tener entre 2 y 10 caracteres en mayúsculas o números.",
+      "timeZoneValidation": "Ingresa una time zone IANA válida."
+    }
+  },
   "staff": {
     "pageEyebrow": "Staff Admin",
     "title": "Staff",

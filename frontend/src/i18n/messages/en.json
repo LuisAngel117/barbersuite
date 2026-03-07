@@ -430,6 +430,66 @@
       "activeDescription": "Deactivate the client if they should no longer appear in daily operations."
     }
   },
+  "branches": {
+    "title": "Branches",
+    "subtitle": "Manage tenant branches and their time zones without leaving the shell.",
+    "tenantScoped": "Tenant scoped",
+    "description": "Tenant-scoped catalog with quick editing and controlled activation for teams that operate across multiple branches.",
+    "count": "{count} branches",
+    "listTitle": "Tenant branches",
+    "newBranch": "New branch",
+    "editBranch": "Edit branch",
+    "active": "Active",
+    "inactive": "Inactive",
+    "emptyTitle": "There are no additional branches yet.",
+    "emptyDescription": "Create a new branch to expand tenant operations.",
+    "searchEmptyTitle": "We couldn't find branches for that search.",
+    "searchEmptyDescription": "Try another term or create a new branch.",
+    "searchPlaceholder": "Name, code or time zone",
+    "loadFailed": "We couldn't load branches.",
+    "loadOneFailed": "We couldn't load the requested branch.",
+    "createFailed": "We couldn't create the branch.",
+    "updateFailed": "We couldn't update the branch.",
+    "toggleFailed": "We couldn't change the branch status.",
+    "duplicateCode": "A branch with that code already exists in this tenant.",
+    "noAccessTitle": "You don't have access to Branches",
+    "noAccessDescription": "Only ADMIN and MANAGER can manage tenant branches.",
+    "backToDashboard": "Back to dashboard",
+    "fields": {
+      "name": "Name",
+      "code": "Code",
+      "timeZone": "Time zone",
+      "active": "Active"
+    },
+    "actions": {
+      "activate": "Activate",
+      "deactivate": "Deactivate"
+    },
+    "toasts": {
+      "created": "Branch created successfully.",
+      "updated": "Branch updated successfully.",
+      "activated": "Branch activated.",
+      "deactivated": "Branch deactivated."
+    },
+    "form": {
+      "description": "Branches live at tenant level and do not depend on the active branch selected above.",
+      "namePlaceholder": "North branch",
+      "codePlaceholder": "UIO02",
+      "timeZonePlaceholder": "America/Guayaquil",
+      "create": "Create branch",
+      "update": "Save changes",
+      "creating": "Creating...",
+      "saving": "Saving...",
+      "newDefaultActive": "New branches are created active by default.",
+      "activeDescription": "Deactivate the branch if it should no longer be available for daily operations.",
+      "codeHelp": "Use a short uppercase or numeric code. It stays fixed after creation.",
+      "codeLocked": "The branch code is fixed after creation.",
+      "emptyPatch": "Make at least one change before saving.",
+      "nameValidation": "Name must be at least 2 characters long.",
+      "codeValidation": "Code must be 2 to 10 uppercase letters or numbers.",
+      "timeZoneValidation": "Enter a valid IANA time zone."
+    }
+  },
   "staff": {
     "pageEyebrow": "Staff Admin",
     "title": "Staff",

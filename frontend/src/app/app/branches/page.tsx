@@ -1,16 +1,16 @@
-import { Building2 } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
+import { BranchesTable } from "@/components/branches/branches-table";
 import { EmptyState } from "@/components/empty-state";
-import { ModulePlaceholder } from "@/components/module-placeholder";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { getDashboardContext } from "@/lib/dashboard-context";
 import { hasAnyRole } from "@/lib/roles";
 
+export const dynamic = "force-dynamic";
+
 export default async function BranchesPage() {
-  const t = await getTranslations("placeholders.branches");
-  const tCommon = await getTranslations("placeholders.common");
+  const tBranches = await getTranslations("branches");
   const { payload } = await getDashboardContext();
   const roles = payload?.user.roles ?? [];
   const canAccess = hasAnyRole(roles, ["ADMIN", "MANAGER"]);
@@ -18,15 +18,15 @@ export default async function BranchesPage() {
   if (!canAccess) {
     return (
       <section className="space-y-6">
-        <PageHeader subtitle={t("subtitle")} title={t("title")} />
+        <PageHeader subtitle={tBranches("subtitle")} title={tBranches("title")} />
         <EmptyState
           cta={
             <Button asChild className="rounded-full" size="sm">
-              <Link href="/app">{tCommon("backToDashboard")}</Link>
+              <Link href="/app">{tBranches("backToDashboard")}</Link>
             </Button>
           }
-          description={tCommon("restrictedDescription")}
-          title={tCommon("restrictedTitle")}
+          description={tBranches("noAccessDescription")}
+          title={tBranches("noAccessTitle")}
           variant="warning"
         />
       </section>
@@ -34,21 +34,18 @@ export default async function BranchesPage() {
   }
 
   return (
-    <ModulePlaceholder
-      bullets={[
-        t("bullets.one"),
-        t("bullets.two"),
-        t("bullets.three"),
-      ]}
-      comingSoonLabel={tCommon("comingSoon")}
-      ctaHref="/app"
-      ctaLabel={t("ctaPrimary")}
-      description={t("description")}
-      icon={<Building2 className="size-5" />}
-      secondaryCtaHref="/app/clients"
-      secondaryCtaLabel={t("ctaSecondary")}
-      subtitle={t("subtitle")}
-      title={t("title")}
-    />
+    <section className="space-y-6">
+      <PageHeader
+        rightSlot={(
+          <Button asChild className="rounded-full" size="sm">
+            <Link href="/app/branches?create=1">{tBranches("newBranch")}</Link>
+          </Button>
+        )}
+        subtitle={tBranches("subtitle")}
+        title={tBranches("title")}
+      />
+
+      <BranchesTable roles={roles} />
+    </section>
   );
 }

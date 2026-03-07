@@ -81,20 +81,7 @@ Notas:
 
 ## Modo full docker (demo)
 
-### 1. Generar el jar del backend
-Desde `/backend`:
-
-```bash
-./mvnw -q -DskipTests package
-```
-
-En Windows:
-
-```powershell
-cmd /c mvnw.cmd -q -DskipTests package
-```
-
-### 2. Levantar backend + dependencias
+### 1. Levantar backend + dependencias
 Desde la raíz del repo:
 
 ```bash
@@ -102,7 +89,9 @@ docker compose -f docker-compose.yml -f docker-compose.app.yml up -d --build
 docker compose -f docker-compose.yml -f docker-compose.app.yml ps
 ```
 
-### 3. Verificar backend containerizado
+No hace falta empaquetar el backend a mano: el `Dockerfile` compila el jar dentro del `docker build`, así que cada `--build` toma el código actual del repo.
+
+### 2. Verificar backend containerizado
 Health esperado:
 
 ```text
@@ -114,4 +103,5 @@ La respuesta debe ser `200 OK`.
 ## Notas
 - `docker-compose.yml` se mantiene como stack de dependencias (`postgres` + `mailhog`).
 - `docker-compose.app.yml` agrega el backend, reutiliza el Postgres del compose base y en demo apunta SMTP a `barbersuite-mailhog:1025`.
+- El backend Docker ya no depende de `backend/target/*.jar` local.
 - La base usa un volumen persistente Docker para conservar datos entre reinicios.

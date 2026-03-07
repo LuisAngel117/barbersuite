@@ -1,21 +1,28 @@
-FROM eclipse-temurin:21-jre AS builder
-WORKDIR /builder
+# syntax=docker/dockerfile:1.7
 
-ARG JAR_FILE=target/*.jar
+FROM eclipse-temurin:21-jdk AS build
+WORKDIR /workspace
 
-COPY ${JAR_FILE} application.jar
+COPY mvnw pom.xml ./
+COPY .mvn .mvn
 
-RUN java -Djarmode=tools -jar application.jar extract --layers --destination extracted \
-  && mkdir -p extracted/snapshot-dependencies
+RUN chmod +x mvnw
+
+RUN --mount=type=cache,target=/root/.m2 ./mvnw -q -DskipTests dependency:go-offline
+
+COPY src src
+
+RUN --mount=type=cache,target=/root/.m2 ./mvnw -q -DskipTests package
 
 FROM eclipse-temurin:21-jre
-WORKDIR /application
+WORKDIR /app
 
-COPY --from=builder /builder/extracted/dependencies/ ./
-COPY --from=builder /builder/extracted/spring-boot-loader/ ./
-COPY --from=builder /builder/extracted/snapshot-dependencies/ ./
-COPY --from=builder /builder/extracted/application/ ./
+RUN groupadd --system spring && useradd --system --gid spring --create-home spring
+
+COPY --from=build /workspace/target/*.jar app.jar
+
+USER spring
 
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-jar", "/application/application.jar"]
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]

@@ -13,6 +13,8 @@ Desde la raiz del repo:
 docker compose -f docker-compose.yml -f docker-compose.app.yml -f docker-compose.frontend.yml up -d --build
 ```
 
+No hace falta generar el jar del backend antes: el `Dockerfile` multi-stage compila el servicio dentro del build de Docker.
+
 Atajo en Windows:
 
 ```powershell

@@ -26,12 +26,10 @@ jobs:
             context: ./backend
             dockerfile: ./backend/Dockerfile
             image_name: barbersuite-backend
-            requires_java: true
           - service: frontend
             context: ./frontend
             dockerfile: ./frontend/Dockerfile
             image_name: barbersuite-frontend
-            requires_java: false
 
     steps:
       - name: Checkout
@@ -57,22 +55,6 @@ jobs:
             echo "manual_tag=" >> "${GITHUB_OUTPUT}"
             echo "has_manual_tag=false" >> "${GITHUB_OUTPUT}"
           fi
-
-      - name: Set up Java 21
-        if: matrix.requires_java
-        uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: "21"
-          cache: maven
-
-      - name: Ensure Maven wrapper is executable
-        if: matrix.requires_java
-        run: chmod +x ./backend/mvnw
-
-      - name: Package backend artifact
-        if: matrix.requires_java
-        run: ./backend/mvnw -q -DskipTests package
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

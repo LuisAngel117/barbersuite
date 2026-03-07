@@ -1,5 +1,3 @@
 .idea/
 *.iml
-.mvn/
-target/*
-!target/*.jar
+target/

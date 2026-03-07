@@ -909,6 +909,78 @@
       "conflict": "An equivalent queued email already exists for this time window."
     }
   },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Preferences, account context and workspace operating status.",
+    "tabs": {
+      "profile": "Profile",
+      "preferences": "Preferences",
+      "workspace": "Workspace",
+      "integrations": "Integrations"
+    },
+    "profile": {
+      "description": "Snapshot of your account, roles and accessible branches inside the tenant.",
+      "fullName": "Full name",
+      "email": "Email",
+      "roles": "Roles",
+      "branches": "Accessible branches",
+      "currentBranch": "Current branch",
+      "noCurrentBranch": "You have not selected a branch from the top selector yet.",
+      "accessTitle": "Operating context",
+      "accessDescription": "The active branch defines the scope for clients, appointments, cash and reports.",
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "preferences": {
+      "theme": "Theme",
+      "themeDescription": "Adjust the shell look to fit your working environment.",
+      "language": "Language",
+      "languageDescription": "Switch between Spanish and English without leaving the current session.",
+      "currentBranch": "Current branch",
+      "currentBranchDescription": "Quick reference for the branch currently used by the internal BFF.",
+      "noBranch": "There is no selected branch right now.",
+      "changeBranch": "Open branch-scoped module"
+    },
+    "workspace": {
+      "title": "Workspace",
+      "description": "Quick visibility into the tenant, its branches and the active administrative surfaces.",
+      "workspaceName": "Tenant",
+      "workspaceId": "Tenant ID",
+      "branches": "Branches",
+      "branchesCount": "{count} visible to your user",
+      "staff": "Staff",
+      "staffDescription": "Manage barbers, access and assignments from the staff module.",
+      "openBranches": "Open branches",
+      "openStaff": "Open staff",
+      "featuresTitle": "Active modules",
+      "featuresDescription": "Current scope snapshot for BarberSuite in this workspace.",
+      "available": "Available",
+      "features": {
+        "appointments": "Appointments",
+        "services": "Services",
+        "reports": "Reports",
+        "notifications": "Notifications"
+      }
+    },
+    "integrations": {
+      "email": "Email",
+      "emailDescription": "Outbox, SMTP tests and the worker are already available from the notifications panel.",
+      "observability": "Observability",
+      "observabilityDescription": "Shortcuts to inspect metrics and dashboards when you run the local demo stack.",
+      "observabilityHint": "These entries are informational here and become more useful in local/demo environments.",
+      "docs": "Docs and quick links",
+      "docsDescription": "Shortcuts to useful product surfaces without leaving the shell.",
+      "available": "Available",
+      "internalLinks": "Internal links",
+      "openNotifications": "Open notifications",
+      "openMailhog": "Open MailHog",
+      "openPrometheus": "Open Prometheus",
+      "openGrafana": "Open Grafana",
+      "openFeatures": "Open features",
+      "openUiKit": "Open UI Kit",
+      "openReports": "Open reports"
+    }
+  },
   "placeholders": {
     "common": {
       "comingSoon": "Coming soon",

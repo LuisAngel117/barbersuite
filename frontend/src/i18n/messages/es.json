@@ -909,6 +909,78 @@
       "conflict": "Ya existe un email equivalente encolado para esta ventana."
     }
   },
+  "settings": {
+    "title": "Configuración",
+    "subtitle": "Preferencias, cuenta y estado operativo del espacio de trabajo.",
+    "tabs": {
+      "profile": "Perfil",
+      "preferences": "Preferencias",
+      "workspace": "Espacio de trabajo",
+      "integrations": "Integraciones"
+    },
+    "profile": {
+      "description": "Resumen de tu cuenta, roles y sucursales accesibles dentro del tenant.",
+      "fullName": "Nombre completo",
+      "email": "Email",
+      "roles": "Roles",
+      "branches": "Sucursales accesibles",
+      "currentBranch": "Sucursal actual",
+      "noCurrentBranch": "Todavía no has seleccionado una sucursal en el selector superior.",
+      "accessTitle": "Contexto operativo",
+      "accessDescription": "La sucursal activa determina el alcance de clientes, agenda, caja y reportes.",
+      "active": "Activa",
+      "inactive": "Inactiva"
+    },
+    "preferences": {
+      "theme": "Tema",
+      "themeDescription": "Cambia el look del shell según tu entorno de trabajo.",
+      "language": "Idioma",
+      "languageDescription": "Alterna entre español e inglés sin salir de la sesión actual.",
+      "currentBranch": "Sucursal actual",
+      "currentBranchDescription": "Referencia rápida del branch que está usando el BFF interno.",
+      "noBranch": "No hay una sucursal seleccionada en este momento.",
+      "changeBranch": "Abrir módulo branch-scoped"
+    },
+    "workspace": {
+      "title": "Espacio de trabajo",
+      "description": "Visibilidad rápida del tenant, sus sucursales y las superficies administrativas activas.",
+      "workspaceName": "Tenant",
+      "workspaceId": "Tenant ID",
+      "branches": "Sucursales",
+      "branchesCount": "{count} visibles para tu usuario",
+      "staff": "Staff",
+      "staffDescription": "Gestiona barberos, accesos y asignaciones desde el módulo de staff.",
+      "openBranches": "Abrir sucursales",
+      "openStaff": "Abrir staff",
+      "featuresTitle": "Módulos activos",
+      "featuresDescription": "Snapshot del alcance actual de BarberSuite en este workspace.",
+      "available": "Disponible",
+      "features": {
+        "appointments": "Agenda",
+        "services": "Servicios",
+        "reports": "Reportes",
+        "notifications": "Notificaciones"
+      }
+    },
+    "integrations": {
+      "email": "Email",
+      "emailDescription": "Outbox, pruebas SMTP y worker ya disponibles desde el panel de notifications.",
+      "observability": "Observabilidad",
+      "observabilityDescription": "Atajos para revisar métricas y paneles cuando corres el demo local.",
+      "observabilityHint": "Estos accesos se muestran como referencia y cobran más valor en local/demo.",
+      "docs": "Documentación y accesos rápidos",
+      "docsDescription": "Puentes hacia superficies útiles del producto sin salir del shell.",
+      "available": "Disponible",
+      "internalLinks": "Accesos internos",
+      "openNotifications": "Abrir notificaciones",
+      "openMailhog": "Abrir MailHog",
+      "openPrometheus": "Abrir Prometheus",
+      "openGrafana": "Abrir Grafana",
+      "openFeatures": "Ver features",
+      "openUiKit": "Abrir UI Kit",
+      "openReports": "Abrir reportes"
+    }
+  },
   "placeholders": {
     "common": {
       "comingSoon": "Coming soon",

@@ -201,7 +201,8 @@ export const APP_NAV_ITEMS: AppNavItem[] = [
       en: "Settings",
     },
     group: "system",
-    allowedRoles: ["ADMIN", "MANAGER"],
+    allowedRoles: ALL_APP_ROLES,
+    testId: "nav-settings",
   },
   {
     key: "ui-kit",
